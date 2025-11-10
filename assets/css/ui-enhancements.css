@@ -1,0 +1,293 @@
+/**
+ * FP Forms UI Enhancements
+ * Microinterazioni, accessibilità, tooltips
+ */
+
+/* ============================================
+   Focus States Migliorati
+   ============================================ */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+.fp-field-type:focus-visible {
+    outline: 3px solid var(--fp-focus-ring, rgba(37, 99, 235, 0.5));
+    outline-offset: 2px;
+}
+
+/* ============================================
+   Tooltips
+   ============================================ */
+[data-tooltip] {
+    position: relative;
+    cursor: help;
+}
+
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    padding: 8px 12px;
+    background: #1f2937;
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: nowrap;
+    border-radius: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 1000;
+}
+
+[data-tooltip]::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #1f2937;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+[data-tooltip]:hover::before,
+[data-tooltip]:hover::after {
+    opacity: 1;
+}
+
+[data-tooltip]:hover::before {
+    transform: translateX(-50%) translateY(-12px);
+}
+
+/* ============================================
+   Microinterazioni Bottoni
+   ============================================ */
+.button,
+.fp-btn,
+button[type="button"],
+button[type="submit"] {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.button:hover:not(:disabled),
+.fp-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.button:active:not(:disabled),
+.fp-btn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Ripple effect */
+.button::after,
+.fp-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.button:active::after,
+.fp-btn:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+/* ============================================
+   Input Validazione Inline
+   ============================================ */
+.fp-field-error {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+.fp-field-success {
+    border-color: #059669 !important;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1) !important;
+}
+
+.fp-error-message {
+    display: block;
+    margin-top: 6px;
+    color: #dc2626;
+    font-size: 13px;
+    animation: fadeInDown 0.3s;
+}
+
+.fp-success-message {
+    display: block;
+    margin-top: 6px;
+    color: #059669;
+    font-size: 13px;
+    animation: fadeInDown 0.3s;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   Hover States Migliorati
+   ============================================ */
+.fp-field-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+.fp-field-type:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+table tr:hover {
+    background: #f9fafb !important;
+    transition: background 0.2s;
+}
+
+/* ============================================
+   Touch Targets (Mobile)
+   ============================================ */
+@media (max-width: 768px) {
+    button,
+    .button,
+    .fp-btn,
+    input[type="checkbox"],
+    input[type="radio"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    .fp-field-type {
+        padding: 16px 20px;
+        font-size: 15px;
+    }
+}
+
+/* ============================================
+   Success Celebrations
+   ============================================ */
+@keyframes celebrate {
+    0%, 100% { transform: scale(1); }
+    10%, 30%, 50%, 70%, 90% { transform: scale(1.1) rotate(-3deg); }
+    20%, 40%, 60%, 80% { transform: scale(1.1) rotate(3deg); }
+}
+
+.fp-celebrate {
+    animation: celebrate 0.8s ease-in-out;
+}
+
+/* ============================================
+   Skeleton Pulse Migliorato
+   ============================================ */
+.fp-skeleton-line {
+    background: linear-gradient(
+        90deg,
+        #f0f0f0 0%,
+        #e0e0e0 20%,
+        #f0f0f0 40%,
+        #f0f0f0 100%
+    );
+    background-size: 200% 100%;
+    animation: fp-skeleton-wave 1.5s linear infinite;
+}
+
+@keyframes fp-skeleton-wave {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ============================================
+   Smooth Scrolling
+   ============================================ */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ============================================
+   Skip to Content (Accessibilità)
+   ============================================ */
+.fp-skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #2563eb;
+    color: #fff;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 0 0 4px 0;
+    z-index: 100000;
+}
+
+.fp-skip-link:focus {
+    top: 0;
+}
+
+/* ============================================
+   Reduced Motion (Accessibilità)
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================
+   High Contrast Mode
+   ============================================ */
+@media (prefers-contrast: high) {
+    :root {
+        --fp-color-border: rgba(0, 0, 0, 0.3);
+    }
+    
+    button,
+    .button,
+    input,
+    textarea,
+    select {
+        border-width: 2px;
+    }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+    .fp-forms-admin__header,
+    .button,
+    .fp-sidebar,
+    .fp-modal-close {
+        display: none !important;
+    }
+    
+    .fp-forms-table-container {
+        box-shadow: none !important;
+        border: 1px solid #000;
+    }
+}
+

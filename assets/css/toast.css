@@ -1,0 +1,131 @@
+/**
+ * FP Forms Toast Notifications CSS
+ */
+
+.fp-toast-container {
+    position: fixed;
+    top: 32px;
+    right: 20px;
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.fp-toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 320px;
+    max-width: 480px;
+    padding: 16px 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    opacity: 0;
+    transform: translateX(400px);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    pointer-events: all;
+}
+
+.fp-toast.fp-toast-show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.fp-toast-icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.fp-toast-message {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #1f2937;
+}
+
+.fp-toast-close {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    color: #6b7280;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.fp-toast-close:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+/* Success */
+.fp-toast-success {
+    border-left: 4px solid #059669;
+}
+
+.fp-toast-success .fp-toast-icon {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+/* Error */
+.fp-toast-error {
+    border-left: 4px solid #dc2626;
+}
+
+.fp-toast-error .fp-toast-icon {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Warning */
+.fp-toast-warning {
+    border-left: 4px solid #d97706;
+}
+
+.fp-toast-warning .fp-toast-icon {
+    background: #fed7aa;
+    color: #92400e;
+}
+
+/* Info */
+.fp-toast-info {
+    border-left: 4px solid #2563eb;
+}
+
+.fp-toast-info .fp-toast-icon {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+    .fp-toast-container {
+        top: 46px;
+        right: 12px;
+        left: 12px;
+    }
+    
+    .fp-toast {
+        min-width: auto;
+        width: 100%;
+    }
+}
+

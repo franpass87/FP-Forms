@@ -1,0 +1,25 @@
+# Composer
+/vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Node (se aggiungi build tools in futuro)
+node_modules/
+package-lock.json
+
+# Backup files
+*.bak
+*.backup
+

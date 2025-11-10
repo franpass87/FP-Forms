@@ -1,0 +1,961 @@
+/**
+ * FP Forms - Frontend Styles
+ * Design System coerente con FP-Experiences
+ * @version 1.0.0
+ */
+
+/* ============================================
+   CSS Variables - FP Design System
+   ============================================ */
+:root {
+    /* Colors */
+    --fp-forms-primary: var(--fp-color-primary, #2563eb);
+    --fp-forms-primary-hover: #1d4ed8;
+    --fp-forms-danger: #dc2626;
+    --fp-forms-success: #059669;
+    --fp-forms-text: #1f2937;
+    --fp-forms-muted: #6b7280;
+    --fp-forms-border: #d1d5db;
+    --fp-forms-surface: #ffffff;
+    --fp-forms-background: #f9fafb;
+    
+    /* Spacing */
+    --fp-forms-spacing-xs: 8px;
+    --fp-forms-spacing-sm: 12px;
+    --fp-forms-spacing-md: 16px;
+    --fp-forms-spacing-lg: 24px;
+    --fp-forms-spacing-xl: 32px;
+    
+    /* Border Radius */
+    --fp-forms-radius: var(--fp-radius, 12px);
+    --fp-forms-radius-sm: 8px;
+    --fp-forms-radius-full: 9999px;
+    
+    /* Shadows */
+    --fp-forms-shadow: var(--fp-shadow, 0 4px 6px rgba(0, 0, 0, 0.07));
+    --fp-forms-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --fp-forms-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    
+    /* Focus Ring */
+    --fp-forms-focus-ring: rgba(37, 99, 235, 0.5);
+}
+
+/* ============================================
+   Container
+   ============================================ */
+.fp-forms-container {
+    max-width: 100%;
+    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ============================================
+   Form
+   ============================================ */
+.fp-forms-form {
+    background: var(--fp-forms-surface);
+    padding: clamp(24px, 4vw, 40px);
+    border-radius: var(--fp-forms-radius);
+    box-shadow: var(--fp-forms-shadow);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* ============================================
+   Description
+   ============================================ */
+.fp-forms-description {
+    margin-bottom: var(--fp-forms-spacing-lg);
+    color: var(--fp-forms-muted);
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* ============================================
+   Fields
+   ============================================ */
+.fp-forms-fields {
+    margin-bottom: var(--fp-forms-spacing-lg);
+}
+
+.fp-forms-field {
+    margin-bottom: var(--fp-forms-spacing-lg);
+}
+
+.fp-forms-label {
+    display: block;
+    margin-bottom: var(--fp-forms-spacing-sm);
+    font-weight: 600;
+    color: var(--fp-forms-text);
+    font-size: 15px;
+}
+
+.fp-forms-required {
+    color: var(--fp-forms-danger);
+    margin-left: 2px;
+}
+
+/* ============================================
+   Inputs
+   ============================================ */
+.fp-forms-input,
+.fp-forms-textarea,
+.fp-forms-select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--fp-forms-border);
+    border-radius: var(--fp-forms-radius-sm);
+    font-size: 15px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    background-color: var(--fp-forms-surface);
+    color: var(--fp-forms-text);
+}
+
+.fp-forms-input:focus,
+.fp-forms-textarea:focus,
+.fp-forms-select:focus {
+    outline: none;
+    border-color: var(--fp-forms-primary);
+    box-shadow: 0 0 0 3px var(--fp-forms-focus-ring);
+}
+
+.fp-forms-input::placeholder,
+.fp-forms-textarea::placeholder {
+    color: #9ca3af;
+}
+
+.fp-forms-textarea {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.5;
+}
+
+/* ============================================
+   Radio & Checkbox
+   ============================================ */
+.fp-forms-radio-group,
+.fp-forms-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--fp-forms-spacing-sm);
+}
+
+.fp-forms-radio-label,
+.fp-forms-checkbox-label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    cursor: pointer;
+    padding: 12px 16px;
+    border-radius: var(--fp-forms-radius-sm);
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.fp-forms-radio-label:hover,
+.fp-forms-checkbox-label:hover {
+    background-color: var(--fp-forms-background);
+    border-color: var(--fp-forms-border);
+}
+
+.fp-forms-radio,
+.fp-forms-checkbox {
+    margin-right: var(--fp-forms-spacing-sm);
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--fp-forms-primary);
+}
+
+/* ============================================
+   Description
+   ============================================ */
+.fp-forms-field .fp-forms-description {
+    margin-top: var(--fp-forms-spacing-xs);
+    margin-bottom: 0;
+    font-size: 13px;
+    color: var(--fp-forms-muted);
+    font-style: italic;
+}
+
+/* ============================================
+   Error States
+   ============================================ */
+.fp-forms-error {
+    display: block;
+    color: var(--fp-forms-danger);
+    font-size: 13px;
+    margin-top: var(--fp-forms-spacing-xs);
+    font-weight: 500;
+}
+
+.fp-forms-field.has-error .fp-forms-input,
+.fp-forms-field.has-error .fp-forms-textarea,
+.fp-forms-field.has-error .fp-forms-select {
+    border-color: var(--fp-forms-danger);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.fp-forms-field.has-error .fp-forms-label {
+    color: var(--fp-forms-danger);
+}
+
+/* ============================================
+   Trust Badges
+   ============================================ */
+.fp-forms-trust-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: var(--fp-forms-spacing-lg);
+    padding: var(--fp-forms-spacing-md);
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: var(--fp-forms-radius);
+    border: 1px solid #bae6fd;
+    justify-content: center;
+    align-items: center;
+}
+
+.fp-trust-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: white;
+    padding: 8px 16px;
+    border-radius: var(--fp-forms-radius-full);
+    font-size: 14px;
+    font-weight: 500;
+    color: #0c4a6e;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.fp-trust-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.fp-badge-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.fp-badge-text {
+    white-space: nowrap;
+}
+
+/* Mobile: Stack badges */
+@media screen and (max-width: 640px) {
+    .fp-forms-trust-badges {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .fp-trust-badge {
+        justify-content: center;
+        width: 100%;
+    }
+}
+
+/* ============================================
+   Submit Button
+   ============================================ */
+.fp-forms-submit {
+    margin-top: var(--fp-forms-spacing-xl);
+}
+
+.fp-forms-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--fp-forms-primary);
+    color: white;
+    border: 2px solid var(--fp-forms-primary);
+    font-weight: 600;
+    border-radius: var(--fp-forms-radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--fp-forms-shadow-sm);
+    font-family: inherit;
+}
+
+/* Button Sizes */
+.fp-forms-submit-btn.fp-btn-small {
+    padding: 10px 24px;
+    font-size: 14px;
+    min-width: 150px;
+}
+
+.fp-forms-submit-btn.fp-btn-medium {
+    padding: 14px 32px;
+    font-size: 16px;
+    min-width: 200px;
+}
+
+.fp-forms-submit-btn.fp-btn-large {
+    padding: 18px 40px;
+    font-size: 18px;
+    min-width: 250px;
+}
+
+/* Button Styles */
+.fp-forms-submit-btn.fp-btn-solid {
+    /* Background/border set inline per custom color */
+    color: white;
+}
+
+.fp-forms-submit-btn.fp-btn-outline {
+    background: transparent;
+    /* Color/border set inline per custom color */
+}
+
+.fp-forms-submit-btn.fp-btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    /* Color set inline per custom color */
+}
+
+/* Button Width */
+.fp-forms-submit-btn.fp-btn-full {
+    width: 100%;
+    min-width: 100%;
+}
+
+.fp-forms-submit-btn.fp-btn-auto {
+    /* Default: min-width già impostato per size */
+}
+
+/* Icon Spacing */
+.fp-forms-submit-btn .fp-btn-icon {
+    margin-left: 6px;
+    font-size: 1.1em;
+}
+
+/* Hover States */
+.fp-forms-submit-btn.fp-btn-solid:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--fp-forms-shadow);
+    filter: brightness(1.1);
+}
+
+.fp-forms-submit-btn.fp-btn-outline:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--fp-forms-shadow);
+    opacity: 0.8;
+}
+
+.fp-forms-submit-btn.fp-btn-ghost:hover {
+    opacity: 0.7;
+}
+
+.fp-forms-submit-btn:active {
+    transform: translateY(0);
+}
+
+.fp-forms-submit-btn:disabled {
+    background: #9ca3af !important;
+    border-color: #9ca3af !important;
+    color: white !important;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.6;
+}
+
+.fp-forms-submit-btn:focus-visible {
+    outline: 3px solid var(--fp-forms-focus-ring);
+    outline-offset: 2px;
+}
+
+/* ============================================
+   Messages
+   ============================================ */
+.fp-forms-messages {
+    margin-top: var(--fp-forms-spacing-lg);
+}
+
+.fp-forms-message {
+    padding: 16px 20px;
+    border-radius: var(--fp-forms-radius-sm);
+    margin-bottom: var(--fp-forms-spacing-md);
+    display: none;
+    font-size: 15px;
+    line-height: 1.5;
+    max-height: 400px; /* BUGFIX #23: Limit message height */
+    overflow-y: auto; /* Scroll se troppo lungo */
+    word-wrap: break-word; /* Break long words */
+}
+
+.fp-forms-message.is-visible {
+    display: block;
+    animation: fp-slide-in 0.3s ease;
+}
+
+@keyframes fp-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Success Message Variants */
+.fp-forms-success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 2px solid #10b981;
+}
+
+.fp-forms-success.fp-msg-success::before {
+    content: '✓ ';
+    font-weight: bold;
+    margin-right: 6px;
+    font-size: 18px;
+}
+
+.fp-forms-success.fp-msg-info {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 2px solid #3b82f6;
+}
+
+.fp-forms-success.fp-msg-info::before {
+    content: 'ℹ️ ';
+    margin-right: 6px;
+}
+
+.fp-forms-success.fp-msg-celebration {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    border: 2px solid #f59e0b;
+    font-weight: 600;
+}
+
+.fp-forms-success.fp-msg-celebration::before {
+    content: '🎉 ';
+    margin-right: 6px;
+    font-size: 18px;
+}
+
+.fp-forms-message.fp-forms-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 2px solid #ef4444;
+}
+
+.fp-forms-message.fp-forms-error::before {
+    content: '⚠️ ';
+    margin-right: 6px;
+}
+
+/* ============================================
+   Loading & Submitting State
+   ============================================ */
+.fp-forms-form.is-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* BUGFIX #24: Prevent double submit visual feedback */
+.fp-forms-form.is-submitting .fp-forms-submit-btn {
+    opacity: 0.7;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.fp-forms-form.is-loading .fp-forms-submit-btn::after {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-left: 10px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: fp-spin 0.6s linear infinite;
+}
+
+@keyframes fp-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Focus Visible States
+   ============================================ */
+.fp-forms-form *:focus-visible {
+    outline: 3px solid var(--fp-forms-focus-ring);
+    outline-offset: 2px;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media screen and (max-width: 768px) {
+    .fp-forms-form {
+        padding: var(--fp-forms-spacing-lg);
+    }
+    
+    .fp-forms-submit-btn.fp-btn-auto {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .fp-forms-submit-btn.fp-btn-full {
+        /* Already 100% */
+    }
+    
+    .fp-forms-radio-group,
+    .fp-forms-checkbox-group {
+        gap: var(--fp-forms-spacing-xs);
+    }
+    
+    .fp-forms-radio-label,
+    .fp-forms-checkbox-label {
+        padding: 10px 12px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .fp-forms-input,
+    .fp-forms-textarea,
+    .fp-forms-select {
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+}
+
+/* ============================================
+   Dark Mode Support
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --fp-forms-text: #f9fafb;
+        --fp-forms-muted: #9ca3af;
+        --fp-forms-border: #374151;
+        --fp-forms-surface: #1f2937;
+        --fp-forms-background: #111827;
+    }
+    
+    .fp-forms-form {
+        background: var(--fp-forms-surface);
+        border-color: var(--fp-forms-border);
+    }
+    
+    .fp-forms-input,
+    .fp-forms-textarea,
+    .fp-forms-select {
+        background-color: #111827;
+        border-color: #374151;
+        color: #f9fafb;
+    }
+    
+    .fp-forms-input::placeholder,
+    .fp-forms-textarea::placeholder {
+        color: #6b7280;
+    }
+    
+    .fp-forms-radio-label:hover,
+    .fp-forms-checkbox-label:hover {
+        background-color: #111827;
+        border-color: #4b5563;
+    }
+    
+    .fp-forms-success {
+        background: rgba(5, 150, 105, 0.15);
+        color: #6ee7b7;
+        border-color: rgba(110, 231, 183, 0.3);
+    }
+    
+    .fp-forms-message.fp-forms-error {
+        background: rgba(220, 38, 38, 0.15);
+        color: #fca5a5;
+        border-color: rgba(252, 165, 165, 0.3);
+    }
+}
+
+/* ============================================
+   High Contrast Mode
+   ============================================ */
+@media (prefers-contrast: high) {
+    .fp-forms-form {
+        border-width: 2px;
+    }
+    
+    .fp-forms-input,
+    .fp-forms-textarea,
+    .fp-forms-select {
+        border-width: 2px;
+    }
+    
+    .fp-forms-submit-btn {
+        border: 2px solid currentColor;
+    }
+}
+
+/* ============================================
+   Reduced Motion
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+    .fp-forms-submit {
+        display: none;
+    }
+    
+    .fp-forms-form {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+}
+
+/* ============================================
+   File Upload Field
+   ============================================ */
+.fp-forms-field-file {
+    margin-bottom: var(--fp-forms-spacing-lg);
+}
+
+.fp-forms-file-wrapper {
+    position: relative;
+}
+
+.fp-forms-file-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px dashed var(--fp-forms-border);
+    border-radius: var(--fp-forms-radius-sm);
+    background: var(--fp-forms-background);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.fp-forms-file-input:hover {
+    border-color: var(--fp-forms-primary);
+    background: #f0f6fc;
+}
+
+.fp-forms-file-input:focus {
+    outline: none;
+    border-color: var(--fp-forms-primary);
+    box-shadow: 0 0 0 3px var(--fp-forms-focus-ring);
+}
+
+.fp-forms-file-info {
+    margin-top: var(--fp-forms-spacing-xs);
+    font-size: 12px;
+    color: var(--fp-forms-muted);
+}
+
+.fp-forms-file-preview {
+    margin-top: var(--fp-forms-spacing-sm);
+    padding: var(--fp-forms-spacing-sm);
+    background: var(--fp-forms-background);
+    border-radius: var(--fp-forms-radius-sm);
+    border: 1px solid var(--fp-forms-border);
+}
+
+.fp-forms-file-preview-item {
+    display: flex;
+    align-items: center;
+    gap: var(--fp-forms-spacing-sm);
+    padding: 8px;
+    background: var(--fp-forms-surface);
+    border-radius: var(--fp-forms-radius-sm);
+    margin-bottom: 8px;
+}
+
+.fp-forms-file-preview-item:last-child {
+    margin-bottom: 0;
+}
+
+.fp-forms-file-preview-icon {
+    font-size: 24px;
+}
+
+.fp-forms-file-preview-name {
+    flex: 1;
+    font-size: 14px;
+    color: var(--fp-forms-text);
+}
+
+.fp-forms-file-preview-size {
+    font-size: 12px;
+    color: var(--fp-forms-muted);
+}
+
+.fp-forms-file-remove {
+    background: none;
+    border: none;
+    color: var(--fp-forms-danger);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--fp-forms-radius-sm);
+}
+
+.fp-forms-file-remove:hover {
+    background: #fee2e2;
+}
+
+/* ============================================
+   Field Width Options
+   ============================================ */
+.fp-forms-fields {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--fp-forms-spacing-md);
+}
+
+.fp-forms-field {
+    grid-column: span 12;
+}
+
+.fp-field-width-full {
+    grid-column: span 12;
+}
+
+.fp-field-width-half {
+    grid-column: span 6;
+}
+
+.fp-field-width-third {
+    grid-column: span 4;
+}
+
+.fp-field-width-quarter {
+    grid-column: span 3;
+}
+
+@media screen and (max-width: 768px) {
+    .fp-field-width-half,
+    .fp-field-width-third,
+    .fp-field-width-quarter {
+        grid-column: span 12;
+    }
+}
+
+/* ============================================
+   Utilities
+   ============================================ */
+.fp-forms-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.fp-forms-text-center {
+    text-align: center;
+}
+
+.fp-forms-mt-sm {
+    margin-top: var(--fp-forms-spacing-sm);
+}
+
+.fp-forms-mt-md {
+    margin-top: var(--fp-forms-spacing-md);
+}
+
+.fp-forms-mt-lg {
+    margin-top: var(--fp-forms-spacing-lg);
+}
+
+.fp-forms-mb-sm {
+    margin-bottom: var(--fp-forms-spacing-sm);
+}
+
+.fp-forms-mb-md {
+    margin-bottom: var(--fp-forms-spacing-md);
+}
+
+.fp-forms-mb-lg {
+    margin-bottom: var(--fp-forms-spacing-lg);
+}
+
+/* ============================================
+   Privacy Checkbox - GDPR Compliance
+   ============================================ */
+.fp-forms-field-privacy-checkbox {
+    margin-bottom: var(--fp-forms-spacing-lg);
+}
+
+.fp-forms-privacy-checkbox {
+    background-color: var(--fp-forms-background);
+    border: 2px solid var(--fp-forms-primary);
+    border-radius: var(--fp-forms-radius-sm);
+    padding: var(--fp-forms-spacing-md);
+}
+
+.fp-forms-privacy-checkbox .fp-forms-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: none;
+}
+
+.fp-forms-privacy-checkbox .fp-forms-checkbox {
+    margin-top: 3px;
+    margin-right: var(--fp-forms-spacing-sm);
+    flex-shrink: 0;
+}
+
+.fp-forms-privacy-text {
+    color: var(--fp-forms-text);
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.fp-forms-privacy-link {
+    color: var(--fp-forms-primary);
+    text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.fp-forms-privacy-link:hover {
+    color: var(--fp-forms-primary-hover);
+    text-decoration: none;
+}
+
+.fp-forms-privacy-link:focus {
+    outline: 2px solid var(--fp-forms-focus-ring);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Stile per quando non c'è un link (privacy policy non configurata) */
+.fp-forms-privacy-text strong {
+    color: var(--fp-forms-danger);
+}
+
+/* Mobile responsive */
+@media screen and (max-width: 600px) {
+    .fp-forms-privacy-text {
+        font-size: 13px;
+    }
+    
+    .fp-forms-privacy-checkbox {
+        padding: var(--fp-forms-spacing-sm);
+    }
+}
+
+/* ============================================
+   Marketing Checkbox - Newsletter/Marketing
+   ============================================ */
+.fp-forms-field-marketing-checkbox {
+    margin-bottom: var(--fp-forms-spacing-lg);
+}
+
+.fp-forms-marketing-checkbox {
+    background-color: #fef3c7;
+    border: 2px solid #f59e0b;
+    border-radius: var(--fp-forms-radius-sm);
+    padding: var(--fp-forms-spacing-md);
+}
+
+.fp-forms-marketing-checkbox .fp-forms-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: none;
+}
+
+.fp-forms-marketing-checkbox .fp-forms-checkbox {
+    margin-top: 3px;
+    margin-right: var(--fp-forms-spacing-sm);
+    flex-shrink: 0;
+}
+
+.fp-forms-marketing-text {
+    color: var(--fp-forms-text);
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+/* Mobile responsive */
+@media screen and (max-width: 600px) {
+    .fp-forms-marketing-text {
+        font-size: 13px;
+    }
+    
+    .fp-forms-marketing-checkbox {
+        padding: var(--fp-forms-spacing-sm);
+    }
+}
+
+/* ============================================
+   reCAPTCHA Field
+   ============================================ */
+.fp-forms-field-recaptcha {
+    margin-bottom: var(--fp-forms-spacing-lg);
+}
+
+.fp-forms-recaptcha-field {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* Widget v2 */
+.g-recaptcha {
+    margin-bottom: var(--fp-forms-spacing-sm);
+}
+
+/* Info v3 */
+.fp-forms-recaptcha-info {
+    margin: var(--fp-forms-spacing-sm) 0 0;
+    color: var(--fp-forms-muted);
+}
+
+.fp-forms-recaptcha-info a {
+    color: var(--fp-forms-primary);
+    text-decoration: underline;
+}
+
+.fp-forms-recaptcha-info a:hover {
+    color: var(--fp-forms-primary-hover);
+    text-decoration: none;
+}
+
+/* Notice quando non configurato (solo admin) */
+.fp-forms-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--fp-forms-radius-sm);
+    margin-bottom: var(--fp-forms-spacing-md);
+}
+
+.fp-forms-notice-warning {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    color: #92400e;
+}
+
+.fp-forms-notice .dashicons {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
