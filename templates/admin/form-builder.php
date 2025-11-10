@@ -446,8 +446,6 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 </div>
             </div>
             
-            <!-- Spostato pulsanti alla fine dopo tutte le impostazioni -->
-            
         </div>
     </form>
 </div>
