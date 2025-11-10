@@ -32,6 +32,26 @@ $fp_forms_autoload = FP_FORMS_PLUGIN_DIR . 'vendor/autoload.php';
 if ( is_readable( $fp_forms_autoload ) ) {
     require_once $fp_forms_autoload;
 } else {
+    // Fallback PSR-4 autoloader per ambienti senza Composer (es. installazione da GitHub)
+    spl_autoload_register(
+        static function ( $class ) {
+            $prefix = 'FPForms\\';
+
+            if ( strpos( $class, $prefix ) !== 0 ) {
+                return;
+            }
+
+            $relative = substr( $class, strlen( $prefix ) );
+            $relative = str_replace( '\\', DIRECTORY_SEPARATOR, $relative );
+
+            $file = FP_FORMS_PLUGIN_DIR . 'src/' . $relative . '.php';
+
+            if ( file_exists( $file ) ) {
+                require_once $file;
+            }
+        }
+    );
+
     add_action(
         'admin_notices',
         static function () {
@@ -40,14 +60,12 @@ if ( is_readable( $fp_forms_autoload ) ) {
             }
 
             printf(
-                '<div class="notice notice-error"><p><strong>%s</strong> %s</p></div>',
+                '<div class="notice notice-warning"><p><strong>%s</strong> %s</p></div>',
                 esc_html__( 'FP Forms:', 'fp-forms' ),
-                esc_html__( 'Esegui "composer install" nella cartella del plugin per completare l\'installazione.', 'fp-forms' )
+                esc_html__( 'Autoloader fallback attivo: esegui "composer install" per abilitare il caricamento ottimizzato.', 'fp-forms' )
             );
         }
     );
-
-    return;
 }
 
 /**
