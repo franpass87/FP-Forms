@@ -152,6 +152,10 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     background: var(--fp-color-primary);
     border-color: var(--fp-color-primary);
     box-shadow: var(--fp-shadow-md);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .fp-forms-empty-state .button-hero:hover {
@@ -159,6 +163,19 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     border-color: var(--fp-color-primary-hover);
     transform: translateY(-2px);
     box-shadow: var(--fp-shadow-lg);
+}
+
+.fp-forms-empty-state .button-secondary {
+    background: #ffffff;
+    color: var(--fp-color-primary);
+    border-color: rgba(37, 99, 235, 0.2);
+    box-shadow: var(--fp-shadow-sm);
+}
+
+.fp-forms-empty-state .button-secondary:hover {
+    background: rgba(37, 99, 235, 0.08);
+    border-color: rgba(37, 99, 235, 0.35);
+    color: var(--fp-color-primary-hover);
 }
 
 /* ============================================
