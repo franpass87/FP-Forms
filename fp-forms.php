@@ -52,20 +52,10 @@ if ( is_readable( $fp_forms_autoload ) ) {
         }
     );
 
-    add_action(
-        'admin_notices',
-        static function () {
-            if ( ! current_user_can( 'activate_plugins' ) ) {
-                return;
-            }
-
-            printf(
-                '<div class="notice notice-warning"><p><strong>%s</strong> %s</p></div>',
-                esc_html__( 'FP Forms:', 'fp-forms' ),
-                esc_html__( 'Autoloader fallback attivo: esegui "composer install" per abilitare il caricamento ottimizzato.', 'fp-forms' )
-            );
-        }
-    );
+    if ( is_admin() ) {
+        add_action( 'admin_init', 'fp_forms_handle_autoload_fallback_notice_dismiss' );
+        add_action( 'admin_notices', 'fp_forms_render_autoload_fallback_notice' );
+    }
 }
 
 /**
@@ -88,6 +78,59 @@ add_action( 'init', 'fp_forms_init', 0 );
 
 if ( function_exists( 'add_filter' ) ) {
     \FPForms\Core\Capabilities::register_capability_bridge();
+}
+
+/**
+ * Gestisce la dismissione dell'avviso di fallback autoloader.
+ */
+function fp_forms_handle_autoload_fallback_notice_dismiss(): void {
+    if ( ! isset( $_GET['fp_forms_dismiss_fallback'] ) ) {
+        return;
+    }
+
+    if ( ! current_user_can( 'activate_plugins' ) ) {
+        return;
+    }
+
+    check_admin_referer( 'fp_forms_dismiss_fallback' );
+
+    update_user_meta( get_current_user_id(), 'fp_forms_hide_fallback_notice', 1 );
+
+    wp_safe_redirect( remove_query_arg( [ 'fp_forms_dismiss_fallback', '_wpnonce' ] ) );
+    exit;
+}
+
+/**
+ * Mostra l'avviso di fallback autoloader solo nelle schermate plugin.
+ */
+function fp_forms_render_autoload_fallback_notice(): void {
+    if ( ! current_user_can( 'activate_plugins' ) ) {
+        return;
+    }
+
+    if ( (bool) get_user_meta( get_current_user_id(), 'fp_forms_hide_fallback_notice', true ) ) {
+        return;
+    }
+
+    $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+    $allowed_screens = [ 'plugins', 'plugins-network' ];
+
+    if ( $screen && ! in_array( $screen->id, $allowed_screens, true ) ) {
+        return;
+    }
+
+    $dismiss_url = wp_nonce_url(
+        add_query_arg( 'fp_forms_dismiss_fallback', '1' ),
+        'fp_forms_dismiss_fallback'
+    );
+
+    printf(
+        '<div class="notice notice-warning is-dismissible"><p><strong>%s</strong> %s</p><p><a href="%s">%s</a></p></div>',
+        esc_html__( 'FP Forms:', 'fp-forms' ),
+        esc_html__( 'Autoloader fallback attivo: esegui "composer install" per abilitare il caricamento ottimizzato.', 'fp-forms' ),
+        esc_url( $dismiss_url ),
+        esc_html__( 'Nascondi questo avviso', 'fp-forms' )
+    );
 }
 
 /**
