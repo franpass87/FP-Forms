@@ -24,7 +24,7 @@ $default_settings = [
     'submit_button_width' => 'auto',
     'submit_button_icon' => '',
     'trust_badges' => [],
-    'success_message' => __( 'Grazie! Il tuo messaggio Ã¨ stato inviato con successo.', 'fp-forms' ),
+    'success_message' => __( 'Grazie! Il tuo messaggio è stato inviato con successo.', 'fp-forms' ),
     'success_message_type' => 'success',
     'success_message_duration' => '0',
     'disable_wordpress_emails' => false,
@@ -163,16 +163,16 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                     
                     <?php
                     $available_badges = [
-                        'instant-response' => [ 'icon' => 'Ã¢Å¡Â¡', 'text' => __( 'Risposta Immediata', 'fp-forms' ) ],
-                        'data-secure' => [ 'icon' => 'Ã°Å¸â€â€™', 'text' => __( 'I Tuoi Dati Sono Al Sicuro', 'fp-forms' ) ],
-                        'no-spam' => [ 'icon' => 'Ã°Å¸Å¡Â«', 'text' => __( 'No Spam, Mai', 'fp-forms' ) ],
-                        'gdpr-compliant' => [ 'icon' => 'Ã¢Å“â€œ', 'text' => __( 'GDPR Compliant', 'fp-forms' ) ],
-                        'ssl-secure' => [ 'icon' => 'Ã°Å¸â€Â', 'text' => __( 'Connessione Sicura SSL', 'fp-forms' ) ],
-                        'quick-reply' => [ 'icon' => 'Ã°Å¸â€™Â¬', 'text' => __( 'Risposta Entro 24h', 'fp-forms' ) ],
-                        'free-quote' => [ 'icon' => 'Ã°Å¸â€™Â°', 'text' => __( 'Preventivo Gratuito', 'fp-forms' ) ],
-                        'trusted' => [ 'icon' => 'Ã¢Â­Â', 'text' => __( '1000+ Clienti Soddisfatti', 'fp-forms' ) ],
-                        'support' => [ 'icon' => 'Ã°Å¸Å½Â¯', 'text' => __( 'Supporto Dedicato', 'fp-forms' ) ],
-                        'privacy-first' => [ 'icon' => 'Ã°Å¸â€˜Â¤', 'text' => __( 'Privacy Garantita', 'fp-forms' ) ],
+                        'instant-response' => [ 'icon' => '⚡', 'text' => __( 'Risposta Immediata', 'fp-forms' ) ],
+                        'data-secure' => [ 'icon' => '🔒', 'text' => __( 'I Tuoi Dati Sono Al Sicuro', 'fp-forms' ) ],
+                        'no-spam' => [ 'icon' => '🚫', 'text' => __( 'No Spam, Mai', 'fp-forms' ) ],
+                        'gdpr-compliant' => [ 'icon' => '✓', 'text' => __( 'GDPR Compliant', 'fp-forms' ) ],
+                        'ssl-secure' => [ 'icon' => '🔐', 'text' => __( 'Connessione Sicura SSL', 'fp-forms' ) ],
+                        'quick-reply' => [ 'icon' => '💬', 'text' => __( 'Risposta Entro 24h', 'fp-forms' ) ],
+                        'free-quote' => [ 'icon' => '💰', 'text' => __( 'Preventivo Gratuito', 'fp-forms' ) ],
+                        'trusted' => [ 'icon' => '⭐', 'text' => __( '1000+ Clienti Soddisfatti', 'fp-forms' ) ],
+                        'support' => [ 'icon' => '🎯', 'text' => __( 'Supporto Dedicato', 'fp-forms' ) ],
+                        'privacy-first' => [ 'icon' => '👤', 'text' => __( 'Privacy Garantita', 'fp-forms' ) ],
                     ];
                     
                     $selected_badges = isset( $form_settings['trust_badges'] ) && is_array( $form_settings['trust_badges'] ) 
@@ -246,11 +246,11 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                     <label><?php _e( 'Icona Pulsante (opzionale)', 'fp-forms' ); ?></label>
                     <select name="submit_button_icon">
                         <option value="" <?php selected( $form_settings['submit_button_icon'] ?? '', '' ); ?>><?php _e( 'Nessuna icona', 'fp-forms' ); ?></option>
-                        <option value="paper-plane" <?php selected( $form_settings['submit_button_icon'] ?? '', 'paper-plane' ); ?>>Ã¢Å“Ë†Ã¯Â¸Â <?php _e( 'Paper Plane', 'fp-forms' ); ?></option>
-                        <option value="send" <?php selected( $form_settings['submit_button_icon'] ?? '', 'send' ); ?>>Ã°Å¸â€œÂ¤ <?php _e( 'Invia', 'fp-forms' ); ?></option>
-                        <option value="check" <?php selected( $form_settings['submit_button_icon'] ?? '', 'check' ); ?>>Ã¢Å“â€œ <?php _e( 'Spunta', 'fp-forms' ); ?></option>
-                        <option value="arrow-right" <?php selected( $form_settings['submit_button_icon'] ?? '', 'arrow-right' ); ?>>&larr;â€™ <?php _e( 'Freccia Destra', 'fp-forms' ); ?></option>
-                        <option value="save" <?php selected( $form_settings['submit_button_icon'] ?? '', 'save' ); ?>>Ã°Å¸â€™Â¾ <?php _e( 'Salva', 'fp-forms' ); ?></option>
+                        <option value="paper-plane" <?php selected( $form_settings['submit_button_icon'] ?? '', 'paper-plane' ); ?>>✈️ <?php _e( 'Paper Plane', 'fp-forms' ); ?></option>
+                        <option value="send" <?php selected( $form_settings['submit_button_icon'] ?? '', 'send' ); ?>>📤 <?php _e( 'Invia', 'fp-forms' ); ?></option>
+                        <option value="check" <?php selected( $form_settings['submit_button_icon'] ?? '', 'check' ); ?>>✓ <?php _e( 'Spunta', 'fp-forms' ); ?></option>
+                        <option value="arrow-right" <?php selected( $form_settings['submit_button_icon'] ?? '', 'arrow-right' ); ?>>→ <?php _e( 'Freccia Destra', 'fp-forms' ); ?></option>
+                        <option value="save" <?php selected( $form_settings['submit_button_icon'] ?? '', 'save' ); ?>>💾 <?php _e( 'Salva', 'fp-forms' ); ?></option>
                     </select>
                     <small><?php _e( 'Icona mostrata accanto al testo', 'fp-forms' ); ?></small>
                 </div>
@@ -280,7 +280,7 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                         <input type="text" value="<?php echo esc_attr( $form_settings['custom_focus_color'] ?? '#2563eb' ); ?>" placeholder="#2563eb" style="width: 100px;" readonly>
                         <button type="button" class="button button-small" onclick="var inputs = this.parentElement.querySelectorAll('input'); inputs[0].value = inputs[1].value = '#2563eb';">Reset</button>
                     </div>
-                    <small><?php _e( 'Colore del bordo e anello quando un campo Ã¨ in focus', 'fp-forms' ); ?></small>
+                    <small><?php _e( 'Colore del bordo e anello quando un campo è in focus', 'fp-forms' ); ?></small>
                 </div>
                 
                 <div class="fp-setting-field">
@@ -319,16 +319,16 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 
                 <div class="fp-setting-field">
                     <label><?php _e( 'Messaggio di Successo', 'fp-forms' ); ?></label>
-                    <textarea name="success_message" rows="4" placeholder="<?php esc_attr_e( 'Grazie! Il tuo messaggio Ã¨ stato inviato con successo.', 'fp-forms' ); ?>"><?php echo esc_textarea( $form_settings['success_message'] ); ?></textarea>
+                    <textarea name="success_message" rows="4" placeholder="<?php esc_attr_e( 'Grazie! Il tuo messaggio è stato inviato con successo.', 'fp-forms' ); ?>"><?php echo esc_textarea( $form_settings['success_message'] ); ?></textarea>
                     <small><?php _e( 'Mostrato dopo invio form. Tag disponibili: {nome}, {email}, {form_title}, {site_name}, {date}, {time}', 'fp-forms' ); ?></small>
                 </div>
                 
                 <div class="fp-setting-field">
                     <label><?php _e( 'Tipo Messaggio', 'fp-forms' ); ?></label>
                     <select name="success_message_type">
-                        <option value="success" <?php selected( $form_settings['success_message_type'] ?? 'success', 'success' ); ?>><?php _e( 'Ã¢Å“â€œ Successo (verde)', 'fp-forms' ); ?></option>
-                        <option value="info" <?php selected( $form_settings['success_message_type'] ?? 'success', 'info' ); ?>><?php _e( 'Ã¢â€žÂ¹Ã¯Â¸Â Info (blu)', 'fp-forms' ); ?></option>
-                        <option value="celebration" <?php selected( $form_settings['success_message_type'] ?? 'success', 'celebration' ); ?>><?php _e( 'Ã°Å¸Å½â€° Celebration (festoso)', 'fp-forms' ); ?></option>
+                        <option value="success" <?php selected( $form_settings['success_message_type'] ?? 'success', 'success' ); ?>><?php _e( '✓ Successo (verde)', 'fp-forms' ); ?></option>
+                        <option value="info" <?php selected( $form_settings['success_message_type'] ?? 'success', 'info' ); ?>><?php _e( 'ℹ️ Info (blu)', 'fp-forms' ); ?></option>
+                        <option value="celebration" <?php selected( $form_settings['success_message_type'] ?? 'success', 'celebration' ); ?>><?php _e( '🎉 Celebration (festoso)', 'fp-forms' ); ?></option>
                     </select>
                     <small><?php _e( 'Stile visivo del messaggio di conferma', 'fp-forms' ); ?></small>
                 </div>
@@ -349,13 +349,13 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 <div class="fp-setting-field" style="background: #fff3cd; padding: 12px; border-left: 4px solid #ffc107; margin-bottom: 15px;">
                     <label style="font-weight: 600; color: #856404;">
                         <input type="checkbox" name="disable_wordpress_emails" value="1" <?php checked( $form_settings['disable_wordpress_emails'] ?? false, true ); ?>>
-                        <?php _e( 'Ã°Å¸Å¡Â« Disabilita TUTTE le email WordPress', 'fp-forms' ); ?>
+                        <?php _e( '🚫 Disabilita TUTTE le email WordPress', 'fp-forms' ); ?>
                     </label>
                     <small style="display: block; margin-top: 8px; color: #856404;">
-                        <?php _e( 'Ã¢Å¡Â Ã¯Â¸Â Se abilitato, NON verranno inviate email (webmaster, cliente, staff). Usa solo se hai configurato Brevo o altro sistema CRM esterno.', 'fp-forms' ); ?>
+                        <?php _e( '⚠️ Se abilitato, NON verranno inviate email (webmaster, cliente, staff). Usa solo se hai configurato Brevo o altro sistema CRM esterno.', 'fp-forms' ); ?>
                     </small>
                     <small style="display: block; margin-top: 4px; color: #856404;">
-                        <?php _e( 'Ã¢Å“â€¦ I dati verranno comunque salvati e gli eventi Brevo/Meta continueranno a funzionare.', 'fp-forms' ); ?>
+                        <?php _e( '... I dati verranno comunque salvati e gli eventi Brevo/Meta continueranno a funzionare.', 'fp-forms' ); ?>
                     </small>
                 </div>
                 
@@ -430,7 +430,7 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                         <input type="checkbox" name="brevo_enabled" value="1" <?php checked( $form_settings['brevo_enabled'] ?? true, true ); ?>>
                         <?php _e( 'Sincronizza con Brevo CRM', 'fp-forms' ); ?>
                     </label>
-                    <small><?php _e( 'Invia contatti e eventi a Brevo ad ogni submission (se Brevo Ã¨ configurato globalmente)', 'fp-forms' ); ?></small>
+                    <small><?php _e( 'Invia contatti ed eventi a Brevo ad ogni submission (se Brevo è configurato globalmente)', 'fp-forms' ); ?></small>
                 </div>
                 
                 <div class="fp-setting-field">
@@ -529,7 +529,7 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                         <input type="text" value="<?php echo esc_attr( $form_settings['custom_focus_color'] ?? '#2563eb' ); ?>" placeholder="#2563eb" style="width: 100px;" readonly>
                         <button type="button" class="button button-small" onclick="var inputs = this.parentElement.querySelectorAll('input'); inputs[0].value = inputs[1].value = '#2563eb';">Reset</button>
                     </div>
-                    <small><?php _e( 'Colore del bordo e anello quando un campo Ã¨ in focus', 'fp-forms' ); ?></small>
+                    <small><?php _e( 'Colore del bordo e anello quando un campo è in focus', 'fp-forms' ); ?></small>
                 </div>
                 
                 <div class="fp-setting-field">
@@ -568,16 +568,16 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 
                 <div class="fp-setting-field">
                     <label><?php _e( 'Messaggio di Successo', 'fp-forms' ); ?></label>
-                    <textarea name="success_message" rows="4" placeholder="<?php esc_attr_e( 'Grazie! Il tuo messaggio Ã¨ stato inviato con successo.', 'fp-forms' ); ?>"><?php echo esc_textarea( $form_settings['success_message'] ); ?></textarea>
+                    <textarea name="success_message" rows="4" placeholder="<?php esc_attr_e( 'Grazie! Il tuo messaggio è stato inviato con successo.', 'fp-forms' ); ?>"><?php echo esc_textarea( $form_settings['success_message'] ); ?></textarea>
                     <small><?php _e( 'Mostrato dopo invio form. Tag disponibili: {nome}, {email}, {form_title}, {site_name}, {date}, {time}', 'fp-forms' ); ?></small>
                 </div>
                 
                 <div class="fp-setting-field">
                     <label><?php _e( 'Tipo Messaggio', 'fp-forms' ); ?></label>
                     <select name="success_message_type">
-                        <option value="success" <?php selected( $form_settings['success_message_type'] ?? 'success', 'success' ); ?>><?php _e( 'Ã¢Å“â€œ Successo (verde)', 'fp-forms' ); ?></option>
-                        <option value="info" <?php selected( $form_settings['success_message_type'] ?? 'success', 'info' ); ?>><?php _e( 'Ã¢â€žÂ¹Ã¯Â¸Â Info (blu)', 'fp-forms' ); ?></option>
-                        <option value="celebration" <?php selected( $form_settings['success_message_type'] ?? 'success', 'celebration' ); ?>><?php _e( 'Ã°Å¸Å½â€° Celebration (festoso)', 'fp-forms' ); ?></option>
+                        <option value="success" <?php selected( $form_settings['success_message_type'] ?? 'success', 'success' ); ?>><?php _e( '✓ Successo (verde)', 'fp-forms' ); ?></option>
+                        <option value="info" <?php selected( $form_settings['success_message_type'] ?? 'success', 'info' ); ?>><?php _e( 'ℹ️ Info (blu)', 'fp-forms' ); ?></option>
+                        <option value="celebration" <?php selected( $form_settings['success_message_type'] ?? 'success', 'celebration' ); ?>><?php _e( '🎉 Celebration (festoso)', 'fp-forms' ); ?></option>
                     </select>
                     <small><?php _e( 'Stile visivo del messaggio di conferma', 'fp-forms' ); ?></small>
                 </div>
@@ -598,13 +598,13 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 <div class="fp-setting-field" style="background: #fff3cd; padding: 12px; border-left: 4px solid #ffc107; margin-bottom: 15px;">
                     <label style="font-weight: 600; color: #856404;">
                         <input type="checkbox" name="disable_wordpress_emails" value="1" <?php checked( $form_settings['disable_wordpress_emails'] ?? false, true ); ?>>
-                        <?php _e( 'Ã°Å¸Å¡Â« Disabilita TUTTE le email WordPress', 'fp-forms' ); ?>
+                        <?php _e( '🚫 Disabilita TUTTE le email WordPress', 'fp-forms' ); ?>
                     </label>
                     <small style="display: block; margin-top: 8px; color: #856404;">
-                        <?php _e( 'Ã¢Å¡Â Ã¯Â¸Â Se abilitato, NON verranno inviate email (webmaster, cliente, staff). Usa solo se hai configurato Brevo o altro sistema CRM esterno.', 'fp-forms' ); ?>
+                        <?php _e( '⚠️ Se abilitato, NON verranno inviate email (webmaster, cliente, staff). Usa solo se hai configurato Brevo o altro sistema CRM esterno.', 'fp-forms' ); ?>
                     </small>
                     <small style="display: block; margin-top: 4px; color: #856404;">
-                        <?php _e( 'Ã¢Å“â€¦ I dati verranno comunque salvati e gli eventi Brevo/Meta continueranno a funzionare.', 'fp-forms' ); ?>
+                        <?php _e( '... I dati verranno comunque salvati e gli eventi Brevo/Meta continueranno a funzionare.', 'fp-forms' ); ?>
                     </small>
                 </div>
                 
@@ -679,7 +679,7 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                         <input type="checkbox" name="brevo_enabled" value="1" <?php checked( $form_settings['brevo_enabled'] ?? true, true ); ?>>
                         <?php _e( 'Sincronizza con Brevo CRM', 'fp-forms' ); ?>
                     </label>
-                    <small><?php _e( 'Invia contatti e eventi a Brevo ad ogni submission (se Brevo Ã¨ configurato globalmente)', 'fp-forms' ); ?></small>
+                    <small><?php _e( 'Invia contatti ed eventi a Brevo ad ogni submission (se Brevo è configurato globalmente)', 'fp-forms' ); ?></small>
                 </div>
                 
                 <div class="fp-setting-field">
