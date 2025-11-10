@@ -13,7 +13,7 @@
         init: function() {
             this.bindEvents();
             this.initSortable();
-            this.refreshFieldOptions();
+            this.initFieldOptionsVisibility();
         },
         
         /**
@@ -32,7 +32,6 @@
             $(document).on('submit', '#fp-form-builder', this.saveForm);
             $(document).on('input', '.fp-field-input-label', this.updateFieldPreview);
             $(document).on('change', '.fp-field-type', this.toggleFieldOptions);
-            $(document).on('change', '.fp-field-type-select', this.changeFieldType);
             
             // Submissions
             $(document).on('click', '.fp-view-submission', this.viewSubmission);
@@ -189,7 +188,9 @@
             
             // Mostra subito il form di editing
             $newField.find('.fp-field-body').show();
-            FPFormsAdmin.applyFieldOptions($newField, type);
+            
+            // Mostra opzioni specifiche in base al tipo
+            FPFormsAdmin.showFieldOptions($newField, type);
         },
         
         /**
@@ -320,35 +321,32 @@
          * Toggle opzioni campo in base al tipo
          */
         toggleFieldOptions: function() {
-            FPFormsAdmin.applyFieldOptions($(this).closest('.fp-field-item'), $(this).val());
-        },
-        changeFieldType: function() {
             var $field = $(this).closest('.fp-field-item');
-            var newType = $(this).val();
+            var type = $(this).val();
             
-            $field.find('.fp-field-type').val(newType);
-            FPFormsAdmin.applyFieldOptions($field, newType);
+            FPFormsAdmin.showFieldOptions($field, type);
         },
         
         /**
-         * Applica la visibilità delle opzioni in base al tipo
+         * Mostra opzioni specifiche per il tipo di campo
          */
-        applyFieldOptions: function($field, type) {
-            type = type || $field.find('.fp-field-type').val();
+        showFieldOptions: function($field, type) {
+            var fieldType = type || $field.find('.fp-field-type').val();
             
+            // Opzioni scelte (select/radio/checkbox)
             var $choices = $field.find('.fp-field-choices');
-            var $fileOptions = $field.find('.fp-field-file-options');
-            
             if ($choices.length) {
-                if (['select', 'radio', 'checkbox'].indexOf(type) !== -1) {
+                if (['select', 'radio', 'checkbox'].indexOf(fieldType) !== -1) {
                     $choices.show();
                 } else {
                     $choices.hide();
                 }
             }
             
+            // Opzioni upload file
+            var $fileOptions = $field.find('.fp-field-file-options');
             if ($fileOptions.length) {
-                if (type === 'file') {
+                if (fieldType === 'file') {
                     $fileOptions.show();
                 } else {
                     $fileOptions.hide();
@@ -357,11 +355,11 @@
         },
         
         /**
-         * Inizializza la visibilità delle opzioni per i campi esistenti
+         * Inizializza la visibilità delle opzioni per i campi già presenti
          */
-        refreshFieldOptions: function() {
+        initFieldOptionsVisibility: function() {
             $('#fp-fields-container .fp-field-item').each(function() {
-                FPFormsAdmin.applyFieldOptions($(this));
+                FPFormsAdmin.showFieldOptions($(this));
             });
         },
         
