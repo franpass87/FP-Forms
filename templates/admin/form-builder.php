@@ -171,7 +171,7 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 
                 <div class="fp-setting-field">
                     <label><?php _e( 'Mostra Badge (opzionale)', 'fp-forms' ); ?></label>
-                    <small style="display: block; margin-bottom: 12px;"><?php _e( 'Seleziona i badge da mostrare sopra il form per aumentare fiducia e conversioni', 'fp-forms' ); ?></small>
+                    <small style="display: block; margin-bottom: 12px;"><?php _e( 'Seleziona i badge da mostrare in fondo al form, dopo il pulsante Invia, per aumentare fiducia e conversioni', 'fp-forms' ); ?></small>
                     
                     <?php
                     $available_badges = [

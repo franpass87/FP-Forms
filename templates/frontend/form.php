@@ -105,11 +105,21 @@ if ( $c_text && ! preg_match( $hex, $c_text ) ) $c_text = '';
 if ( $c_bg && ! preg_match( $hex, $c_bg ) ) $c_bg = '';
 
 $has_custom_colors = $c_border || $c_focus || $c_text || $c_bg;
-?>
 
-<?php if ( $has_custom_colors ) : ?>
+// Colore pulsante submit: sempre usato, hover = versione piu' scura
+$btn_r = hexdec( substr( $btn_color, 1, 2 ) );
+$btn_g = hexdec( substr( $btn_color, 3, 2 ) );
+$btn_b = hexdec( substr( $btn_color, 5, 2 ) );
+$btn_hover_r = max( 0, (int) round( $btn_r * 0.85 ) );
+$btn_hover_g = max( 0, (int) round( $btn_g * 0.85 ) );
+$btn_hover_b = max( 0, (int) round( $btn_b * 0.85 ) );
+$btn_hover_hex = sprintf( '#%02x%02x%02x', $btn_hover_r, $btn_hover_g, $btn_hover_b );
+?>
 <style id="fp-forms-colors-<?php echo esc_attr( $form['id'] ); ?>">
 #fp-forms-container-<?php echo esc_attr( $form['id'] ); ?> {
+    --fp-btn-color: <?php echo esc_attr( $btn_color ); ?>;
+    --fp-btn-hover: <?php echo esc_attr( $btn_hover_hex ); ?>;
+    --fp-btn-focus-ring: rgba(<?php echo $btn_r; ?>, <?php echo $btn_g; ?>, <?php echo $btn_b; ?>, 0.5);
     <?php if ( $c_border ) : ?>--fp-forms-border: <?php echo esc_attr( $c_border ); ?>;<?php endif; ?>
     <?php if ( $c_focus ) :
         $r = hexdec( substr( $c_focus, 1, 2 ) );
@@ -121,7 +131,6 @@ $has_custom_colors = $c_border || $c_focus || $c_text || $c_bg;
     <?php if ( $c_bg ) : ?>--fp-forms-surface: <?php echo esc_attr( $c_bg ); ?>;<?php endif; ?>
 }
 </style>
-<?php endif; ?>
 <div class="fp-forms-container" 
      id="fp-forms-container-<?php echo esc_attr( $form['id'] ); ?>"
      data-form-title="<?php echo esc_attr( $form['title'] ); ?>">
@@ -138,19 +147,6 @@ $has_custom_colors = $c_border || $c_focus || $c_text || $c_bg;
             </div>
         <?php endif; ?>
         
-        <?php if ( ! empty( $trust_badges ) ) : ?>
-            <div class="fp-forms-trust-badges">
-                <?php foreach ( $trust_badges as $badge_key ) : ?>
-                    <?php if ( isset( $badges_config[ $badge_key ] ) ) : ?>
-                        <div class="fp-trust-badge">
-                            <span class="fp-badge-icon"><?php echo $badges_config[ $badge_key ]['icon']; ?></span>
-                            <span class="fp-badge-text"><?php echo esc_html( $badges_config[ $badge_key ]['text'] ); ?></span>
-                        </div>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-        
         <div class="fp-forms-fields">
             <?php 
             $frontend = \FPForms\Plugin::instance()->frontend;
@@ -163,12 +159,24 @@ $has_custom_colors = $c_border || $c_focus || $c_text || $c_bg;
         <div class="fp-forms-submit" style="text-align: <?php echo esc_attr( $btn_align ); ?>;">
             <button type="submit" 
                     class="fp-forms-submit-btn fp-btn-<?php echo esc_attr( $btn_size ); ?> fp-btn-<?php echo esc_attr( $btn_style ); ?> fp-btn-<?php echo esc_attr( $btn_width ); ?>"
-                    data-color="<?php echo esc_attr( $btn_color ); ?>"
-                    style="<?php echo $btn_style === 'solid' ? 'background-color: ' . esc_attr( $btn_color ) . '; border-color: ' . esc_attr( $btn_color ) . ';' : 'color: ' . esc_attr( $btn_color ) . '; border-color: ' . esc_attr( $btn_color ) . ';'; ?>">
+                    data-color="<?php echo esc_attr( $btn_color ); ?>">
                 <?php echo esc_html( $submit_text ); ?>
                 <?php echo $icon_html; ?>
             </button>
         </div>
+        
+        <?php if ( ! empty( $trust_badges ) ) : ?>
+            <div class="fp-forms-trust-badges">
+                <?php foreach ( $trust_badges as $badge_key ) : ?>
+                    <?php if ( isset( $badges_config[ $badge_key ] ) ) : ?>
+                        <div class="fp-trust-badge">
+                            <span class="fp-badge-icon"><?php echo $badges_config[ $badge_key ]['icon']; ?></span>
+                            <span class="fp-badge-text"><?php echo esc_html( $badges_config[ $badge_key ]['text'] ); ?></span>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
         
         <div class="fp-forms-messages">
             <div class="fp-forms-message fp-forms-success" style="display:none;" role="status" aria-live="polite"></div>

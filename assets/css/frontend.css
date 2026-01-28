@@ -20,12 +20,12 @@
     --fp-forms-surface: #ffffff;
     --fp-forms-background: #f9fafb;
     
-    /* Spacing */
-    --fp-forms-spacing-xs: 8px;
-    --fp-forms-spacing-sm: 12px;
-    --fp-forms-spacing-md: 16px;
-    --fp-forms-spacing-lg: 24px;
-    --fp-forms-spacing-xl: 32px;
+    /* Spacing - ridotti per layout meno dispersivo */
+    --fp-forms-spacing-xs: 6px;
+    --fp-forms-spacing-sm: 8px;
+    --fp-forms-spacing-md: 12px;
+    --fp-forms-spacing-lg: 16px;
+    --fp-forms-spacing-xl: 20px;
     
     /* Border Radius - Minimal */
     --fp-forms-radius: var(--fp-radius, 8px);
@@ -57,7 +57,7 @@
    ============================================ */
 .fp-forms-form {
     background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
-    padding: clamp(32px, 5vw, 48px);
+    padding: clamp(20px, 4vw, 32px);
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
     border: 1px solid rgba(0, 0, 0, 0.05);
@@ -82,14 +82,14 @@
    Description - Minimal
    ============================================ */
 .fp-forms-description {
-    margin-bottom: var(--fp-forms-spacing-xl);
+    margin-bottom: var(--fp-forms-spacing-lg);
     color: var(--fp-forms-muted);
-    font-size: 15px;
-    line-height: 1.7;
+    font-size: 14px;
+    line-height: 1.6;
     font-weight: 400;
     letter-spacing: -0.01em;
     position: relative;
-    padding-left: 20px;
+    padding-left: 14px;
 }
 
 .fp-forms-description::before {
@@ -107,18 +107,18 @@
    Fields
    ============================================ */
 .fp-forms-fields {
-    margin-bottom: var(--fp-forms-spacing-lg);
+    margin-bottom: var(--fp-forms-spacing-md);
 }
 
 .fp-forms-field {
-    margin-bottom: 28px;
+    margin-bottom: 0;
 }
 
 .fp-forms-label {
     display: flex;
     align-items: center;
     gap: var(--fp-forms-spacing-xs);
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     font-weight: 600;
     color: var(--fp-forms-text);
     font-size: 14px;
@@ -171,7 +171,7 @@
 .fp-forms-textarea,
 .fp-forms-select {
     width: 100%;
-    padding: 13px 18px;
+    padding: 10px 14px;
     border: 1.5px solid var(--fp-forms-border);
     border-radius: 8px;
     font-size: 15px;
@@ -206,7 +206,7 @@
 
 .fp-forms-textarea {
     resize: vertical;
-    min-height: 120px;
+    min-height: 96px;
     line-height: 1.5;
 }
 
@@ -226,7 +226,7 @@
     align-items: center;
     font-weight: normal;
     cursor: pointer;
-    padding: 12px 16px;
+    padding: 10px 12px;
     border-radius: 8px;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1.5px solid transparent;
@@ -288,9 +288,10 @@
 .fp-forms-trust-badges {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: var(--fp-forms-spacing-lg);
-    padding: 20px;
+    gap: 8px;
+    margin-top: var(--fp-forms-spacing-md);
+    margin-bottom: var(--fp-forms-spacing-md);
+    padding: 12px 16px;
     background: linear-gradient(135deg, rgba(37, 99, 235, 0.03) 0%, rgba(59, 130, 246, 0.03) 100%);
     border-radius: 8px;
     border: 1.5px solid rgba(37, 99, 235, 0.12);
@@ -304,7 +305,7 @@
     align-items: center;
     gap: 6px;
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    padding: 8px 16px;
+    padding: 6px 12px;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
@@ -347,7 +348,7 @@
    Submit Button
    ============================================ */
 .fp-forms-submit {
-    margin-top: var(--fp-forms-spacing-xl);
+    margin-top: var(--fp-forms-spacing-lg);
 }
 
 .fp-forms-submit-btn {
@@ -355,14 +356,12 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: linear-gradient(135deg, var(--fp-forms-primary) 0%, #3b82f6 100%);
     color: white;
-    border: none;
+    border: 2px solid transparent;
     font-weight: 600;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25), 0 2px 4px rgba(37, 99, 235, 0.15);
     font-family: inherit;
     letter-spacing: -0.01em;
     position: relative;
@@ -376,8 +375,9 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
     transition: left 0.5s ease;
+    pointer-events: none;
 }
 
 .fp-forms-submit-btn:hover::before {
@@ -386,38 +386,41 @@
 
 /* Button Sizes */
 .fp-forms-submit-btn.fp-btn-small {
-    padding: 10px 24px;
+    padding: 8px 20px;
     font-size: 14px;
-    min-width: 150px;
+    min-width: 140px;
 }
 
 .fp-forms-submit-btn.fp-btn-medium {
-    padding: 14px 32px;
-    font-size: 16px;
-    min-width: 200px;
+    padding: 10px 24px;
+    font-size: 15px;
+    min-width: 180px;
 }
 
 .fp-forms-submit-btn.fp-btn-large {
-    padding: 18px 40px;
-    font-size: 18px;
-    min-width: 250px;
+    padding: 12px 32px;
+    font-size: 16px;
+    min-width: 220px;
 }
 
-/* Button Styles */
+/* Button Styles - usa --fp-btn-color / --fp-btn-hover dal container */
 .fp-forms-submit-btn.fp-btn-solid {
-    /* Background/border set inline per custom color */
+    background-color: var(--fp-btn-color, var(--fp-forms-primary));
+    border-color: var(--fp-btn-color, var(--fp-forms-primary));
     color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .fp-forms-submit-btn.fp-btn-outline {
     background: transparent;
-    /* Color/border set inline per custom color */
+    color: var(--fp-btn-color, var(--fp-forms-primary));
+    border-color: var(--fp-btn-color, var(--fp-forms-primary));
 }
 
 .fp-forms-submit-btn.fp-btn-ghost {
     background: transparent;
+    color: var(--fp-btn-color, var(--fp-forms-primary));
     border-color: transparent;
-    /* Color set inline per custom color */
 }
 
 /* Button Width */
@@ -436,22 +439,23 @@
     font-size: 1.1em;
 }
 
-/* Hover States - Migliorati */
+/* Hover States - colore scelto, nessun gradient o blu forzato */
 .fp-forms-submit-btn.fp-btn-solid:hover {
-    background: linear-gradient(135deg, var(--fp-forms-primary-hover) 0%, #2563eb 100%);
+    background-color: var(--fp-btn-hover, var(--fp-forms-primary-hover));
+    border-color: var(--fp-btn-hover, var(--fp-forms-primary-hover));
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35), 0 4px 8px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 }
 
 .fp-forms-submit-btn.fp-btn-outline:hover {
-    background: linear-gradient(135deg, var(--fp-forms-primary) 0%, #3b82f6 100%);
+    background-color: var(--fp-btn-color, var(--fp-forms-primary));
     color: white;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
 }
 
 .fp-forms-submit-btn.fp-btn-ghost:hover {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%);
+    background-color: rgba(0, 0, 0, 0.06);
     transform: translateY(-1px);
 }
 
@@ -470,7 +474,7 @@
 }
 
 .fp-forms-submit-btn:focus-visible {
-    outline: 3px solid var(--fp-forms-focus-ring);
+    outline: 3px solid var(--fp-btn-focus-ring, var(--fp-forms-focus-ring));
     outline-offset: 2px;
 }
 
@@ -478,13 +482,13 @@
    Messages
    ============================================ */
 .fp-forms-messages {
-    margin-top: var(--fp-forms-spacing-lg);
+    margin-top: var(--fp-forms-spacing-md);
 }
 
 .fp-forms-message {
-    padding: 14px 18px;
+    padding: 10px 14px;
     border-radius: 6px;
-    margin-bottom: var(--fp-forms-spacing-md);
+    margin-bottom: var(--fp-forms-spacing-sm);
     display: none;
     font-size: 14px;
     line-height: 1.6;
@@ -603,7 +607,7 @@
    ============================================ */
 @media screen and (max-width: 768px) {
     .fp-forms-form {
-        padding: var(--fp-forms-spacing-lg);
+        padding: var(--fp-forms-spacing-md);
     }
     
     .fp-forms-submit-btn.fp-btn-auto {
@@ -696,10 +700,6 @@
     .fp-forms-select {
         border-width: 2px;
     }
-    
-    .fp-forms-submit-btn {
-        border: 2px solid currentColor;
-    }
 }
 
 /* ============================================
@@ -733,7 +733,7 @@
    File Upload Field
    ============================================ */
 .fp-forms-field-file {
-    margin-bottom: var(--fp-forms-spacing-lg);
+    margin-bottom: var(--fp-forms-spacing-md);
 }
 
 .fp-forms-file-wrapper {
@@ -823,7 +823,7 @@
 .fp-forms-fields {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
-    gap: var(--fp-forms-spacing-md);
+    gap: var(--fp-forms-spacing-sm);
 }
 
 .fp-forms-field {
@@ -901,7 +901,7 @@
 .fp-forms-field-fullname .fp-fullname-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--fp-forms-spacing-md);
+    gap: var(--fp-forms-spacing-sm);
 }
 .fp-forms-field-fullname .fp-forms-input-nome,
 .fp-forms-field-fullname .fp-forms-input-cognome {
@@ -917,14 +917,14 @@
    Privacy Checkbox - GDPR Compliance
    ============================================ */
 .fp-forms-field-privacy-checkbox {
-    margin-bottom: var(--fp-forms-spacing-lg);
+    margin-bottom: var(--fp-forms-spacing-md);
 }
 
 .fp-forms-privacy-checkbox {
     background: linear-gradient(135deg, rgba(37, 99, 235, 0.03) 0%, rgba(59, 130, 246, 0.03) 100%);
     border: 1.5px solid rgba(37, 99, 235, 0.2);
     border-radius: 8px;
-    padding: 18px;
+    padding: 12px 14px;
     transition: all 0.2s ease;
     box-shadow: 0 1px 3px rgba(37, 99, 235, 0.05);
 }
@@ -993,14 +993,14 @@
    Marketing Checkbox - Newsletter/Marketing
    ============================================ */
 .fp-forms-field-marketing-checkbox {
-    margin-bottom: var(--fp-forms-spacing-lg);
+    margin-bottom: var(--fp-forms-spacing-md);
 }
 
 .fp-forms-marketing-checkbox {
     background-color: rgba(245, 158, 11, 0.03);
     border: 1px solid rgba(245, 158, 11, 0.2);
     border-radius: 6px;
-    padding: 16px;
+    padding: 12px 14px;
 }
 
 .fp-forms-marketing-checkbox .fp-forms-checkbox-label {
@@ -1039,7 +1039,7 @@
    reCAPTCHA Field
    ============================================ */
 .fp-forms-field-recaptcha {
-    margin-bottom: var(--fp-forms-spacing-lg);
+    margin-bottom: var(--fp-forms-spacing-md);
 }
 
 .fp-forms-recaptcha-field {
@@ -1073,10 +1073,10 @@
 .fp-forms-notice {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    padding: 16px;
+    gap: var(--fp-forms-spacing-sm);
+    padding: var(--fp-forms-spacing-md);
     border-radius: var(--fp-forms-radius-sm);
-    margin-bottom: var(--fp-forms-spacing-md);
+    margin-bottom: var(--fp-forms-spacing-sm);
 }
 
 .fp-forms-notice-warning {

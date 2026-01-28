@@ -27,7 +27,7 @@ $snapshots = $versioning->get_snapshots( $form_id );
         </div>
     <?php else : ?>
         <div class="fp-snapshots-list">
-            <table class="wp-list-table widefat fixed striped">
+            <table class="wp-list-table widefat striped fp-versioning-table">
                 <thead>
                     <tr>
                         <th style="width: 50px;"><?php _e( '#', 'fp-forms' ); ?></th>
@@ -96,7 +96,28 @@ $snapshots = $versioning->get_snapshots( $form_id );
 
 .fp-snapshots-list {
     margin-top: var(--fp-spacing-md);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
+
+.fp-versioning-section .wp-list-table {
+    table-layout: auto;
+    min-width: 520px;
+}
+
+.fp-versioning-section .wp-list-table th,
+.fp-versioning-section .wp-list-table td {
+    word-break: normal;
+    overflow-wrap: normal;
+    white-space: normal;
+    vertical-align: middle;
+}
+
+.fp-versioning-section .wp-list-table th:nth-child(1) { width: 40px; }
+.fp-versioning-section .wp-list-table th:nth-child(2) { min-width: 140px; }
+.fp-versioning-section .wp-list-table th:nth-child(3) { min-width: 100px; }
+.fp-versioning-section .wp-list-table th:nth-child(4) { min-width: 80px; }
+.fp-versioning-section .wp-list-table th:nth-child(5) { width: 130px; }
 
 .fp-badge-current {
     display: inline-block;
