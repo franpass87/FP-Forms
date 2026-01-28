@@ -54,7 +54,7 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
         </a>
     </div>
     
-    <form id="fp-form-builder" class="fp-builder-container">
+    <form id="fp-form-builder" class="fp-builder-container" method="post" action="" onsubmit="return false;">
         <input type="hidden" name="form_id" id="form_id" value="<?php echo esc_attr( $form_id ); ?>">
         
         <div class="fp-builder-main">

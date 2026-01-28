@@ -66,13 +66,18 @@
          * Inizializza sortable per i campi
          */
         initSortable: function() {
-            if ($('#fp-fields-container').length) {
-                $('#fp-fields-container').sortable({
-                    handle: '.fp-field-drag',
-                    placeholder: 'fp-field-placeholder',
-                    axis: 'y',
-                    opacity: 0.8
-                });
+            if (!$('#fp-fields-container').length) return;
+            try {
+                if ($.fn.sortable) {
+                    $('#fp-fields-container').sortable({
+                        handle: '.fp-field-drag',
+                        placeholder: 'fp-field-placeholder',
+                        axis: 'y',
+                        opacity: 0.8
+                    });
+                }
+            } catch (err) {
+                console.warn('FP Forms: sortable init skipped', err);
             }
         },
         
@@ -191,15 +196,18 @@
          */
         addField: function(e) {
             e.preventDefault();
-            
+            e.stopPropagation();
+
             var type = $(this).data('type');
+            if (!type) return;
             var index = $('#fp-fields-container .fp-field-item').length;
-            
+
             var fieldData = FPFormsAdmin.getFieldDefaults(type);
             var html = FPFormsAdmin.getFieldHtml(fieldData, index);
-            
+            if (!html) return;
+
             $('#fp-fields-container').append(html);
-            
+
             var $newField = $('#fp-fields-container .fp-field-item').last();
             
             // Mostra subito il form di editing
@@ -320,7 +328,10 @@
          */
         getFieldHtml: function(field, index) {
             var template = $('#fp-field-template').html();
-            
+            if (!template) {
+                console.warn('FP Forms: template #fp-field-template non trovato');
+                return '';
+            }
             template = template.replace(/\{\{index\}\}/g, index);
             template = template.replace(/\{\{type\}\}/g, field.type);
             template = template.replace(/\{\{typeLabel\}\}/g, field.typeLabel);
@@ -420,28 +431,28 @@
          * Valida form prima del salvataggio
          */
         validateForm: function() {
+            var toast = typeof window.fpToast !== 'undefined' ? window.fpToast : null;
             var title = $('#form_title').val().trim();
-            
+
             if (!title) {
-                fpToast.error('Il titolo del form è obbligatorio');
+                if (toast && toast.error) toast.error('Il titolo del form è obbligatorio');
                 $('#form_title').focus();
                 return false;
             }
-            
+
             var fieldsCount = $('#fp-fields-container .fp-field-item').length;
-            
+
             if (fieldsCount === 0) {
-                fpToast.warning('Aggiungi almeno un campo al form');
+                if (toast && toast.warning) toast.warning('Aggiungi almeno un campo al form');
                 return false;
             }
-            
-            // Valida ogni campo
+
             var hasError = false;
             $('#fp-fields-container .fp-field-item').each(function() {
                 var $field = $(this);
                 var label = $field.find('.fp-field-input-label').val().trim();
                 var name = $field.find('.fp-field-input-name').val().trim();
-                
+
                 if (!label || !name) {
                     hasError = true;
                     $field.addClass('fp-field-error');
@@ -449,12 +460,12 @@
                     $field.removeClass('fp-field-error');
                 }
             });
-            
+
             if (hasError) {
-                fpToast.error('Alcuni campi non hanno etichetta o nome');
+                if (toast && toast.error) toast.error('Alcuni campi non hanno etichetta o nome');
                 return false;
             }
-            
+
             return true;
         },
         
@@ -579,9 +590,9 @@
             };
             
             var $btn = $('#fp-form-builder').find('button[type="submit"]');
-            fpLoadingButton($btn, 'Salvataggio...');
-            fpProgress.show(30);
-            
+            if (typeof window.fpLoadingButton === 'function') window.fpLoadingButton($btn, 'Salvataggio...');
+            if (typeof window.fpProgress !== 'undefined' && window.fpProgress.show) window.fpProgress.show(30);
+
             $.ajax({
                 url: fpFormsAdmin.ajaxurl,
                 type: 'POST',
@@ -595,29 +606,27 @@
                     settings: JSON.stringify(settings)
                 },
                 success: function(response) {
-                    fpProgress.show(100);
+                    if (typeof window.fpProgress !== 'undefined' && window.fpProgress.show) window.fpProgress.show(100);
                     if (response.success) {
-                        fpToast.success('Form salvato con successo!');
-                        
-                        // Redirect se è un nuovo form
+                        if (typeof window.fpToast !== 'undefined' && window.fpToast.success) window.fpToast.success('Form salvato con successo!');
                         setTimeout(function() {
-                            if (!formId) {
-                                window.location.href = '?page=fp-forms-edit&form_id=' + response.data.form_id;
+                            if (!formId && response.data && response.data.form_id) {
+                                window.location.href = (fpFormsAdmin.editFormUrlBase || (location.pathname + '?page=fp-forms-edit&form_id=')) + response.data.form_id;
                             } else {
-                                fpLoadingButtonReset($btn);
-                                fpProgress.hide();
+                                if (typeof window.fpLoadingButtonReset === 'function') window.fpLoadingButtonReset($btn);
+                                if (typeof window.fpProgress !== 'undefined' && window.fpProgress.hide) window.fpProgress.hide();
                             }
                         }, 600);
                     } else {
-                        fpToast.error(response.data.message || fpFormsAdmin.strings.error);
-                        fpLoadingButtonReset($btn);
-                        fpProgress.hide();
+                        if (typeof window.fpToast !== 'undefined' && window.fpToast.error) window.fpToast.error(response.data && response.data.message ? response.data.message : (fpFormsAdmin.strings && fpFormsAdmin.strings.error));
+                        if (typeof window.fpLoadingButtonReset === 'function') window.fpLoadingButtonReset($btn);
+                        if (typeof window.fpProgress !== 'undefined' && window.fpProgress.hide) window.fpProgress.hide();
                     }
                 },
                 error: function() {
-                    fpToast.error(fpFormsAdmin.strings.error);
-                    fpLoadingButtonReset($btn);
-                    fpProgress.hide();
+                    if (typeof window.fpToast !== 'undefined' && window.fpToast.error) window.fpToast.error(fpFormsAdmin.strings && fpFormsAdmin.strings.error ? fpFormsAdmin.strings.error : 'Errore');
+                    if (typeof window.fpLoadingButtonReset === 'function') window.fpLoadingButtonReset($btn);
+                    if (typeof window.fpProgress !== 'undefined' && window.fpProgress.hide) window.fpProgress.hide();
                 }
             });
         },
@@ -1036,13 +1045,22 @@
                     fpProgress.hide();
                 }
             });
+            }
         }
     };
-    
+
     // Inizializza al document ready
     $(document).ready(function() {
-        FPFormsAdmin.init();
-        FPFormsSettings.init();
+        try {
+            FPFormsAdmin.init();
+        } catch (err) {
+            console.error('FP Forms Admin init error:', err);
+        }
+        try {
+            FPFormsSettings.init();
+        } catch (err) {
+            console.error('FP Forms Settings init error:', err);
+        }
     });
     
     /**
@@ -1396,8 +1414,8 @@
         }
     };
     
-    // Bind eventi webhooks
-    $(document).on('click', '#fp-add-webhook', FPFormsAdmin.addWebhook);
+    // Bind eventi webhooks (4 arg espliciti: events, selector, data, handler evita "guid on string")
+    $(document).on('click', '#fp-add-webhook', null, FPFormsAdmin.addWebhook);
     $(document).on('click', '.fp-webhook-delete', FPFormsAdmin.deleteWebhook);
     $(document).on('click', '.fp-test-webhook', FPFormsAdmin.testWebhook);
     
