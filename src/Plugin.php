@@ -77,6 +77,21 @@ class Plugin {
     public $meta_pixel;
     
     /**
+     * Webhook Manager
+     */
+    public $webhooks;
+    
+    /**
+     * Payment Manager
+     */
+    public $payments;
+    
+    /**
+     * Form Versioning
+     */
+    public $versioning;
+    
+    /**
      * Anti-spam
      */
     public $anti_spam;
@@ -144,6 +159,9 @@ class Plugin {
         // Multi-step forms
         new Forms\MultiStep();
         
+        // Form versioning
+        $this->versioning = new Versioning\FormHistory();
+        
         // Analytics tracker
         $this->analytics = new Analytics\Tracker();
         
@@ -155,6 +173,12 @@ class Plugin {
         
         // Meta Pixel Integration
         $this->meta_pixel = new Integrations\MetaPixel();
+        
+        // Webhook Manager
+        $this->webhooks = new Integrations\WebhookManager();
+        
+        // Payment Manager (base per future integrazioni)
+        $this->payments = new Integrations\PaymentManager();
         
         // Anti-spam
         $this->anti_spam = new Security\AntiSpam();
@@ -215,6 +239,11 @@ class Plugin {
         
         if ( empty( $atts['id'] ) ) {
             return '';
+        }
+        
+        // Inizializza frontend se non presente (per shortcode in admin/preview)
+        if ( ! $this->frontend ) {
+            $this->frontend = new Frontend\Manager();
         }
         
         return $this->frontend->render_form( $atts['id'] );

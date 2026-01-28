@@ -9,7 +9,8 @@
     // Crea container toast se non esiste
     function ensureToastContainer() {
         if (!$('#fp-toast-container').length) {
-            $('body').append('<div id="fp-toast-container" class="fp-toast-container"></div>');
+            // Aggiungi ARIA live region per screen readers
+            $('body').append('<div id="fp-toast-container" class="fp-toast-container" role="status" aria-live="polite" aria-atomic="true"></div>');
         }
     }
     
@@ -32,10 +33,13 @@
             info: 'ℹ'
         };
         
-        var $toast = $('<div class="fp-toast fp-toast-' + type + '">' +
-            '<span class="fp-toast-icon">' + icons[type] + '</span>' +
+        // Determina aria-live priority in base al tipo
+        var ariaLive = (type === 'error') ? 'assertive' : 'polite';
+        
+        var $toast = $('<div class="fp-toast fp-toast-' + type + '" role="alert" aria-live="' + ariaLive + '" aria-atomic="true">' +
+            '<span class="fp-toast-icon" aria-hidden="true">' + icons[type] + '</span>' +
             '<span class="fp-toast-message">' + message + '</span>' +
-            '<button class="fp-toast-close">×</button>' +
+            '<button class="fp-toast-close" aria-label="Chiudi notifica">×</button>' +
         '</div>');
         
         $('#fp-toast-container').append($toast);

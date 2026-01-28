@@ -401,7 +401,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 var forms = document.querySelectorAll('.fp-forms-container form');
                 
                 forms.forEach(function(form) {
-                    var formId = form.querySelector('[name="form_id"]')?.value;
+                    var formIdElement = form.querySelector('[name="form_id"]');
+                    var formId = formIdElement ? formIdElement.value : null;
                     var formTitle = form.closest('.fp-forms-container').dataset.formTitle || 'Untitled Form';
                     
                     if (!formId) return;
@@ -453,11 +454,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     
                     // Track submission errors
                     form.addEventListener('fpFormSubmitError', function(e) {
-                        var errorMsg = e.detail?.message || 'Unknown error';
+                        var errorMsg = (e.detail && e.detail.message) ? e.detail.message : 'Unknown error';
                         self.trackFormSubmit(formId, formTitle, false, errorMsg);
                         
                         // Track validation errors specifici
-                        if (e.detail?.errors) {
+                        if (e.detail && e.detail.errors) {
                             Object.keys(e.detail.errors).forEach(function(fieldName) {
                                 self.trackValidationError(
                                     formId, 

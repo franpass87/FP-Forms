@@ -109,11 +109,18 @@ class Cache {
     
     /**
      * Invalida cache submissions
+     * FIX #5: Invalida tutte le possibili varianti di status
      */
     public static function invalidate_submissions( $form_id ) {
+        // FIX #5: Invalida tutte le possibili varianti di status
+        $statuses = [ '', 'unread', 'read', 'archived', 'trash' ];
+        foreach ( $statuses as $status ) {
+            $key = 'submissions_count_' . $form_id . '_' . $status;
+            self::delete( $key );
+        }
+        
+        // Invalida anche la chiave generica (per compatibilità)
         self::delete( 'submissions_count_' . $form_id . '_' );
-        self::delete( 'submissions_count_' . $form_id . '_unread' );
-        self::delete( 'submissions_count_' . $form_id . '_read' );
     }
     
     /**

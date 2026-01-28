@@ -1,0 +1,76 @@
+/**
+ * FP Forms Voice Input Styles
+ */
+
+.fp-voice-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.fp-voice-input-wrapper input,
+.fp-voice-input-wrapper textarea {
+    padding-right: 45px;
+}
+
+.fp-voice-input-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: #6b7280;
+    border-radius: 6px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.fp-voice-input-btn:hover {
+    background: #f3f4f6;
+    color: #2563eb;
+}
+
+.fp-voice-input-btn .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.fp-voice-input-btn.fp-voice-recording {
+    color: #dc2626;
+    animation: fp-voice-pulse 1s ease-in-out infinite;
+}
+
+.fp-voice-input-btn.fp-voice-recording .dashicons {
+    color: #dc2626;
+}
+
+@keyframes fp-voice-pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: translateY(-50%) scale(1.1);
+    }
+}
+
+.fp-voice-active {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Per textarea, posiziona in basso a destra */
+.fp-voice-input-wrapper textarea + .fp-voice-input-btn {
+    top: auto;
+    bottom: 8px;
+    transform: none;
+}
+

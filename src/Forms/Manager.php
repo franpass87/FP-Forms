@@ -36,6 +36,17 @@ class Manager {
                 $this->update_fields( $post_id, $args['fields'] );
             }
             
+            // Prepara dati form completi per hook
+            $form_data = [
+                'title' => $title,
+                'description' => $args['description'],
+                'fields' => $args['fields'],
+                'settings' => $args['settings'],
+            ];
+            
+            // Hook per versioning e altre integrazioni
+            do_action( 'fp_forms_form_saved', $post_id, $form_data );
+            
             return $post_id;
         }
         
@@ -70,6 +81,17 @@ class Manager {
             if ( isset( $data['fields'] ) ) {
                 $this->update_fields( $form_id, $data['fields'] );
             }
+            
+            // Prepara dati form completi per hook
+            $form_data = [
+                'title' => isset( $data['title'] ) ? $data['title'] : get_the_title( $form_id ),
+                'description' => isset( $data['description'] ) ? $data['description'] : get_post_field( 'post_content', $form_id ),
+                'fields' => isset( $data['fields'] ) ? $data['fields'] : $this->get_fields( $form_id ),
+                'settings' => isset( $data['settings'] ) ? $data['settings'] : get_post_meta( $form_id, '_fp_form_settings', true ),
+            ];
+            
+            // Hook per versioning e altre integrazioni
+            do_action( 'fp_forms_form_saved', $form_id, $form_data );
             
             return true;
         }

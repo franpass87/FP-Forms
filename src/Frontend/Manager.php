@@ -37,10 +37,67 @@ class Manager {
             true
         );
         
+        // Toast notifications
+        wp_register_style(
+            'fp-forms-toast',
+            FP_FORMS_PLUGIN_URL . 'assets/css/toast.css',
+            [],
+            FP_FORMS_VERSION
+        );
+        
+        wp_register_script(
+            'fp-forms-toast',
+            FP_FORMS_PLUGIN_URL . 'assets/js/toast.js',
+            [ 'jquery' ],
+            FP_FORMS_VERSION,
+            true
+        );
+        
         // File upload enhancement
         wp_register_script(
             'fp-forms-file-upload',
             FP_FORMS_PLUGIN_URL . 'assets/js/file-upload.js',
+            [ 'jquery', 'fp-forms-frontend' ],
+            FP_FORMS_VERSION,
+            true
+        );
+        
+        // Form calculator
+        wp_register_script(
+            'fp-forms-calculator',
+            FP_FORMS_PLUGIN_URL . 'assets/js/calculator.js',
+            [ 'jquery', 'fp-forms-frontend' ],
+            FP_FORMS_VERSION,
+            true
+        );
+        
+        // Progressive save
+        wp_register_style(
+            'fp-forms-progressive-save',
+            FP_FORMS_PLUGIN_URL . 'assets/css/progressive-save.css',
+            [],
+            FP_FORMS_VERSION
+        );
+        
+        wp_register_script(
+            'fp-forms-progressive-save',
+            FP_FORMS_PLUGIN_URL . 'assets/js/progressive-save.js',
+            [ 'jquery', 'fp-forms-frontend' ],
+            FP_FORMS_VERSION,
+            true
+        );
+        
+        // Voice input
+        wp_register_style(
+            'fp-forms-voice-input',
+            FP_FORMS_PLUGIN_URL . 'assets/css/voice-input.css',
+            [],
+            FP_FORMS_VERSION
+        );
+        
+        wp_register_script(
+            'fp-forms-voice-input',
+            FP_FORMS_PLUGIN_URL . 'assets/js/voice-input.js',
             [ 'jquery', 'fp-forms-frontend' ],
             FP_FORMS_VERSION,
             true
@@ -72,10 +129,17 @@ class Manager {
         
         // Carica assets
         wp_enqueue_style( 'fp-forms-frontend' );
+        wp_enqueue_style( 'fp-forms-toast' );
+        wp_enqueue_style( 'fp-forms-progressive-save' );
+        wp_enqueue_style( 'fp-forms-voice-input' );
+        wp_enqueue_script( 'fp-forms-toast' );
+        wp_enqueue_script( 'fp-forms-progressive-save' );
+        wp_enqueue_script( 'fp-forms-voice-input' );
         wp_enqueue_script( 'fp-forms-frontend' );
         
         // Carica file upload se form ha campo file
         $has_recaptcha = false;
+        $has_calculated = false;
         foreach ( $form['fields'] as $field ) {
             if ( $field['type'] === 'file' ) {
                 wp_enqueue_script( 'fp-forms-file-upload' );
@@ -83,6 +147,14 @@ class Manager {
             if ( $field['type'] === 'recaptcha' ) {
                 $has_recaptcha = true;
             }
+            if ( $field['type'] === 'calculated' ) {
+                $has_calculated = true;
+            }
+        }
+        
+        // Enqueue calculator se presente
+        if ( $has_calculated ) {
+            wp_enqueue_script( 'fp-forms-calculator' );
         }
         
         // Enqueue reCAPTCHA se presente nel form

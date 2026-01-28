@@ -37,11 +37,17 @@ class DashboardWidget {
         $total_submissions = 0;
         $unread_submissions = 0;
         
+        $tracker = \FPForms\Plugin::instance()->analytics;
+        $total_views = 0;
+        
         foreach ( $forms as $form ) {
             $db = \FPForms\Plugin::instance()->database;
             $total_submissions += $db->count_submissions( $form['id'] );
             $unread_submissions += $db->count_submissions( $form['id'], 'unread' );
+            $total_views += $tracker->get_total_views( $form['id'] );
         }
+        
+        $overall_conversion = $total_views > 0 ? round( ( $total_submissions / $total_views ) * 100, 2 ) : 0;
         
         ?>
         <div class="fp-dashboard-widget">
@@ -56,10 +62,30 @@ class DashboardWidget {
                     <div class="fp-widget-stat-label"><?php _e( 'Submissions Totali', 'fp-forms' ); ?></div>
                 </div>
                 
+                <div class="fp-widget-stat">
+                    <div class="fp-widget-stat-value"><?php echo $total_views; ?></div>
+                    <div class="fp-widget-stat-label"><?php _e( 'Visualizzazioni', 'fp-forms' ); ?></div>
+                </div>
+                
                 <div class="fp-widget-stat highlight">
                     <div class="fp-widget-stat-value"><?php echo $unread_submissions; ?></div>
                     <div class="fp-widget-stat-label"><?php _e( 'Non Lette', 'fp-forms' ); ?></div>
                 </div>
+            </div>
+            
+            <?php if ( $total_views > 0 ) : ?>
+            <div class="fp-widget-conversion">
+                <div class="fp-conversion-bar">
+                    <div class="fp-conversion-label">
+                        <span><?php _e( 'Tasso Conversione Globale', 'fp-forms' ); ?></span>
+                        <strong><?php echo $overall_conversion; ?>%</strong>
+                    </div>
+                    <div class="fp-conversion-progress">
+                        <div class="fp-conversion-fill" style="width: <?php echo min( 100, $overall_conversion ); ?>%"></div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
             </div>
             
             <?php if ( ! empty( $forms ) ) : ?>
@@ -78,11 +104,19 @@ class DashboardWidget {
                     
                     foreach ( $top_forms as $form ) :
                         $count = \FPForms\Plugin::instance()->database->count_submissions( $form['id'] );
+                        $form_views = $tracker->get_total_views( $form['id'] );
+                        $form_conversion = $tracker->get_conversion_rate( $form['id'] );
                     ?>
                     <li>
                         <a href="<?php echo admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] ); ?>">
                             <strong><?php echo esc_html( $form['title'] ); ?></strong>
-                            <span class="fp-widget-count"><?php echo $count; ?> submissions</span>
+                            <div class="fp-widget-form-stats">
+                                <span class="fp-widget-count"><?php echo $count; ?> submissions</span>
+                                <?php if ( $form_views > 0 ) : ?>
+                                <span class="fp-widget-views"><?php echo $form_views; ?> views</span>
+                                <span class="fp-widget-conversion-mini <?php echo $form_conversion > 5 ? 'good' : 'low'; ?>"><?php echo $form_conversion; ?>%</span>
+                                <?php endif; ?>
+                            </div>
                         </a>
                     </li>
                     <?php endforeach; ?>
@@ -110,6 +144,70 @@ class DashboardWidget {
             grid-template-columns: repeat(3, 1fr);
             gap: 15px;
             margin-bottom: 20px;
+        }
+        
+        .fp-widget-conversion {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .fp-conversion-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #374151;
+        }
+        
+        .fp-conversion-label strong {
+            font-size: 16px;
+            color: #1f2937;
+        }
+        
+        .fp-conversion-progress {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .fp-conversion-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            transition: width 0.3s ease;
+        }
+        
+        .fp-widget-form-stats {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 4px;
+        }
+        
+        .fp-widget-views {
+            font-size: 11px;
+            color: #6b7280;
+        }
+        
+        .fp-widget-conversion-mini {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .fp-widget-conversion-mini.good {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .fp-widget-conversion-mini.low {
+            background: #fee2e2;
+            color: #991b1b;
         }
         
         .fp-widget-stat {

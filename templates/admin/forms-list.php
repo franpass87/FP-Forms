@@ -69,6 +69,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                     $submissions_count = \FPForms\Plugin::instance()->database->count_submissions( $form['id'] );
                     $unread_count = \FPForms\Plugin::instance()->database->count_submissions( $form['id'], 'unread' );
                     $tracker = \FPForms\Plugin::instance()->analytics;
+                    $views = $tracker->get_total_views( $form['id'] );
                     $conversion = $tracker->get_conversion_rate( $form['id'] );
                 ?>
                     <tr>
@@ -94,12 +95,14 @@ if ( ! defined( 'ABSPATH' ) ) {
                             </a>
                         </td>
                         <td>
-                            <span class="fp-conversion-badge <?php echo $conversion > 5 ? 'good' : 'low'; ?>">
-                                <?php echo $conversion; ?>%
-                            </span>
-                            <a href="<?php echo admin_url( 'admin.php?page=fp-forms-analytics&form_id=' . $form['id'] ); ?>" class="fp-view-analytics" title="<?php _e( 'Vedi Analytics', 'fp-forms' ); ?>">
-                                <span class="dashicons dashicons-chart-line"></span>
-                            </a>
+                            <div class="fp-analytics-mini">
+                                <span class="fp-views-count" title="<?php _e( 'Visualizzazioni', 'fp-forms' ); ?>">
+                                    <span class="dashicons dashicons-visibility"></span> <?php echo $views; ?>
+                                </span>
+                                <span class="fp-conversion-badge <?php echo $conversion > 5 ? 'good' : ( $conversion > 0 ? 'medium' : 'low' ); ?>" title="<?php _e( 'Tasso di conversione', 'fp-forms' ); ?>">
+                                    <?php echo $conversion; ?>%
+                                </span>
+                            </div>
                         </td>
                         <td><?php echo date_i18n( get_option( 'date_format' ), strtotime( $form['created_at'] ) ); ?></td>
                         <td>

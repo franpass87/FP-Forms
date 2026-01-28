@@ -75,9 +75,24 @@ class AntiSpam {
     
     /**
      * Rate limiting check
+     * FIX #4: Controlla blacklist IP prima di processare rate limit
      */
     private function check_rate_limit( $form_id ) {
         $ip = \FPForms\Helpers\Helper::get_user_ip();
+        
+        // FIX #4: Controlla blacklist PRIMA del rate limit (evita spreco di risorse)
+        if ( $this->is_blacklisted( $ip ) ) {
+            \FPForms\Core\Logger::warning( 'Blacklisted IP attempted submission', [
+                'form_id' => $form_id,
+                'ip' => $ip,
+            ] );
+            
+            return new \WP_Error( 
+                'ip_blacklisted',
+                __( 'Il tuo indirizzo IP è stato bloccato. Contatta l\'amministratore se ritieni che si tratti di un errore.', 'fp-forms' )
+            );
+        }
+        
         $key = 'fp_forms_rate_' . $form_id . '_' . md5( $ip );
         
         $attempts = get_transient( $key );

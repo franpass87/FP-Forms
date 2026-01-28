@@ -105,5 +105,44 @@
         }
     };
     
+    /**
+     * Mostra loading overlay su tabella
+     * @param {jQuery} $table - Tabella jQuery
+     * @param {string} message - Messaggio (opzionale)
+     */
+    window.fpShowTableLoading = function($table, message) {
+        if (!$table || !$table.length) return;
+        
+        message = message || 'Caricamento...';
+        
+        var $container = $table.closest('.fp-table-container');
+        if (!$container.length) {
+            $container = $table.wrap('<div class="fp-table-container"></div>').parent();
+        }
+        
+        // Rimuovi overlay esistente
+        $container.find('.fp-table-loading').remove();
+        
+        var $overlay = $('<div class="fp-table-loading">' +
+            '<div class="fp-spinner"></div>' +
+            '<p>' + message + '</p>' +
+        '</div>');
+        
+        $container.css('position', 'relative').append($overlay);
+    };
+    
+    /**
+     * Nasconde loading overlay da tabella
+     * @param {jQuery} $table - Tabella jQuery
+     */
+    window.fpHideTableLoading = function($table) {
+        if (!$table || !$table.length) return;
+        
+        var $container = $table.closest('.fp-table-container');
+        $container.find('.fp-table-loading').fadeOut(200, function() {
+            $(this).remove();
+        });
+    };
+    
 })(jQuery);
 

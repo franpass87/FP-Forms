@@ -1,0 +1,162 @@
+/**
+ * FP Forms Modal Confirm Dialog CSS
+ */
+
+.fp-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(4px);
+}
+
+.fp-modal-overlay.fp-modal-show {
+    opacity: 1;
+}
+
+.fp-modal {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.fp-modal-overlay.fp-modal-show .fp-modal {
+    transform: scale(1) translateY(0);
+}
+
+.fp-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.fp-modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.fp-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.fp-modal-close:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.fp-modal-body {
+    padding: 24px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.fp-modal-message {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #374151;
+}
+
+.fp-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px 24px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.fp-modal-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    min-width: 100px;
+}
+
+.fp-modal-btn.button-primary {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+}
+
+.fp-modal-btn.button-primary:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.fp-modal-btn.button-secondary {
+    background: #fff;
+    color: #374151;
+    border-color: #d1d5db;
+}
+
+.fp-modal-btn.button-secondary:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.fp-modal-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+    .fp-modal {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .fp-modal-header,
+    .fp-modal-body,
+    .fp-modal-footer {
+        padding: 16px;
+    }
+    
+    .fp-modal-footer {
+        flex-direction: column-reverse;
+    }
+    
+    .fp-modal-btn {
+        width: 100%;
+    }
+}
+

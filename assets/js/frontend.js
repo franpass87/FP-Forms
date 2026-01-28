@@ -192,6 +192,9 @@
                         
                         // BUGFIX #18: Remove submitting flag
                         $form.removeClass('is-submitting');
+                        
+                        // Trigger success event per progressive save
+                        $form.trigger('fp_forms_submit_success');
                     } else {
                         // BUGFIX #18: Remove submitting flag on error
                         $form.removeClass('is-submitting');
@@ -205,10 +208,14 @@
                             }
                         }));
                         
-                        // Mostra errore
-                        $form.find('.fp-forms-error')
-                            .text(response.data.message)
-                            .fadeIn();
+                        // Mostra errore con toast (se disponibile) o fallback inline
+                        if (typeof window.fpToast !== 'undefined') {
+                            window.fpToast.error(response.data.message || fpForms.strings.error);
+                        } else {
+                            $form.find('.fp-forms-error')
+                                .text(response.data.message)
+                                .fadeIn();
+                        }
                         
                         // Evidenzia campi con errori
                         if (response.data.errors) {
@@ -243,10 +250,14 @@
                         errorMessage = fpForms.strings.error_abort;
                     }
                     
-                    $form.find('.fp-forms-error')
-                        .text(errorMessage)
-                        .attr('role', 'alert')
-                        .attr('aria-live', 'assertive')
+                    // Usa toast se disponibile, altrimenti fallback inline
+                    if (typeof window.fpToast !== 'undefined') {
+                        window.fpToast.error(errorMessage);
+                    } else {
+                        $form.find('.fp-forms-error')
+                            .text(errorMessage)
+                            .attr('role', 'alert')
+                            .attr('aria-live', 'assertive')
                         .fadeIn();
                 }
             });

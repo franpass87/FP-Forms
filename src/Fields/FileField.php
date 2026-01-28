@@ -129,6 +129,7 @@ class FileField {
     
     /**
      * Valida file
+     * FIX #1: Usa wp_check_filetype() e validazione immagini WordPress standard
      */
     private function validate_file( $file, $max_size, $allowed_types ) {
         // Check errori upload
@@ -144,35 +145,62 @@ class FileField {
             );
         }
         
-        // Check tipo file
-        $file_ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+        // FIX #1: Usa wp_check_filetype() invece di validazione manuale
+        $wp_filetype = wp_check_filetype( $file['name'], $this->get_allowed_mime_types_for_wp( $allowed_types ) );
         
-        if ( ! in_array( $file_ext, $allowed_types ) ) {
+        if ( ! $wp_filetype['ext'] || ! $wp_filetype['type'] ) {
             return new \WP_Error(
                 'invalid_file_type',
                 sprintf( __( 'Tipo file non permesso. Formati accettati: %s', 'fp-forms' ), implode( ', ', $allowed_types ) )
             );
         }
         
-        // Verifica MIME type (con error handling per server senza finfo)
+        // Verifica che l'estensione sia nella lista permessa
+        $file_ext = strtolower( $wp_filetype['ext'] );
+        if ( ! in_array( $file_ext, $allowed_types, true ) ) {
+            return new \WP_Error(
+                'invalid_file_type',
+                sprintf( __( 'Tipo file non permesso. Formati accettati: %s', 'fp-forms' ), implode( ', ', $allowed_types ) )
+            );
+        }
+        
+        // FIX #1: Per immagini, verifica anche il contenuto reale del file
+        $image_extensions = [ 'jpg', 'jpeg', 'png', 'gif', 'webp' ];
+        if ( in_array( $file_ext, $image_extensions, true ) ) {
+            $image_info = @getimagesize( $file['tmp_name'] );
+            if ( $image_info === false ) {
+                return new \WP_Error( 
+                    'invalid_image', 
+                    __( 'Il file non è un\'immagine valida. Il contenuto del file non corrisponde all\'estensione.', 'fp-forms' ) 
+                );
+            }
+            
+            // Verifica che il MIME type dell'immagine corrisponda
+            $detected_mime = $image_info['mime'];
+            if ( $detected_mime !== $wp_filetype['type'] ) {
+                return new \WP_Error( 
+                    'invalid_mime', 
+                    __( 'Il tipo MIME del file non corrisponde all\'estensione.', 'fp-forms' ) 
+                );
+            }
+        }
+        
+        // Verifica MIME type con finfo (doppia verifica)
+        $detected_mime = false;
         if ( function_exists( 'finfo_open' ) ) {
             $finfo = finfo_open( FILEINFO_MIME_TYPE );
             if ( $finfo ) {
-                $mime_type = finfo_file( $finfo, $file['tmp_name'] );
+                $detected_mime = finfo_file( $finfo, $file['tmp_name'] );
                 finfo_close( $finfo );
-            } else {
-                // Fallback a mime_content_type
-                $mime_type = mime_content_type( $file['tmp_name'] );
             }
-        } else {
-            // Fallback per server senza finfo
-            $mime_type = isset( $file['type'] ) ? $file['type'] : 'application/octet-stream';
         }
         
-        $allowed_mimes = $this->get_allowed_mime_types( $allowed_types );
-        
-        if ( ! in_array( $mime_type, $allowed_mimes ) ) {
-            return new \WP_Error( 'invalid_mime', __( 'Tipo MIME non valido.', 'fp-forms' ) );
+        // Se finfo è disponibile, verifica che il MIME type corrisponda
+        if ( $detected_mime && $detected_mime !== $wp_filetype['type'] ) {
+            return new \WP_Error( 
+                'invalid_mime', 
+                __( 'Il tipo MIME rilevato non corrisponde al tipo di file dichiarato.', 'fp-forms' ) 
+            );
         }
         
         return true;
@@ -189,9 +217,17 @@ class FileField {
         if ( ! file_exists( $fp_forms_dir ) ) {
             wp_mkdir_p( $fp_forms_dir );
             
-            // Proteggi directory
+            // FIX #3: Protezione directory universale (Apache + Nginx + IIS)
+            // Protezione Apache (.htaccess)
             file_put_contents( $fp_forms_dir . '/.htaccess', 'deny from all' );
+            
+            // Protezione universale (index.php)
             file_put_contents( $fp_forms_dir . '/index.php', '<?php // Silence is golden' );
+            
+            // Imposta permessi sicuri (se possibile)
+            if ( function_exists( 'chmod' ) ) {
+                @chmod( $fp_forms_dir, 0750 );
+            }
         }
         
         // Sanitize filename
@@ -213,26 +249,88 @@ class FileField {
     }
     
     /**
-     * Ottiene MIME types permessi
+     * Ottiene MIME types permessi (compatibilità legacy)
+     * @deprecated Usa get_allowed_mime_types_for_wp() per wp_check_filetype()
      */
     private function get_allowed_mime_types( $extensions ) {
-        $mime_types = [
-            'pdf' => 'application/pdf',
-            'doc' => 'application/msword',
-            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'jpg' => 'image/jpeg',
-            'jpeg' => 'image/jpeg',
-            'png' => 'image/png',
-            'gif' => 'image/gif',
-            'zip' => 'application/zip',
-            'txt' => 'text/plain',
-        ];
-        
+        $wp_mime_types = get_allowed_mime_types();
         $allowed = [];
         
         foreach ( $extensions as $ext ) {
-            if ( isset( $mime_types[ $ext ] ) ) {
-                $allowed[] = $mime_types[ $ext ];
+            // Cerca nell'array WordPress MIME types
+            foreach ( $wp_mime_types as $mime_ext => $mime_type ) {
+                // Supporta formati come "jpg|jpeg|jpe"
+                $mime_ext_array = explode( '|', $mime_ext );
+                if ( in_array( $ext, $mime_ext_array, true ) ) {
+                    $allowed[] = $mime_type;
+                    break;
+                }
+            }
+        }
+        
+        // Se non trovato in WordPress, usa fallback
+        if ( empty( $allowed ) ) {
+            $fallback_mimes = [
+                'pdf' => 'application/pdf',
+                'doc' => 'application/msword',
+                'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+                'zip' => 'application/zip',
+                'txt' => 'text/plain',
+            ];
+            
+            foreach ( $extensions as $ext ) {
+                if ( isset( $fallback_mimes[ $ext ] ) ) {
+                    $allowed[] = $fallback_mimes[ $ext ];
+                }
+            }
+        }
+        
+        return array_unique( $allowed );
+    }
+    
+    /**
+     * Ottiene MIME types per wp_check_filetype()
+     * FIX #1: Usa get_allowed_mime_types() di WordPress
+     */
+    private function get_allowed_mime_types_for_wp( $extensions ) {
+        $wp_mime_types = get_allowed_mime_types();
+        $allowed = [];
+        
+        foreach ( $extensions as $ext ) {
+            // Cerca nell'array WordPress MIME types
+            foreach ( $wp_mime_types as $mime_ext => $mime_type ) {
+                // Supporta formati come "jpg|jpeg|jpe"
+                $mime_ext_array = explode( '|', $mime_ext );
+                if ( in_array( $ext, $mime_ext_array, true ) ) {
+                    // wp_check_filetype() si aspetta un array con estensioni come chiavi
+                    $allowed[ $ext ] = $mime_type;
+                    break;
+                }
+            }
+        }
+        
+        // Se non trovato in WordPress, usa fallback
+        if ( empty( $allowed ) ) {
+            $fallback_mimes = [
+                'pdf' => 'application/pdf',
+                'doc' => 'application/msword',
+                'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+                'zip' => 'application/zip',
+                'txt' => 'text/plain',
+            ];
+            
+            foreach ( $extensions as $ext ) {
+                if ( isset( $fallback_mimes[ $ext ] ) ) {
+                    $allowed[ $ext ] = $fallback_mimes[ $ext ];
+                }
             }
         }
         

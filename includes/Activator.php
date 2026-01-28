@@ -33,6 +33,7 @@ class Activator {
      * Crea le tabelle del database
      */
     private static function create_tables() {
+        self::create_transactions_table();
         global $wpdb;
         
         $charset_collate = $wpdb->get_charset_collate();
@@ -95,6 +96,36 @@ class Activator {
         dbDelta( $sql_submissions );
         dbDelta( $sql_fields );
         dbDelta( $sql_files );
+    }
+    
+    /**
+     * Crea tabella transazioni per pagamenti
+     */
+    private static function create_transactions_table() {
+        global $wpdb;
+        
+        $table = $wpdb->prefix . 'fp_forms_transactions';
+        
+        $charset_collate = $wpdb->get_charset_collate();
+        
+        $sql = "CREATE TABLE IF NOT EXISTS {$table} (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            submission_id bigint(20) UNSIGNED NOT NULL,
+            form_id bigint(20) UNSIGNED NOT NULL,
+            provider varchar(50) NOT NULL,
+            amount decimal(10,2) NOT NULL,
+            status varchar(20) NOT NULL,
+            transaction_id varchar(255) DEFAULT '',
+            metadata longtext,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY submission_id (submission_id),
+            KEY form_id (form_id),
+            KEY status (status)
+        ) {$charset_collate};";
+        
+        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+        dbDelta( $sql );
     }
     
     /**

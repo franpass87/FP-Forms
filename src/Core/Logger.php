@@ -28,11 +28,23 @@ class Logger {
         if ( ! file_exists( self::$log_dir ) ) {
             wp_mkdir_p( self::$log_dir );
             
-            // Proteggi directory con .htaccess
+            // FIX #3: Protezione directory universale (Apache + Nginx + IIS)
+            // Protezione Apache (.htaccess)
             file_put_contents( 
                 self::$log_dir . '.htaccess', 
                 "deny from all\n" 
             );
+            
+            // Protezione universale (index.php)
+            file_put_contents( 
+                self::$log_dir . 'index.php', 
+                '<?php // Silence is golden' 
+            );
+            
+            // Imposta permessi sicuri (se possibile)
+            if ( function_exists( 'chmod' ) ) {
+                @chmod( self::$log_dir, 0750 );
+            }
         }
     }
     

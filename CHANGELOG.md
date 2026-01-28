@@ -1,5 +1,205 @@
 # CHANGELOG - FP Forms
 
+## [1.3.1] - 5 Novembre 2025
+
+### 🚀 NEW FEATURES - Quick Wins Implementation
+
+#### Toast Notification System (Frontend)
+- **ADDED:** Integrazione toast notifications nel frontend
+- **ADDED:** Toast per errori di connessione e timeout
+- **IMPROVED:** Fallback graceful se toast non disponibile
+- **Files:** `src/Frontend/Manager.php`, `assets/js/frontend.js`
+
+#### Field Icons Support
+- **ADDED:** Supporto icone per campi form (dashicons o emoji)
+- **ADDED:** Configurazione icona nel field options
+- **ADDED:** Styling CSS per icone con allineamento flex
+- **Files:** `src/Fields/FieldFactory.php`, `assets/css/frontend.css`
+
+#### Loading States Migliorati
+- **ADDED:** Table loading overlay con spinner
+- **ADDED:** Funzioni `fpShowTableLoading()` e `fpHideTableLoading()`
+- **IMPROVED:** Skeleton screens migliorati
+- **ADDED:** Progress indicators
+- **Files:** `assets/css/loading-states.css`, `assets/js/loading-states.js`
+
+#### Modal Confirm Dialog
+- **ADDED:** Sistema modal moderno per sostituire `confirm()` e `alert()`
+- **ADDED:** Keyboard navigation (Tab trap, ESC per chiudere)
+- **ADDED:** Accessibilità WCAG (aria-modal, focus management)
+- **ADDED:** Design coerente con FP ecosystem
+- **ADDED:** Supporto callback onConfirm/onCancel
+- **Files:** `assets/js/modal-confirm.js`, `assets/css/modal-confirm.css`
+- **REPLACED:** Tutti i `confirm()` e `alert()` in admin.js con modal/toast
+
+#### Honeypot Anti-Spam
+- **VERIFIED:** Integrazione completa verificata
+- **STATUS:** Già implementato e funzionante in `templates/frontend/form.php`
+
+---
+
+### 🔧 TECHNICAL IMPROVEMENTS
+
+#### Code Quality
+- **REPLACED:** 9 istanze di `confirm()` con `fpConfirm()` modal
+- **REPLACED:** 2 istanze di `alert()` con `fpToast.error()`
+- **IMPROVED:** Gestione errori frontend con toast
+- **ADDED:** Dipendenze corrette per modal e toast in admin
+
+#### File Modificati
+- `src/Frontend/Manager.php` - Aggiunto enqueue toast CSS/JS
+- `src/Admin/Manager.php` - Aggiunto enqueue modal CSS/JS
+- `assets/js/frontend.js` - Integrazione toast per errori
+- `assets/js/admin.js` - Sostituiti tutti confirm/alert
+- `src/Fields/FieldFactory.php` - Aggiunto supporto icone
+- `assets/css/frontend.css` - Stili per field icons
+- `assets/css/loading-states.css` - Table overlay e miglioramenti
+- `assets/js/loading-states.js` - Funzioni table loading
+
+#### File Creati
+- `assets/js/modal-confirm.js` - Sistema modal confirm
+- `assets/css/modal-confirm.css` - Stili modal
+- `src/Fields/CalculatedField.php` - Campo calcolato
+- `assets/js/calculator.js` - Calcolatore form
+- `src/Integrations/WebhookManager.php` - Gestore webhook
+- `templates/admin/partials/webhooks-settings.php` - UI webhooks
+- `templates/admin/partials/webhook-item.php` - Item webhook
+
+---
+
+### 🔒 SECURITY IMPROVEMENTS
+
+#### Calculator Security
+- **IMPROVED:** Validazione sicurezza migliorata per espressioni matematiche
+- **ADDED:** Verifica parentesi bilanciate
+- **ADDED:** Whitelist caratteri matematici sicuri
+- **ADDED:** Verifica operatori consecutivi
+- **ADDED:** Validazione risultato numerico finito
+
+#### Modal XSS Prevention
+- **FIXED:** Sanitizzazione messaggi modal con `.text()` invece di `.html()`
+- **IMPROVED:** Prevenzione XSS nei dialog di conferma
+
+---
+
+### 🎨 UI/UX ENHANCEMENTS
+
+#### Calculated Field UI
+- **ADDED:** Tipo campo "Calcolato" nel form builder
+- **ADDED:** UI per configurare formula, formato e decimali
+- **ADDED:** Help text con esempi di formule
+- **ADDED:** Supporto formati: numero, valuta (€), percentuale
+
+#### Webhooks UI
+- **ADDED:** Sezione webhooks nelle impostazioni form
+- **ADDED:** UI per aggiungere/modificare/eliminare webhook
+- **ADDED:** Pulsante "Test Webhook" con feedback visivo
+- **ADDED:** Gestione secret key per firma HMAC
+- **ADDED:** AJAX handler per test webhook
+
+---
+
+### 🚀 FASE 4: Long-term & Innovations
+
+#### Progressive Form Auto-Save
+- **ADDED:** Auto-save automatico ogni 30 secondi
+- **ADDED:** Auto-save su change con debounce (2 secondi)
+- **ADDED:** Ripristino dati salvati al ricaricamento pagina
+- **ADDED:** Notifica utente con opzione ripristino/ignora
+- **ADDED:** Pulizia automatica dopo submit successo
+- **ADDED:** Scadenza automatica dopo 7 giorni
+- **Files:** `assets/js/progressive-save.js`, `assets/css/progressive-save.css`
+
+#### Form Versioning
+- **ADDED:** Sistema snapshot automatici per form
+- **ADDED:** Cronologia modifiche (ultimi 20 snapshot)
+- **ADDED:** Rilevamento cambiamenti significativi
+- **ADDED:** Funzione restore da snapshot
+- **ADDED:** Funzione diff tra snapshot
+- **ADDED:** Logging per audit trail
+- **Files:** `src/Versioning/FormHistory.php`
+
+#### Voice Input Support
+- **ADDED:** Speech-to-text per campi form usando Web Speech API
+- **ADDED:** Pulsante microfono su campi text/email/tel/textarea
+- **ADDED:** Supporto lingua italiana
+- **ADDED:** Feedback visivo durante registrazione
+- **ADDED:** Gestione errori e permessi microfono
+- **ADDED:** Opzione per abilitare/disabilitare per campo
+- **Files:** `assets/js/voice-input.js`, `assets/css/voice-input.css`
+
+#### Multi-Step Forms UI Builder
+- **ADDED:** Campo "Nuovo Step" nel form builder per separare step
+- **ADDED:** Opzione "Abilita form multi-step" nelle impostazioni
+- **ADDED:** Campo titolo step configurabile per ogni separatore
+- **ADDED:** Supporto step_title nel salvataggio form
+- **IMPROVED:** UI migliorata per gestione step nel builder
+- **Files:** `templates/admin/form-builder.php`, `templates/admin/partials/field-item.php`, `assets/js/admin.js`
+
+---
+
+### 📝 NOTE IMPLEMENTAZIONE
+
+#### Payment Integration (Base)
+- **ADDED:** Payment Manager base per future integrazioni
+- **ADDED:** Sistema logging transazioni
+- **ADDED:** Tabella database per transazioni
+- **ADDED:** Hook per provider specifici (Stripe, PayPal, etc.)
+- **ADDED:** Calcolo importo da campo calcolato o importo fisso
+- **NOTE:** Integrazioni provider specifici (Stripe, PayPal, Satispay) da implementare in versioni future
+- **Files:** `src/Integrations/PaymentManager.php`
+
+#### Form Versioning UI
+- **ADDED:** UI per visualizzare cronologia snapshot
+- **ADDED:** Pulsante ripristina snapshot con conferma
+- **ADDED:** Visualizzazione data, utente e note per ogni snapshot
+- **ADDED:** AJAX handler per restore snapshot
+- **Files:** `templates/admin/partials/form-versioning.php`
+
+**Payment Integration Provider Specifici** - Base implementata
+- Base payment manager implementata con sistema transazioni
+- Provider specifici (Stripe, PayPal, Satispay) richiedono integrazioni API esterne complesse
+- **Raccomandazione:** Implementare provider specifici in versioni future con plugin dedicato o integrazione separata
+
+**Voice Input** - Implementato con fallback graceful
+- Funziona solo su browser che supportano Web Speech API (Chrome, Edge, Safari)
+- Richiede permesso microfono utente
+- Fallback automatico se browser non supporta
+
+---
+
+### ⚡ PERFORMANCE
+
+- **IMPROVED:** Loading states più efficienti
+- **IMPROVED:** Toast non bloccanti migliorano UX
+- **IMPROVED:** Modal con animazioni hardware-accelerated
+
+---
+
+### ♿ ACCESSIBILITY
+
+- **ADDED:** Modal con focus trap e keyboard navigation
+- **ADDED:** ARIA attributes (aria-modal, aria-labelledby)
+- **IMPROVED:** Screen reader support per modal
+
+---
+
+### 📦 UPGRADE NOTES
+
+**Da 1.2.3 a 1.3.1:**
+- ✅ Aggiornamento automatico seamless
+- ✅ Tutte le features backward compatible
+- ✅ Nessuna migrazione database richiesta
+- ✅ Toast e modal disponibili immediatamente
+
+**Recommended Actions Post-Update:**
+1. Testa form submission con toast notifications
+2. Verifica modal confirm nelle azioni admin
+3. Configura icone campi (opzionale)
+4. Testa loading states su tabelle submissions
+
+---
+
 ## [1.2.3] - 5 Novembre 2025
 
 ### 🎨 NEW FEATURES - UI/UX Customization
@@ -934,6 +1134,27 @@ Nessuno! 100% backward compatible.
 - 10 tipi di campo
 - Email notifiche
 - Database submissions
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

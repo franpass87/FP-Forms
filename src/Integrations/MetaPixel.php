@@ -14,8 +14,9 @@ class MetaPixel {
     
     /**
      * Conversions API endpoint
+     * Usa versione più recente dell'API Facebook Graph
      */
-    const CAPI_ENDPOINT = 'https://graph.facebook.com/v18.0';
+    const CAPI_ENDPOINT = 'https://graph.facebook.com/v21.0';
     
     /**
      * Pixel ID
@@ -315,7 +316,8 @@ src="https://www.facebook.com/tr?id=<?php echo esc_attr( $this->pixel_id ); ?>&e
             var forms = document.querySelectorAll('.fp-forms-container form');
             
             forms.forEach(function(form) {
-                var formId = form.querySelector('[name="form_id"]')?.value;
+                var formIdElement = form.querySelector('[name="form_id"]');
+                var formId = formIdElement ? formIdElement.value : null;
                 var formTitle = form.closest('.fp-forms-container').dataset.formTitle || 'Untitled Form';
                 
                 if (!formId) return;
@@ -358,13 +360,13 @@ src="https://www.facebook.com/tr?id=<?php echo esc_attr( $this->pixel_id ); ?>&e
                         formId, 
                         formTitle, 
                         true, 
-                        e.detail?.submissionId
+                        (e.detail && e.detail.submissionId ? e.detail.submissionId : null)
                     );
                 });
                 
                 // Track validation errors
                 form.addEventListener('fpFormSubmitError', function(e) {
-                    if (e.detail?.errors) {
+                    if (e.detail && e.detail.errors) {
                         Object.keys(e.detail.errors).forEach(function(fieldName) {
                             self.trackValidationError(
                                 formId, 

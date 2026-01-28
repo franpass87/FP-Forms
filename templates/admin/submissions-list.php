@@ -265,6 +265,59 @@ if ( ! defined( 'ABSPATH' ) ) {
             </form>
         </div>
     </div>
+    
+    <?php if ( $total_pages > 1 ) : ?>
+    <div class="fp-pagination-wrapper">
+        <div class="fp-pagination">
+            <?php
+            $base_url = admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] );
+            if ( ! empty( $search ) ) {
+                $base_url .= '&s=' . urlencode( $search );
+            }
+            if ( ! empty( $status_filter ) ) {
+                $base_url .= '&status=' . urlencode( $status_filter );
+            }
+            
+            // Previous button
+            if ( $page > 1 ) :
+                $prev_url = $base_url . '&paged=' . ( $page - 1 );
+            ?>
+                <a href="<?php echo esc_url( $prev_url ); ?>" class="button fp-pagination-btn fp-pagination-prev">
+                    &larr; <?php _e( 'Precedente', 'fp-forms' ); ?>
+                </a>
+            <?php else : ?>
+                <span class="button disabled fp-pagination-btn fp-pagination-prev" disabled>
+                    &larr; <?php _e( 'Precedente', 'fp-forms' ); ?>
+                </span>
+            <?php endif; ?>
+            
+            <span class="fp-pagination-info">
+                <?php 
+                printf( 
+                    __( 'Pagina %d di %d (%d submissions totali)', 'fp-forms' ),
+                    $page,
+                    $total_pages,
+                    $total_submissions
+                ); 
+                ?>
+            </span>
+            
+            <?php
+            // Next button
+            if ( $page < $total_pages ) :
+                $next_url = $base_url . '&paged=' . ( $page + 1 );
+            ?>
+                <a href="<?php echo esc_url( $next_url ); ?>" class="button fp-pagination-btn fp-pagination-next">
+                    <?php _e( 'Successivo', 'fp-forms' ); ?> &rarr;
+                </a>
+            <?php else : ?>
+                <span class="button disabled fp-pagination-btn fp-pagination-next" disabled>
+                    <?php _e( 'Successivo', 'fp-forms' ); ?> &rarr;
+                </span>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
 
 <style>
@@ -299,6 +352,46 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 .fp-modal-actions .dashicons {
     margin-right: 6px;
+}
+
+/* Pagination Styles */
+.fp-pagination-wrapper {
+    margin-top: 20px;
+    padding: 20px 0;
+    border-top: 1px solid #e5e7eb;
+}
+
+.fp-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.fp-pagination-btn {
+    min-width: 120px;
+}
+
+.fp-pagination-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.fp-pagination-info {
+    flex: 1;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+@media (max-width: 640px) {
+    .fp-pagination {
+        flex-direction: column;
+    }
+    
+    .fp-pagination-btn {
+        width: 100%;
+    }
 }
 </style>
 

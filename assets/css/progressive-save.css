@@ -1,0 +1,36 @@
+/**
+ * FP Forms Progressive Save Styles
+ */
+
+.fp-autosave-notice {
+    padding: 12px 16px;
+    background: rgba(245, 158, 11, 0.05);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 6px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #92400e;
+    font-weight: 400;
+}
+
+.fp-autosave-notice .dashicons {
+    color: #d97706;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.fp-autosave-notice a {
+    color: #92400e;
+    text-decoration: underline;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.fp-autosave-notice a:hover {
+    color: #78350f;
+}
+

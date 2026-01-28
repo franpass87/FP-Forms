@@ -100,12 +100,16 @@ class Manager {
         
         $args = wp_parse_args( $args, $defaults );
         
-        // Sanitizza orderby e order per prevenire SQL injection
+        // FIX #2: Sanitizza orderby e order per prevenire SQL injection (whitelist esplicita)
         $allowed_orderby = [ 'id', 'created_at', 'status', 'form_id' ];
         $orderby = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'created_at';
         
+        // FIX #2: Validazione più rigorosa per ORDER
         $order = strtoupper( $args['order'] );
-        $order = in_array( $order, [ 'ASC', 'DESC' ], true ) ? $order : 'DESC';
+        $order = ( $order === 'ASC' ) ? 'ASC' : 'DESC';
+        
+        // FIX #2: Usa backticks per identificatori (orderby è già whitelisted, quindi sicuro)
+        $orderby_safe = '`' . $orderby . '`';
         
         $where = $wpdb->prepare( 'WHERE form_id = %d', $form_id );
         
@@ -118,9 +122,15 @@ class Manager {
             $where .= $wpdb->prepare( ' AND data LIKE %s', '%' . $wpdb->esc_like( $args['search'] ) . '%' );
         }
         
-        $query = "SELECT * FROM {$this->table_submissions} {$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
+        // FIX #2: Costruisci query senza interpolazione diretta di orderby/order
+        // orderby e order sono già validati e whitelisted, quindi sicuri
+        $query = $wpdb->prepare(
+            "SELECT * FROM {$this->table_submissions} {$where} ORDER BY {$orderby_safe} {$order} LIMIT %d OFFSET %d",
+            $args['limit'],
+            $args['offset']
+        );
         
-        return $wpdb->get_results( $wpdb->prepare( $query, $args['limit'], $args['offset'] ) );
+        return $wpdb->get_results( $query );
     }
     
     /**
