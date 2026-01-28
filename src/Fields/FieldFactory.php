@@ -158,21 +158,21 @@ class FieldFactory {
         $description   = isset( $field['options']['description'] ) ? $field['options']['description'] : '';
 
         $html  = '<div class="fp-forms-field fp-forms-field-fullname">';
-        $html .= '<span class="fp-forms-label">' . esc_html( $field['label'] ) . $required_mark . '</span>';
+        $html .= '<label for="' . esc_attr( $base_id . '_nome' ) . '" class="fp-forms-label">' . esc_html( $field['label'] ) . $required_mark . '</label>';
         $html .= '<div class="fp-fullname-row">';
-        $html .= '<label for="' . esc_attr( $base_id . '_nome' ) . '" class="fp-forms-sr-only">' . esc_html__( 'Nome', 'fp-forms' ) . '</label>';
         $html .= sprintf(
-            '<input type="text" id="%s" name="%s" class="fp-forms-input fp-forms-input-nome" %s placeholder="%s" />',
+            '<input type="text" id="%s" name="%s" class="fp-forms-input fp-forms-input-nome" aria-label="%s" %s placeholder="%s" />',
             esc_attr( $base_id . '_nome' ),
             esc_attr( $base_name . '_nome' ),
+            esc_attr( __( 'Nome', 'fp-forms' ) ),
             $required,
             esc_attr( $ph_nome )
         );
-        $html .= '<label for="' . esc_attr( $base_id . '_cognome' ) . '" class="fp-forms-sr-only">' . esc_html__( 'Cognome', 'fp-forms' ) . '</label>';
         $html .= sprintf(
-            '<input type="text" id="%s" name="%s" class="fp-forms-input fp-forms-input-cognome" %s placeholder="%s" />',
+            '<input type="text" id="%s" name="%s" class="fp-forms-input fp-forms-input-cognome" aria-label="%s" %s placeholder="%s" />',
             esc_attr( $base_id . '_cognome' ),
             esc_attr( $base_name . '_cognome' ),
+            esc_attr( __( 'Cognome', 'fp-forms' ) ),
             $required,
             esc_attr( $ph_cognome )
         );

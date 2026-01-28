@@ -899,15 +899,6 @@
 }
 
 /* Nome e cognome (due input affiancati) */
-.fp-forms-field-fullname .fp-forms-label {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.4;
-    letter-spacing: -0.01em;
-    margin-bottom: 6px;
-    color: var(--fp-forms-text);
-}
 .fp-forms-field-fullname .fp-fullname-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
