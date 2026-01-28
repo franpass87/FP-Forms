@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Template: Form Builder
  */
@@ -101,6 +101,10 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                     <span class="dashicons dashicons-text"></span>
                     <?php _e( 'Testo', 'fp-forms' ); ?>
                 </button>
+                <button type="button" class="fp-field-type" data-type="fullname" data-tooltip="Nome e cognome (due campi affiancati)">
+                    <span class="dashicons dashicons-admin-users"></span>
+                    <?php _e( 'Nome e cognome', 'fp-forms' ); ?>
+                </button>
                 <button type="button" class="fp-field-type" data-type="email" data-tooltip="Email con validazione automatica">
                     <span class="dashicons dashicons-email"></span>
                     <?php _e( 'Email', 'fp-forms' ); ?>
@@ -141,6 +145,10 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                         <span class="dashicons dashicons-email-alt"></span>
                         <?php _e( 'Marketing', 'fp-forms' ); ?>
                     </button>
+                    <button type="button" class="fp-field-type" data-type="calculated" data-tooltip="Campo calcolato con formula">
+                        <span class="dashicons dashicons-calculator"></span>
+                        <?php _e( 'Calcolato', 'fp-forms' ); ?>
+                    </button>
                     <button type="button" class="fp-field-type" data-type="recaptcha" data-tooltip="Google reCAPTCHA anti-spam">
                         <span class="dashicons dashicons-shield"></span>
                         <?php _e( 'reCAPTCHA', 'fp-forms' ); ?>
@@ -148,6 +156,10 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                     <button type="button" class="fp-field-type" data-type="file">
                         <span class="dashicons dashicons-upload"></span>
                         <?php _e( 'Upload File', 'fp-forms' ); ?>
+                    </button>
+                    <button type="button" class="fp-field-type fp-field-type-step" data-type="step_break" data-tooltip="Separatore per form multi-step">
+                        <span class="dashicons dashicons-arrow-right-alt"></span>
+                        <?php _e( 'Nuovo Step', 'fp-forms' ); ?>
                     </button>
                 </div>
             </div>
@@ -315,6 +327,24 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                     <input type="url" name="success_redirect_url" value="<?php echo esc_url( $form_settings['success_redirect_url'] ?? '' ); ?>" placeholder="https://example.com/thank-you">
                 </div>
                 
+                <h4><?php _e( 'Impostazioni Avanzate', 'fp-forms' ); ?></h4>
+                
+                <div class="fp-setting-field">
+                    <label>
+                        <input type="checkbox" name="enable_multistep" value="1" <?php checked( $form_settings['enable_multistep'] ?? false, true ); ?>>
+                        <?php _e( 'Abilita form multi-step', 'fp-forms' ); ?>
+                    </label>
+                    <small><?php _e( 'Dividi il form in più step. Usa il campo "Nuovo Step" per separare le sezioni.', 'fp-forms' ); ?></small>
+                </div>
+                
+                <div class="fp-setting-field">
+                    <label>
+                        <input type="checkbox" name="enable_progressive_save" value="1" <?php checked( $form_settings['enable_progressive_save'] ?? false, true ); ?>>
+                        <?php _e( 'Abilita salvataggio progressivo (auto-save)', 'fp-forms' ); ?>
+                    </label>
+                    <small><?php _e( 'Salva automaticamente i dati del form nel browser dell\'utente per evitare perdite', 'fp-forms' ); ?></small>
+                </div>
+                
                 <h4><?php _e( 'Messaggio di Conferma', 'fp-forms' ); ?></h4>
                 
                 <div class="fp-setting-field">
@@ -444,8 +474,26 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                     <input type="text" name="brevo_event_name" value="<?php echo esc_attr( $form_settings['brevo_event_name'] ?? '' ); ?>" placeholder="form_submission">
                     <small><?php _e( 'Lascia vuoto per usare "form_submission" come default. Esempi: newsletter_signup, contact_request, demo_request', 'fp-forms' ); ?></small>
                 </div>
+                
+                <?php
+                // Conditional Logic Builder
+                include FP_FORMS_PLUGIN_DIR . 'templates/admin/partials/conditional-logic-builder.php';
+                
+                // Webhooks Settings
+                include FP_FORMS_PLUGIN_DIR . 'templates/admin/partials/webhooks-settings.php';
+                
+                // Form Versioning (solo se form esistente)
+                if ( ! $is_new && $form_id > 0 ) {
+                    include FP_FORMS_PLUGIN_DIR . 'templates/admin/partials/form-versioning.php';
+                }
+                ?>
             </div>
-            
+        </div>
+
+        <div class="fp-builder-actions">
+            <button type="submit" class="button button-primary button-large">
+                <?php _e( 'Salva Form', 'fp-forms' ); ?>
+            </button>
         </div>
     </form>
 </div>

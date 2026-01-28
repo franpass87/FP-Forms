@@ -106,32 +106,44 @@
         deleteForm: function(e) {
             e.preventDefault();
             
-            if (!confirm('Sei sicuro di voler eliminare questo form? Questa azione non può essere annullata.')) {
-                return;
-            }
-            
             var formId = $(this).data('form-id');
             var $row = $(this).closest('tr');
+            var self = this;
             
-            $.ajax({
-                url: fpFormsAdmin.ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'fp_forms_delete_form',
-                    nonce: fpFormsAdmin.nonce,
-                    form_id: formId
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $row.fadeOut(function() {
-                            $(this).remove();
-                        });
-                    } else {
-                        alert(response.data.message || fpFormsAdmin.strings.error);
-                    }
-                },
-                error: function() {
-                    alert(fpFormsAdmin.strings.error);
+            window.fpConfirm('Sei sicuro di voler eliminare questo form? Questa azione non può essere annullata.', {
+                title: 'Elimina Form',
+                confirmText: 'Elimina',
+                cancelText: 'Annulla',
+                confirmClass: 'button-primary',
+                onConfirm: function() {
+                    $.ajax({
+                        url: fpFormsAdmin.ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'fp_forms_delete_form',
+                            nonce: fpFormsAdmin.nonce,
+                            form_id: formId
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                $row.fadeOut(function() {
+                                    $(this).remove();
+                                });
+                                if (typeof window.fpToast !== 'undefined') {
+                                    window.fpToast.success('Form eliminato con successo');
+                                }
+                            } else {
+                                if (typeof window.fpToast !== 'undefined') {
+                                    window.fpToast.error(response.data.message || fpFormsAdmin.strings.error);
+                                }
+                            }
+                        },
+                        error: function() {
+                            if (typeof window.fpToast !== 'undefined') {
+                                window.fpToast.error(fpFormsAdmin.strings.error);
+                            }
+                        }
+                    });
                 }
             });
         },
@@ -159,12 +171,16 @@
                     if (response.success) {
                         location.reload();
                     } else {
-                        alert(response.data.message || fpFormsAdmin.strings.error);
+                        if (typeof window.fpToast !== 'undefined') {
+                            window.fpToast.error(response.data.message || fpFormsAdmin.strings.error);
+                        }
                         $btn.prop('disabled', false).text('Duplica');
                     }
                 },
                 error: function() {
-                    alert(fpFormsAdmin.strings.error);
+                    if (typeof window.fpToast !== 'undefined') {
+                        window.fpToast.error(fpFormsAdmin.strings.error);
+                    }
                     $btn.prop('disabled', false).text('Duplica');
                 }
             });
@@ -199,6 +215,7 @@
         getFieldDefaults: function(type) {
             var typeLabels = {
                 'text': 'Testo',
+                'fullname': 'Nome e cognome',
                 'email': 'Email',
                 'phone': 'Telefono',
                 'number': 'Numero',
@@ -210,7 +227,9 @@
                 'privacy-checkbox': 'Privacy Policy',
                 'marketing-checkbox': 'Marketing',
                 'recaptcha': 'reCAPTCHA',
-                'file': 'Upload File'
+                'file': 'Upload File',
+                'calculated': 'Calcolato',
+                'step_break': 'Nuovo Step'
             };
             
             // Default specifici per privacy-checkbox
@@ -241,6 +260,20 @@
                 };
             }
             
+            // Default specifici per fullname (nome e cognome)
+            if (type === 'fullname') {
+                return {
+                    type: type,
+                    typeLabel: typeLabels[type],
+                    label: 'Nome e cognome',
+                    name: 'nome_cognome',
+                    placeholder: '',
+                    description: '',
+                    choices: '',
+                    required: true
+                };
+            }
+
             // Default specifici per reCAPTCHA
             if (type === 'recaptcha') {
                 return {
@@ -252,6 +285,21 @@
                     description: '',
                     choices: '',
                     required: false // Non applicabile
+                };
+            }
+            
+            // Default specifici per step_break
+            if (type === 'step_break') {
+                return {
+                    type: type,
+                    typeLabel: typeLabels[type],
+                    label: 'Nuovo Step',
+                    name: 'step_break_' + Date.now(),
+                    step_title: 'Step ' + (Date.now() % 1000),
+                    placeholder: '',
+                    description: '',
+                    choices: '',
+                    required: false
                 };
             }
             
@@ -300,12 +348,17 @@
         deleteField: function(e) {
             e.preventDefault();
             
-            if (!confirm('Eliminare questo campo?')) {
-                return;
-            }
+            var $field = $(this).closest('.fp-field-item');
             
-            $(this).closest('.fp-field-item').fadeOut(function() {
-                $(this).remove();
+            window.fpConfirm('Eliminare questo campo?', {
+                title: 'Elimina Campo',
+                confirmText: 'Elimina',
+                cancelText: 'Annulla',
+                onConfirm: function() {
+                    $field.fadeOut(function() {
+                        $(this).remove();
+                    });
+                }
             });
         },
         
@@ -467,6 +520,11 @@
                     fieldData.options.marketing_text = $field.find('.fp-field-input-marketing-text').val() || 'Acconsento a ricevere comunicazioni marketing e newsletter';
                 }
                 
+                // Aggiungi step_title per step_break
+                if (type === 'step_break') {
+                    fieldData.step_title = $field.find('.fp-field-input-step-title').val() || '';
+                }
+                
                 fields.push(fieldData);
             });
             
@@ -511,7 +569,13 @@
                 brevo_list_id: $('input[name="brevo_list_id"]').val(),
                 brevo_event_name: $('input[name="brevo_event_name"]').val(),
                 // Conditional logic
-                conditional_rules: FPFormsAdmin.getConditionalRules()
+                conditional_rules: FPFormsAdmin.getConditionalRules(),
+                // Webhooks
+                webhooks: FPFormsAdmin.getWebhooks(),
+                // Multi-step
+                enable_multistep: $('input[name="enable_multistep"]').is(':checked'),
+                // Progressive save
+                enable_progressive_save: $('input[name="enable_progressive_save"]').is(':checked')
             };
             
             var $btn = $('#fp-form-builder').find('button[type="submit"]');
@@ -605,30 +669,31 @@
         deleteSubmission: function(e) {
             e.preventDefault();
             
-            if (!confirm('Eliminare questa submission? Questa azione non può essere annullata.')) {
-                return;
-            }
-            
             var $btn = $(this);
             var submissionId = $btn.data('submission-id');
             var $row = $btn.closest('tr');
             
-            fpLoadingButton($btn, 'Eliminazione...');
-            
-            $.ajax({
-                url: fpFormsAdmin.ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'fp_forms_delete_submission',
-                    nonce: fpFormsAdmin.nonce,
-                    submission_id: submissionId
-                },
-                success: function(response) {
-                    if (response.success) {
-                        fpToast.success('Submission eliminata');
-                        $row.fadeOut(400, function() {
-                            $(this).remove();
-                        });
+            window.fpConfirm('Eliminare questa submission? Questa azione non può essere annullata.', {
+                title: 'Elimina Submission',
+                confirmText: 'Elimina',
+                cancelText: 'Annulla',
+                onConfirm: function() {
+                    fpLoadingButton($btn, 'Eliminazione...');
+                    
+                    $.ajax({
+                        url: fpFormsAdmin.ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'fp_forms_delete_submission',
+                            nonce: fpFormsAdmin.nonce,
+                            submission_id: submissionId
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                fpToast.success('Submission eliminata');
+                                $row.fadeOut(400, function() {
+                                    $(this).remove();
+                                });
                     } else {
                         fpToast.error(response.data.message || fpFormsAdmin.strings.error);
                         fpLoadingButtonReset($btn);
@@ -637,6 +702,8 @@
                 error: function() {
                     fpToast.error(fpFormsAdmin.strings.error);
                     fpLoadingButtonReset($btn);
+                }
+                    });
                 }
             });
         },
@@ -770,17 +837,46 @@
         deleteConditionalRule: function(e) {
             e.preventDefault();
             
-            if (!confirm('Eliminare questa regola?')) {
-                return;
-            }
+            var $rule = $(this).closest('.fp-rule-item');
             
-            $(this).closest('.fp-rule-item').fadeOut(function() {
-                $(this).remove();
-                // Rinumera regole
-                $('.fp-rule-item').each(function(idx) {
-                    $(this).find('.fp-rule-number').text('Regola #' + (idx + 1));
-                });
+            window.fpConfirm('Eliminare questa regola?', {
+                title: 'Elimina Regola',
+                confirmText: 'Elimina',
+                cancelText: 'Annulla',
+                onConfirm: function() {
+                    $rule.fadeOut(function() {
+                        $(this).remove();
+                        // Rinumera regole
+                        $('.fp-rule-item').each(function(idx) {
+                            $(this).find('.fp-rule-number').text('Regola #' + (idx + 1));
+                        });
+                    });
+                }
             });
+        },
+        
+        /**
+         * Ottiene webhooks dal form
+         */
+        getWebhooks: function() {
+            var webhooks = [];
+            
+            $('.fp-webhook-item').each(function() {
+                var $webhook = $(this);
+                var url = $webhook.find('.fp-webhook-url').val();
+                
+                // Solo aggiungi se ha URL
+                if (url) {
+                    webhooks.push({
+                        id: $webhook.find('.fp-webhook-id').val() || 'webhook_' + Date.now(),
+                        enabled: $webhook.find('.fp-webhook-enabled').is(':checked'),
+                        url: url,
+                        secret: $webhook.find('.fp-webhook-secret').val() || ''
+                    });
+                }
+            });
+            
+            return webhooks;
         },
         
         /**
@@ -890,15 +986,29 @@
                 return;
             }
             
-            if (action === 'delete' && !confirm('Eliminare ' + submissionIds.length + ' submissions? Questa azione non può essere annullata.')) {
+            var $btn = $(this);
+            var self = this;
+            
+            // Confirm per delete
+            if (action === 'delete') {
+                window.fpConfirm('Eliminare ' + submissionIds.length + ' submissions? Questa azione non può essere annullata.', {
+                    title: 'Elimina Submissions',
+                    confirmText: 'Elimina',
+                    cancelText: 'Annulla',
+                    onConfirm: function() {
+                        executeBulkAction();
+                    }
+                });
                 return;
             }
             
-            var $btn = $(this);
-            fpLoadingButton($btn, 'Elaborazione...');
-            fpProgress.show(50);
+            executeBulkAction();
             
-            $.ajax({
+            function executeBulkAction() {
+                fpLoadingButton($btn, 'Elaborazione...');
+                fpProgress.show(50);
+                
+                $.ajax({
                 url: fpFormsAdmin.ajaxurl,
                 type: 'POST',
                 data: {
@@ -1128,7 +1238,7 @@
                         } else {
                             $container.html(
                                 '<div class="notice notice-error inline" style="margin:0; padding:8px 12px;">' +
-                                (response.data?.message || 'Errore caricamento liste') +
+                                (response.data && response.data.message ? response.data.message : 'Errore caricamento liste') +
                                 '</div>'
                             );
                         }
@@ -1194,7 +1304,151 @@
                     }
                 });
             });
+        },
+        
+        /**
+         * Aggiungi webhook
+         */
+        addWebhook: function(e) {
+            e.preventDefault();
+            
+            var index = $('.fp-webhook-item').length;
+            var template = $('#fp-webhook-template').html();
+            
+            template = template.replace(/\{\{index\}\}/g, index);
+            template = template.replace(/\{\{webhookNumber\}\}/g, index + 1);
+            template = template.replace(/\{\{webhookId\}\}/g, 'webhook_' + Date.now());
+            
+            $('#fp-webhooks-container').append(template);
+        },
+        
+        /**
+         * Elimina webhook
+         */
+        deleteWebhook: function(e) {
+            e.preventDefault();
+            
+            var $webhook = $(this).closest('.fp-webhook-item');
+            
+            window.fpConfirm('Eliminare questo webhook?', {
+                title: 'Elimina Webhook',
+                confirmText: 'Elimina',
+                cancelText: 'Annulla',
+                onConfirm: function() {
+                    $webhook.fadeOut(function() {
+                        $(this).remove();
+                        // Rinumera webhook
+                        $('.fp-webhook-item').each(function(idx) {
+                            $(this).find('.fp-webhook-number').text('Webhook #' + (idx + 1));
+                        });
+                    });
+                }
+            });
+        },
+        
+        /**
+         * Test webhook
+         */
+        testWebhook: function(e) {
+            e.preventDefault();
+            
+            var $btn = $(this);
+            var $webhook = $btn.closest('.fp-webhook-item');
+            var $result = $webhook.find('.fp-webhook-test-result');
+            var url = $webhook.find('.fp-webhook-url').val();
+            var secret = $webhook.find('.fp-webhook-secret').val();
+            
+            if (!url) {
+                fpToast.warning('Inserisci un URL webhook prima di testare');
+                return;
+            }
+            
+            var originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> Testing...');
+            $result.html('');
+            
+            $.ajax({
+                url: fpFormsAdmin.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'fp_forms_test_webhook',
+                    nonce: fpFormsAdmin.nonce,
+                    url: url,
+                    secret: secret || ''
+                },
+                success: function(response) {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    
+                    if (response.success) {
+                        $result.removeClass('error').addClass('success').text('✓ ' + response.data.message);
+                        fpToast.success('Webhook testato con successo!');
+                    } else {
+                        $result.removeClass('success').addClass('error').text('✕ ' + (response.data.message || 'Errore'));
+                        fpToast.error(response.data.message || 'Errore durante il test webhook');
+                    }
+                },
+                error: function() {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    $result.removeClass('success').addClass('error').text('✕ Errore di connessione');
+                    fpToast.error('Errore di connessione durante il test');
+                }
+            });
         }
     };
+    
+    // Bind eventi webhooks
+    $(document).on('click', '#fp-add-webhook', FPFormsAdmin.addWebhook);
+    $(document).on('click', '.fp-webhook-delete', FPFormsAdmin.deleteWebhook);
+    $(document).on('click', '.fp-test-webhook', FPFormsAdmin.testWebhook);
+    
+    /**
+     * Ripristina snapshot
+     */
+    FPFormsAdmin.restoreSnapshot = function(e) {
+        e.preventDefault();
+        
+        var $btn = $(this);
+        var snapshotId = $btn.data('snapshot-id');
+        var formId = $btn.data('form-id');
+        
+        window.fpConfirm('Ripristinare questa versione del form? La versione corrente verrà salvata come nuovo snapshot.', {
+            title: 'Ripristina Snapshot',
+            confirmText: 'Ripristina',
+            cancelText: 'Annulla',
+            onConfirm: function() {
+                var originalHtml = $btn.html();
+                $btn.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> Ripristino...');
+                
+                $.ajax({
+                    url: fpFormsAdmin.ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'fp_forms_restore_snapshot',
+                        nonce: fpFormsAdmin.nonce,
+                        form_id: formId,
+                        snapshot_id: snapshotId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            fpToast.success(response.data.message);
+                            setTimeout(function() {
+                                window.location.href = response.data.redirect;
+                            }, 1000);
+                        } else {
+                            fpToast.error(response.data.message || 'Errore nel ripristinare lo snapshot');
+                            $btn.prop('disabled', false).html(originalHtml);
+                        }
+                    },
+                    error: function() {
+                        fpToast.error('Errore di connessione');
+                        $btn.prop('disabled', false).html(originalHtml);
+                    }
+                });
+            }
+        });
+    };
+    
+    // Bind evento restore snapshot
+    $(document).on('click', '.fp-restore-snapshot', FPFormsAdmin.restoreSnapshot);
     
 })(jQuery);

@@ -164,13 +164,26 @@ class Sanitizer {
         
         foreach ( $fields as $field ) {
             $field_name = $field['name'];
+            $field_type = isset( $field['type'] ) ? $field['type'] : 'text';
+
+            if ( $field_type === 'fullname' ) {
+                $key_nome = $field_name . '_nome';
+                $key_cognome = $field_name . '_cognome';
+                if ( isset( $data[ $key_nome ] ) ) {
+                    $sanitized[ $key_nome ] = $this->sanitize_field( $data[ $key_nome ], 'text' );
+                }
+                if ( isset( $data[ $key_cognome ] ) ) {
+                    $sanitized[ $key_cognome ] = $this->sanitize_field( $data[ $key_cognome ], 'text' );
+                }
+                continue;
+            }
             
             if ( ! isset( $data[ $field_name ] ) ) {
                 continue;
             }
             
             $value = $data[ $field_name ];
-            $sanitized[ $field_name ] = $this->sanitize_field( $value, $field['type'] );
+            $sanitized[ $field_name ] = $this->sanitize_field( $value, $field_type );
         }
         
         return $sanitized;

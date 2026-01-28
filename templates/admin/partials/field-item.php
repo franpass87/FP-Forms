@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $type_labels = [
     'text' => 'Testo',
+    'fullname' => 'Nome e cognome',
     'email' => 'Email',
     'phone' => 'Telefono',
     'number' => 'Numero',
@@ -21,6 +22,8 @@ $type_labels = [
     'marketing-checkbox' => 'Marketing',
     'recaptcha' => 'reCAPTCHA',
     'file' => 'Upload File',
+    'calculated' => 'Calcolato',
+    'step_break' => 'Nuovo Step',
 ];
 
 $type_label = isset( $type_labels[ $field['type'] ] ) ? $type_labels[ $field['type'] ] : $field['type'];
@@ -110,6 +113,38 @@ if ( isset( $field['options']['choices'] ) && is_array( $field['options']['choic
             </label>
         </div>
         <?php endif; ?>
+        
+        <?php if ( $field['type'] === 'calculated' ) : ?>
+        <div class="fp-field-row fp-field-calculated-options">
+            <label><?php _e( 'Formula', 'fp-forms' ); ?></label>
+            <input type="text" class="fp-field-input-formula" value="<?php echo esc_attr( $field['options']['formula'] ?? '' ); ?>" placeholder="{campo1} + {campo2} * 0.2" required>
+            <small class="fp-field-help">
+                <?php _e( 'Usa {nome_campo} per riferirti ad altri campi. Esempi:', 'fp-forms' ); ?><br>
+                <code>{quantita} * {prezzo}</code> - <?php _e( 'Moltiplicazione', 'fp-forms' ); ?><br>
+                <code>{base} + {iva}</code> - <?php _e( 'Somma', 'fp-forms' ); ?><br>
+                <code>({totale} - {sconto}) * 0.9</code> - <?php _e( 'Calcolo complesso', 'fp-forms' ); ?>
+            </small>
+        </div>
+        <div class="fp-field-row fp-field-calculated-options">
+            <label><?php _e( 'Formato Output', 'fp-forms' ); ?></label>
+            <select class="fp-field-input-format">
+                <option value="number" <?php selected( $field['options']['format'] ?? 'number', 'number' ); ?>><?php _e( 'Numero', 'fp-forms' ); ?></option>
+                <option value="currency" <?php selected( $field['options']['format'] ?? '', 'currency' ); ?>><?php _e( 'Valuta (€)', 'fp-forms' ); ?></option>
+                <option value="percentage" <?php selected( $field['options']['format'] ?? '', 'percentage' ); ?>><?php _e( 'Percentuale (%)', 'fp-forms' ); ?></option>
+            </select>
+        </div>
+        <div class="fp-field-row fp-field-calculated-options">
+            <label><?php _e( 'Decimali', 'fp-forms' ); ?></label>
+            <input type="number" class="fp-field-input-decimals" value="<?php echo esc_attr( $field['options']['decimals'] ?? 2 ); ?>" min="0" max="10">
+            <small class="fp-field-help"><?php _e( 'Numero di cifre decimali da mostrare', 'fp-forms' ); ?></small>
+        </div>
+        <div class="fp-field-row">
+            <p class="fp-field-notice">
+                <span class="dashicons dashicons-info"></span>
+                <?php _e( 'Il campo calcolato è readonly e si aggiorna automaticamente quando cambiano i campi referenziati nella formula.', 'fp-forms' ); ?>
+            </p>
+        </div>
+        <?php endif; ?>
         <?php if ( $field['type'] === 'recaptcha' ) : ?>
         <div class="fp-field-row">
             <p class="fp-field-notice">
@@ -134,6 +169,40 @@ if ( isset( $field['options']['choices'] ) && is_array( $field['options']['choic
                 <?php _e( 'Campo obbligatorio', 'fp-forms' ); ?>
             </label>
             <small class="fp-field-help"><?php _e( 'Il consenso marketing è generalmente opzionale', 'fp-forms' ); ?></small>
+        </div>
+        <?php elseif ( $field['type'] === 'step_break' ) : ?>
+        <div class="fp-field-row">
+            <label><?php _e( 'Titolo Step', 'fp-forms' ); ?></label>
+            <input type="text" class="fp-field-input-step-title" value="<?php echo esc_attr( $field['step_title'] ?? '' ); ?>" placeholder="<?php esc_attr_e( 'Es: Informazioni Personali', 'fp-forms' ); ?>">
+            <small class="fp-field-help"><?php _e( 'Titolo mostrato nella progress bar del form multi-step', 'fp-forms' ); ?></small>
+        </div>
+        <div class="fp-field-row">
+            <p class="fp-field-notice">
+                <span class="dashicons dashicons-info"></span>
+                <?php _e( 'Questo campo separa il form in step diversi. I campi prima di questo separatore appartengono allo step precedente.', 'fp-forms' ); ?>
+            </p>
+        </div>
+        <?php elseif ( in_array( $field['type'], [ 'text', 'email', 'phone', 'textarea' ], true ) ) : ?>
+        <div class="fp-field-row">
+            <label>
+                <input type="checkbox" class="fp-field-input-required" <?php checked( $field['required'], true ); ?>>
+                <?php _e( 'Campo obbligatorio', 'fp-forms' ); ?>
+            </label>
+        </div>
+        <div class="fp-field-row">
+            <label>
+                <input type="checkbox" class="fp-field-input-voice-input" <?php checked( $field['options']['voice_input'] ?? false, true ); ?>>
+                <?php _e( 'Abilita input vocale', 'fp-forms' ); ?>
+            </label>
+            <small class="fp-field-help"><?php _e( 'Aggiunge pulsante microfono per inserire testo con la voce (richiede permesso microfono)', 'fp-forms' ); ?></small>
+        </div>
+        <?php elseif ( $field['type'] === 'fullname' ) : ?>
+        <div class="fp-field-row">
+            <label>
+                <input type="checkbox" class="fp-field-input-required" <?php checked( $field['required'], true ); ?>>
+                <?php _e( 'Campo obbligatorio', 'fp-forms' ); ?>
+            </label>
+            <small class="fp-field-help"><?php _e( 'Nome e cognome richiesti', 'fp-forms' ); ?></small>
         </div>
         <?php else : ?>
         <div class="fp-field-row">

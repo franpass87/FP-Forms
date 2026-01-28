@@ -34,6 +34,8 @@ class Manager {
         add_action( 'wp_ajax_fp_forms_test_brevo', [ $this, 'ajax_test_brevo' ] );
         add_action( 'wp_ajax_fp_forms_load_brevo_lists', [ $this, 'ajax_load_brevo_lists' ] );
         add_action( 'wp_ajax_fp_forms_test_meta', [ $this, 'ajax_test_meta' ] );
+        add_action( 'wp_ajax_fp_forms_test_webhook', [ $this, 'ajax_test_webhook' ] );
+        add_action( 'wp_ajax_fp_forms_restore_snapshot', [ $this, 'ajax_restore_snapshot' ] );
         add_action( 'wp_ajax_fp_forms_import_form_config', [ $this, 'ajax_import_form_config' ] );
     }
     
@@ -175,6 +177,13 @@ class Manager {
             FP_FORMS_VERSION
         );
         
+        wp_enqueue_style(
+            'fp-forms-modal',
+            FP_FORMS_PLUGIN_URL . 'assets/css/modal-confirm.css',
+            [],
+            FP_FORMS_VERSION
+        );
+        
         // JS
         wp_enqueue_script(
             'fp-forms-toast',
@@ -193,9 +202,17 @@ class Manager {
         );
         
         wp_enqueue_script(
+            'fp-forms-modal',
+            FP_FORMS_PLUGIN_URL . 'assets/js/modal-confirm.js',
+            [ 'jquery' ],
+            FP_FORMS_VERSION,
+            true
+        );
+        
+        wp_enqueue_script(
             'fp-forms-admin',
             FP_FORMS_PLUGIN_URL . 'assets/js/admin.js',
-            [ 'jquery', 'jquery-ui-sortable', 'fp-forms-toast', 'fp-forms-loading' ],
+            [ 'jquery', 'jquery-ui-sortable', 'fp-forms-toast', 'fp-forms-loading', 'fp-forms-modal' ],
             FP_FORMS_VERSION,
             true
         );
@@ -662,20 +679,43 @@ class Manager {
         
         // Dati form
         $html .= '<div class="fp-submission-data">';
+        $fullname_bases = [];
+        foreach ( $form['fields'] as $f ) {
+            if ( isset( $f['type'] ) && $f['type'] === 'fullname' && ! empty( $f['name'] ) ) {
+                $fullname_bases[ $f['name'] ] = $f['label'];
+            }
+        }
+        $shown_keys = [];
         foreach ( $submission->data as $key => $value ) {
-            // Trova label campo
+            if ( in_array( $key, $shown_keys, true ) ) {
+                continue;
+            }
+            $clean = str_replace( 'fp_field_', '', $key );
+            $is_nome = preg_match( '/^(.+)_nome$/', $clean, $m ) && isset( $fullname_bases[ $m[1] ] );
+            $is_cognome = preg_match( '/^(.+)_cognome$/', $clean, $m ) && isset( $fullname_bases[ $m[1] ] );
+            if ( $is_nome || $is_cognome ) {
+                $base = $m[1];
+                $label = $fullname_bases[ $base ];
+                $key_nome = $base . '_nome';
+                $key_cognome = $base . '_cognome';
+                $val_nome = isset( $submission->data[ $key_nome ] ) ? ( is_array( $submission->data[ $key_nome ] ) ? implode( ', ', $submission->data[ $key_nome ] ) : $submission->data[ $key_nome ] ) : '';
+                $val_cognome = isset( $submission->data[ $key_cognome ] ) ? ( is_array( $submission->data[ $key_cognome ] ) ? implode( ', ', $submission->data[ $key_cognome ] ) : $submission->data[ $key_cognome ] ) : '';
+                $combined = trim( $val_nome . ' ' . $val_cognome );
+                $html .= '<p><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $combined ) . '</p>';
+                $shown_keys[] = $key_nome;
+                $shown_keys[] = $key_cognome;
+                continue;
+            }
             $field_label = $key;
             foreach ( $form['fields'] as $field ) {
-                if ( $field['name'] === str_replace( 'fp_field_', '', $key ) ) {
+                if ( $field['name'] === $clean ) {
                     $field_label = $field['label'];
                     break;
                 }
             }
-            
             if ( is_array( $value ) ) {
                 $value = implode( ', ', $value );
             }
-            
             $html .= '<p><strong>' . esc_html( $field_label ) . ':</strong> ' . esc_html( $value ) . '</p>';
         }
         $html .= '</div>';
@@ -706,7 +746,7 @@ class Manager {
      * AJAX: Testa connessione reCAPTCHA
      */
     public function ajax_test_recaptcha() {
-        check_ajax_referer( 'fp-forms-admin', 'nonce' );
+        check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti', 'fp-forms' ) ] );
@@ -726,7 +766,7 @@ class Manager {
      * AJAX: Testa connessione Brevo
      */
     public function ajax_test_brevo() {
-        check_ajax_referer( 'fp-forms-admin', 'nonce' );
+        check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti', 'fp-forms' ) ] );
@@ -746,7 +786,7 @@ class Manager {
      * AJAX: Carica liste Brevo
      */
     public function ajax_load_brevo_lists() {
-        check_ajax_referer( 'fp-forms-admin', 'nonce' );
+        check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti', 'fp-forms' ) ] );
@@ -766,7 +806,7 @@ class Manager {
      * AJAX: Testa connessione Meta Pixel
      */
     public function ajax_test_meta() {
-        check_ajax_referer( 'fp-forms-admin', 'nonce' );
+        check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti', 'fp-forms' ) ] );
@@ -905,6 +945,92 @@ class Manager {
             $sanitized['trust_badges'] = [];
         }
         
+        // Webhooks (array di webhook)
+        if ( isset( $settings['webhooks'] ) && is_array( $settings['webhooks'] ) ) {
+            $sanitized['webhooks'] = [];
+            foreach ( $settings['webhooks'] as $webhook ) {
+                if ( ! is_array( $webhook ) ) {
+                    continue;
+                }
+                
+                $sanitized_webhook = [
+                    'enabled' => isset( $webhook['enabled'] ) ? (bool) $webhook['enabled'] : true,
+                    'url' => isset( $webhook['url'] ) ? esc_url_raw( $webhook['url'] ) : '',
+                    'secret' => isset( $webhook['secret'] ) ? sanitize_text_field( $webhook['secret'] ) : '',
+                    'id' => isset( $webhook['id'] ) ? sanitize_text_field( $webhook['id'] ) : 'webhook_' . uniqid(),
+                ];
+                
+                // Solo aggiungi se ha URL valido
+                if ( ! empty( $sanitized_webhook['url'] ) ) {
+                    $sanitized['webhooks'][] = $sanitized_webhook;
+                }
+            }
+        } else {
+            $sanitized['webhooks'] = [];
+        }
+        
         return $sanitized;
+    }
+    
+    /**
+     * AJAX: Test webhook
+     */
+    public function ajax_test_webhook() {
+        check_ajax_referer( 'fp_forms_admin', 'nonce' );
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
+        }
+        
+        $url = isset( $_POST['url'] ) ? esc_url_raw( $_POST['url'] ) : '';
+        $secret = isset( $_POST['secret'] ) ? sanitize_text_field( $_POST['secret'] ) : '';
+        
+        if ( empty( $url ) ) {
+            wp_send_json_error( [ 'message' => __( 'URL webhook non valido.', 'fp-forms' ) ] );
+        }
+        
+        $webhook_manager = \FPForms\Plugin::instance()->webhooks;
+        $result = $webhook_manager->test_webhook( $url, $secret );
+        
+        if ( $result['success'] ) {
+            wp_send_json_success( [
+                'message' => $result['message'],
+                'status_code' => $result['status_code'],
+            ] );
+        } else {
+            wp_send_json_error( [
+                'message' => $result['message'],
+            ] );
+        }
+    }
+    
+    /**
+     * AJAX: Ripristina snapshot
+     */
+    public function ajax_restore_snapshot() {
+        check_ajax_referer( 'fp_forms_admin', 'nonce' );
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
+        }
+        
+        $form_id = isset( $_POST['form_id'] ) ? intval( $_POST['form_id'] ) : 0;
+        $snapshot_id = isset( $_POST['snapshot_id'] ) ? sanitize_text_field( $_POST['snapshot_id'] ) : '';
+        
+        if ( ! $form_id || ! $snapshot_id ) {
+            wp_send_json_error( [ 'message' => __( 'Parametri non validi.', 'fp-forms' ) ] );
+        }
+        
+        $versioning = \FPForms\Plugin::instance()->versioning;
+        $result = $versioning->restore_snapshot( $form_id, $snapshot_id );
+        
+        if ( $result ) {
+            wp_send_json_success( [
+                'message' => __( 'Snapshot ripristinato con successo!', 'fp-forms' ),
+                'redirect' => admin_url( 'admin.php?page=fp-forms-edit&form_id=' . $form_id ),
+            ] );
+        } else {
+            wp_send_json_error( [ 'message' => __( 'Errore nel ripristinare lo snapshot.', 'fp-forms' ) ] );
+        }
     }
 }

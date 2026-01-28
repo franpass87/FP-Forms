@@ -24,6 +24,7 @@ class FieldFactory {
     private static function register_defaults() {
         self::$renderers = [
             'text' => [ __CLASS__, 'render_text' ],
+            'fullname' => [ __CLASS__, 'render_fullname' ],
             'email' => [ __CLASS__, 'render_email' ],
             'phone' => [ __CLASS__, 'render_phone' ],
             'number' => [ __CLASS__, 'render_number' ],
@@ -36,6 +37,7 @@ class FieldFactory {
             'marketing-checkbox' => [ __CLASS__, 'render_marketing_checkbox' ],
             'recaptcha' => [ __CLASS__, 'render_recaptcha' ],
             'file' => [ __CLASS__, 'render_file' ],
+            'calculated' => [ 'FPForms\Fields\CalculatedField', 'render' ],
         ];
     }
     
@@ -83,8 +85,31 @@ class FieldFactory {
         $required_mark = $field['required'] ? ' <span class="fp-forms-required">*</span>' : '';
         $description = isset( $field['options']['description'] ) ? $field['options']['description'] : '';
         
-        $html = '<div class="fp-forms-field fp-forms-field-' . esc_attr( $field['type'] ) . '">';
-        $html .= '<label for="' . esc_attr( $field['id'] ?? '' ) . '" class="fp-forms-label">' . esc_html( $field['label'] ) . $required_mark . '</label>';
+        // Field icon support
+        $icon_html = '';
+        if ( isset( $field['options']['icon'] ) && ! empty( $field['options']['icon'] ) ) {
+            $icon = $field['options']['icon'];
+            // Supporto dashicons o emoji
+            if ( strpos( $icon, 'dashicons-' ) === 0 ) {
+                $icon_html = '<span class="fp-field-icon dashicons ' . esc_attr( $icon ) . '"></span>';
+            } else {
+                // Emoji o altro testo
+                $icon_html = '<span class="fp-field-icon fp-field-icon-emoji">' . esc_html( $icon ) . '</span>';
+            }
+        }
+        
+        // Voice input support (solo per text, email, tel, textarea)
+        $voice_input_enabled = isset( $field['options']['voice_input'] ) && $field['options']['voice_input'] === true;
+        $voice_input_supported = in_array( $field['type'], [ 'text', 'email', 'phone', 'textarea' ], true );
+        
+        // Aggiungi data attribute per voice input
+        $voice_attr = '';
+        if ( $voice_input_supported && $voice_input_enabled ) {
+            $voice_attr = ' data-voice-input="true"';
+        }
+        
+        $html = '<div class="fp-forms-field fp-forms-field-' . esc_attr( $field['type'] ) . '"' . $voice_attr . '>';
+        $html .= '<label for="' . esc_attr( $field['id'] ?? '' ) . '" class="fp-forms-label">' . $icon_html . esc_html( $field['label'] ) . $required_mark . '</label>';
         $html .= $content;
         
         if ( $description ) {
@@ -115,6 +140,52 @@ class FieldFactory {
         return self::wrap_field( $field, $html );
     }
     
+    /**
+     * Render fullname field (Nome e cognome – due input affiancati)
+     */
+    public static function render_fullname( $field, $form_id ) {
+        $base_name = 'fp_field_' . $field['name'];
+        $base_id   = 'fp_field_' . $form_id . '_' . $field['name'];
+        $required  = ! empty( $field['required'] ) ? 'required' : '';
+        $ph_nome   = isset( $field['options']['placeholder'] ) && $field['options']['placeholder'] !== ''
+            ? $field['options']['placeholder']
+            : __( 'Nome', 'fp-forms' );
+        $ph_cognome = isset( $field['options']['placeholder_cognome'] ) && $field['options']['placeholder_cognome'] !== ''
+            ? $field['options']['placeholder_cognome']
+            : __( 'Cognome', 'fp-forms' );
+
+        $required_mark = $field['required'] ? ' <span class="fp-forms-required">*</span>' : '';
+        $description   = isset( $field['options']['description'] ) ? $field['options']['description'] : '';
+
+        $html  = '<div class="fp-forms-field fp-forms-field-fullname">';
+        $html .= '<span class="fp-forms-label">' . esc_html( $field['label'] ) . $required_mark . '</span>';
+        $html .= '<div class="fp-fullname-row">';
+        $html .= '<label for="' . esc_attr( $base_id . '_nome' ) . '" class="fp-forms-sr-only">' . esc_html__( 'Nome', 'fp-forms' ) . '</label>';
+        $html .= sprintf(
+            '<input type="text" id="%s" name="%s" class="fp-forms-input fp-forms-input-nome" %s placeholder="%s" />',
+            esc_attr( $base_id . '_nome' ),
+            esc_attr( $base_name . '_nome' ),
+            $required,
+            esc_attr( $ph_nome )
+        );
+        $html .= '<label for="' . esc_attr( $base_id . '_cognome' ) . '" class="fp-forms-sr-only">' . esc_html__( 'Cognome', 'fp-forms' ) . '</label>';
+        $html .= sprintf(
+            '<input type="text" id="%s" name="%s" class="fp-forms-input fp-forms-input-cognome" %s placeholder="%s" />',
+            esc_attr( $base_id . '_cognome' ),
+            esc_attr( $base_name . '_cognome' ),
+            $required,
+            esc_attr( $ph_cognome )
+        );
+        $html .= '</div>';
+        if ( $description ) {
+            $html .= '<p class="fp-forms-description">' . esc_html( $description ) . '</p>';
+        }
+        $html .= '<span class="fp-forms-error" style="display:none;"></span>';
+        $html .= '</div>';
+
+        return $html;
+    }
+
     /**
      * Render email field
      */
@@ -299,7 +370,7 @@ class FieldFactory {
         // Ottieni URL privacy policy
         $privacy_url = self::get_privacy_policy_url();
         $privacy_text = isset( $field['options']['privacy_text'] ) 
-            ? $field['options']['privacy_text'] 
+            ? trim( $field['options']['privacy_text'] )
             : __( 'Ho letto e accetto la', 'fp-forms' );
         $privacy_link_text = __( 'Privacy Policy', 'fp-forms' );
         
@@ -314,16 +385,19 @@ class FieldFactory {
             esc_attr( $attrs['name'] )
         );
         $html .= ' <span class="fp-forms-privacy-text">';
-        $html .= esc_html( $privacy_text ) . ' ';
+        // Assicura che ci sia uno spazio tra il testo e il link
+        $privacy_text_trimmed = trim( $privacy_text );
+        $html .= esc_html( $privacy_text_trimmed );
         
+        // Usa non-breaking space per preservare lo spazio tra testo e link
         if ( $privacy_url ) {
-            $html .= sprintf(
+            $html .= '&nbsp;' . sprintf(
                 '<a href="%s" target="_blank" rel="noopener noreferrer" class="fp-forms-privacy-link">%s</a>',
                 esc_url( $privacy_url ),
                 esc_html( $privacy_link_text )
             );
         } else {
-            $html .= '<strong>' . esc_html( $privacy_link_text ) . '</strong>';
+            $html .= '&nbsp;<strong>' . esc_html( $privacy_link_text ) . '</strong>';
         }
         
         $html .= ' <span class="fp-forms-required">*</span>';
@@ -351,30 +425,108 @@ class FieldFactory {
     
     /**
      * Ottiene URL della privacy policy
-     * Controlla nell'ordine: FP-Privacy, WP Privacy Page, URL custom
+     * Verifica prima se FP Privacy Policy è installato e attivo, poi fallback a WordPress
+     * 
+     * @return string URL della privacy policy o stringa vuota se non trovata
      */
     private static function get_privacy_policy_url() {
-        // 1. Controlla se FP-Privacy è attivo
-        if ( function_exists( 'fp_privacy_get_policy_url' ) ) {
-            $url = fp_privacy_get_policy_url();
-            if ( $url ) {
-                return $url;
+        // 1. Verifica se FP Privacy Policy è installato e attivo
+        if ( ! function_exists( 'is_plugin_active' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+        
+        // Lista dei possibili nomi del plugin FP Privacy
+        $fp_privacy_plugins = [
+            'fp-privacy-and-cookie-policy/fp-privacy-and-cookie-policy.php',
+            'FP-Privacy-and-Cookie-Policy/fp-privacy-and-cookie-policy.php',
+            'fp-privacy/fp-privacy.php',
+            'FP-Privacy/fp-privacy.php',
+        ];
+        
+        $fp_privacy_active = false;
+        foreach ( $fp_privacy_plugins as $plugin_path ) {
+            if ( is_plugin_active( $plugin_path ) ) {
+                $fp_privacy_active = true;
+                break;
             }
         }
         
-        // 2. Controlla se esiste FP-Privacy come plugin
-        if ( class_exists( 'FP\Privacy\Plugin' ) ) {
-            // Ottieni URL dalla pagina privacy di FP-Privacy
-            $privacy_page_id = get_option( 'fp_privacy_policy_page_id' );
-            if ( $privacy_page_id ) {
-                return get_permalink( $privacy_page_id );
+        // 2. Se FP Privacy è attivo, prova diversi metodi per ottenere l'URL
+        if ( $fp_privacy_active ) {
+            // Metodo 1: Funzione helper globale
+            if ( function_exists( 'fp_privacy_get_policy_url' ) ) {
+                $url = fp_privacy_get_policy_url();
+                if ( $url && filter_var( $url, FILTER_VALIDATE_URL ) ) {
+                    return esc_url( $url );
+                }
+            }
+            
+            // Metodo 2: Classe FP\Privacy\Plugin
+            if ( class_exists( 'FP\Privacy\Plugin' ) ) {
+                $privacy_page_id = get_option( 'fp_privacy_policy_page_id' );
+                if ( $privacy_page_id ) {
+                    $url = get_permalink( $privacy_page_id );
+                    if ( $url ) {
+                        return esc_url( $url );
+                    }
+                }
+            }
+            
+            // Metodo 3: Namespace alternativi
+            $namespace_variants = [
+                'FPPrivacy\\Plugin',
+                'FP_Privacy\\Plugin',
+                'FPPrivacyPolicy\\Plugin',
+            ];
+            
+            foreach ( $namespace_variants as $namespace ) {
+                if ( class_exists( $namespace ) ) {
+                    $privacy_page_id = get_option( 'fp_privacy_policy_page_id' );
+                    if ( ! $privacy_page_id ) {
+                        $privacy_page_id = get_option( 'fp_privacy_page_id' );
+                    }
+                    if ( $privacy_page_id ) {
+                        $url = get_permalink( $privacy_page_id );
+                        if ( $url ) {
+                            return esc_url( $url );
+                        }
+                    }
+                }
+            }
+            
+            // Metodo 4: Opzioni del database comuni per FP Privacy
+            $privacy_options = [
+                'fp_privacy_policy_page_id',
+                'fp_privacy_page_id',
+                'fp_privacy_policy_url',
+                'fp_privacy_url',
+            ];
+            
+            foreach ( $privacy_options as $option_name ) {
+                $option_value = get_option( $option_name );
+                if ( $option_value ) {
+                    // Se è un ID di pagina
+                    if ( is_numeric( $option_value ) ) {
+                        $url = get_permalink( (int) $option_value );
+                        if ( $url ) {
+                            return esc_url( $url );
+                        }
+                    }
+                    // Se è già un URL
+                    elseif ( filter_var( $option_value, FILTER_VALIDATE_URL ) ) {
+                        return esc_url( $option_value );
+                    }
+                }
             }
         }
         
         // 3. Fallback: Privacy Policy page di WordPress
         $privacy_page_id = get_option( 'wp_page_for_privacy_policy' );
         if ( $privacy_page_id ) {
-            return get_permalink( $privacy_page_id );
+            $url = get_permalink( $privacy_page_id );
+            if ( $url ) {
+                return esc_url( $url );
+            }
         }
         
         // 4. Nessuna privacy policy trovata

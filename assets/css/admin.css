@@ -268,6 +268,34 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     color: var(--fp-color-primary);
 }
 
+/* Analytics Mini */
+.fp-analytics-mini {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.fp-views-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.fp-views-count .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.fp-conversion-badge.medium {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
 .fp-view-analytics .dashicons {
     font-size: 18px;
     width: 18px;
@@ -384,6 +412,16 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     overflow-y: auto;
     position: sticky;
     top: 32px;
+}
+
+.fp-builder-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: var(--fp-spacing-md);
+    padding: var(--fp-spacing-lg) 0 0;
+    margin-top: var(--fp-spacing-md);
+    border-top: 1px solid var(--fp-color-border);
 }
 
 /* Form Info */

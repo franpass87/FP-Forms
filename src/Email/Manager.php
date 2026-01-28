@@ -75,7 +75,7 @@ class Manager {
         foreach ( $form['fields'] as $field ) {
             $field_name = $field['name'];
             $field_label = $field['label'];
-            $field_value = isset( $data[ $field_name ] ) ? $data[ $field_name ] : '';
+            $field_value = $this->get_field_display_value( $field, $data );
             
             if ( is_array( $field_value ) ) {
                 $field_value = implode( ', ', $field_value );
@@ -139,13 +139,27 @@ class Manager {
     }
     
     /**
+     * Restituisce il valore da mostrare per un campo (gestisce fullname)
+     */
+    private function get_field_display_value( $field, $data ) {
+        $name = $field['name'];
+        $type = isset( $field['type'] ) ? $field['type'] : 'text';
+        if ( $type === 'fullname' ) {
+            $n = isset( $data[ $name . '_nome' ] ) ? $data[ $name . '_nome' ] : '';
+            $c = isset( $data[ $name . '_cognome' ] ) ? $data[ $name . '_cognome' ] : '';
+            return trim( $n . ' ' . $c );
+        }
+        return isset( $data[ $name ] ) ? $data[ $name ] : '';
+    }
+
+    /**
      * Sostituisce i tag dinamici
      */
     private function replace_tags( $text, $data, $form ) {
         // Tag per i campi del form
         foreach ( $form['fields'] as $field ) {
             $field_name = $field['name'];
-            $field_value = isset( $data[ $field_name ] ) ? $data[ $field_name ] : '';
+            $field_value = $this->get_field_display_value( $field, $data );
             
             if ( is_array( $field_value ) ) {
                 $field_value = implode( ', ', $field_value );

@@ -230,10 +230,21 @@ class Manager {
         
         foreach ( $fields as $field ) {
             $field_name = $field['name'];
-            $field_value = isset( $data[ $field_name ] ) ? $data[ $field_name ] : '';
             $field_label = $field['label'];
-            $field_type = $field['type'];
+            $field_type = isset( $field['type'] ) ? $field['type'] : 'text';
             $custom_error = isset( $field['options']['error_message'] ) ? $field['options']['error_message'] : '';
+
+            if ( $field_type === 'fullname' ) {
+                $field_value_nome = isset( $data[ $field_name . '_nome' ] ) ? $data[ $field_name . '_nome' ] : '';
+                $field_value_cognome = isset( $data[ $field_name . '_cognome' ] ) ? $data[ $field_name . '_cognome' ] : '';
+                if ( $field['required'] ) {
+                    $validator->validate_required( $field_value_nome, $field_name . '_nome', __( 'Nome', 'fp-forms' ), $custom_error );
+                    $validator->validate_required( $field_value_cognome, $field_name . '_cognome', __( 'Cognome', 'fp-forms' ), $custom_error );
+                }
+                continue;
+            }
+
+            $field_value = isset( $data[ $field_name ] ) ? $data[ $field_name ] : '';
             
             // Valida campo obbligatorio
             if ( $field['required'] ) {
