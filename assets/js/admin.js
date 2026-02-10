@@ -610,7 +610,7 @@
                     if (response.success) {
                         if (typeof window.fpToast !== 'undefined' && window.fpToast.success) window.fpToast.success('Form salvato con successo!');
                         setTimeout(function() {
-                            if (!formId && response.data && response.data.form_id) {
+                            if ((!formId || parseInt(formId, 10) === 0) && response.data && response.data.form_id) {
                                 window.location.href = (fpFormsAdmin.editFormUrlBase || (location.pathname + '?page=fp-forms-edit&form_id=')) + response.data.form_id;
                             } else {
                                 if (typeof window.fpLoadingButtonReset === 'function') window.fpLoadingButtonReset($btn);
