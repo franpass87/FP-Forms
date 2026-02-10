@@ -100,6 +100,14 @@ class Smtp {
             ];
         }
 
+        // Assicura che l'hook phpmailer_init sia attivo per il test,
+        // anche se SMTP non è ancora "abilitato" nelle impostazioni.
+        // Senza questo, wp_mail() usa PHP mail() nativo che spesso fallisce.
+        $hook_registered = has_action( 'phpmailer_init', [ __CLASS__, 'configure_phpmailer' ] );
+        if ( ! $hook_registered ) {
+            add_action( 'phpmailer_init', [ __CLASS__, 'configure_phpmailer' ] );
+        }
+
         $subject = sprintf(
             /* translators: %s: site name */
             __( '[%s] Email di test SMTP - FP Forms', 'fp-forms' ),
@@ -115,13 +123,24 @@ class Smtp {
         $message .= 'Auth: ' . ( $settings['auth'] ? 'yes' : 'no' ) . "\n";
         $message .= 'Date: ' . date_i18n( 'Y-m-d H:i:s' ) . "\n";
 
+        // Abilita debug PHPMailer per catturare errori dettagliati
+        add_action( 'phpmailer_init', function( $phpmailer ) {
+            $phpmailer->SMTPDebug = 0; // No output, ma errori catturati
+            $phpmailer->Debugoutput = function() {}; // Silenzia output
+        }, 999 );
+
         // Cattura eventuali errori da PHPMailer
+        $mail_error = null;
         add_action( 'wp_mail_failed', function( $wp_error ) use ( &$mail_error ) {
             $mail_error = $wp_error;
         } );
 
-        $mail_error = null;
-        $result     = wp_mail( $to, $subject, $message );
+        $result = wp_mail( $to, $subject, $message );
+
+        // Rimuovi hook temporaneo se non era registrato prima
+        if ( ! $hook_registered ) {
+            remove_action( 'phpmailer_init', [ __CLASS__, 'configure_phpmailer' ] );
+        }
 
         if ( $result ) {
             return [
