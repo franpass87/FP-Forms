@@ -37,6 +37,7 @@ class Manager {
         add_action( 'wp_ajax_fp_forms_test_webhook', [ $this, 'ajax_test_webhook' ] );
         add_action( 'wp_ajax_fp_forms_restore_snapshot', [ $this, 'ajax_restore_snapshot' ] );
         add_action( 'wp_ajax_fp_forms_import_form_config', [ $this, 'ajax_import_form_config' ] );
+        add_action( 'wp_ajax_fp_forms_test_smtp', [ $this, 'ajax_test_smtp' ] );
     }
     
     /**
@@ -366,6 +367,26 @@ class Manager {
             
             update_option( 'fp_forms_email_from_name', sanitize_text_field( $_POST['email_from_name'] ) );
             update_option( 'fp_forms_email_from_address', sanitize_email( $_POST['email_from_address'] ) );
+            
+            // Salva impostazioni SMTP
+            $smtp_settings = [
+                'enabled'    => isset( $_POST['smtp_enabled'] ),
+                'host'       => sanitize_text_field( $_POST['smtp_host'] ?? '' ),
+                'port'       => intval( $_POST['smtp_port'] ?? 587 ),
+                'encryption' => sanitize_text_field( $_POST['smtp_encryption'] ?? 'tls' ),
+                'auth'       => isset( $_POST['smtp_auth'] ),
+                'username'   => sanitize_text_field( $_POST['smtp_username'] ?? '' ),
+                'password'   => $_POST['smtp_password'] ?? '',
+            ];
+            // Validazione encryption
+            if ( ! in_array( $smtp_settings['encryption'], [ 'tls', 'ssl', 'none' ], true ) ) {
+                $smtp_settings['encryption'] = 'tls';
+            }
+            // Validazione porta
+            if ( $smtp_settings['port'] < 1 || $smtp_settings['port'] > 65535 ) {
+                $smtp_settings['port'] = 587;
+            }
+            update_option( 'fp_forms_smtp_settings', $smtp_settings );
             
             // Salva impostazioni reCAPTCHA (nuovo formato 2025)
             $recaptcha_settings = [
@@ -815,6 +836,31 @@ class Manager {
         
         $meta = new \FPForms\Integrations\MetaPixel();
         $result = $meta->test_connection();
+        
+        if ( $result['success'] ) {
+            wp_send_json_success( [ 'message' => $result['message'] ] );
+        } else {
+            wp_send_json_error( [ 'message' => $result['message'] ] );
+        }
+    }
+    
+    /**
+     * AJAX: Testa connessione SMTP
+     */
+    public function ajax_test_smtp() {
+        check_ajax_referer( 'fp_forms_admin', 'nonce' );
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Permessi insufficienti', 'fp-forms' ) ] );
+        }
+        
+        $email = isset( $_POST['email'] ) ? sanitize_email( $_POST['email'] ) : '';
+        
+        if ( ! is_email( $email ) ) {
+            wp_send_json_error( [ 'message' => __( 'Indirizzo email non valido.', 'fp-forms' ) ] );
+        }
+        
+        $result = \FPForms\Email\Smtp::send_test( $email );
         
         if ( $result['success'] ) {
             wp_send_json_success( [ 'message' => $result['message'] ] );

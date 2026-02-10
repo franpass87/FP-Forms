@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Template: Impostazioni plugin
  */
@@ -9,6 +9,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $email_from_name = get_option( 'fp_forms_email_from_name', get_bloginfo( 'name' ) );
 $email_from_address = get_option( 'fp_forms_email_from_address', get_bloginfo( 'admin_email' ) );
+
+// SMTP settings
+$smtp_settings = get_option( 'fp_forms_smtp_settings', [
+    'enabled'    => false,
+    'host'       => '',
+    'port'       => 587,
+    'encryption' => 'tls',
+    'auth'       => true,
+    'username'   => '',
+    'password'   => '',
+] );
+$smtp_enabled    = $smtp_settings['enabled'] ?? false;
+$smtp_host       = $smtp_settings['host'] ?? '';
+$smtp_port       = $smtp_settings['port'] ?? 587;
+$smtp_encryption = $smtp_settings['encryption'] ?? 'tls';
+$smtp_auth       = $smtp_settings['auth'] ?? true;
+$smtp_username   = $smtp_settings['username'] ?? '';
+$smtp_password   = $smtp_settings['password'] ?? '';
 
 // reCAPTCHA settings
 $recaptcha_settings = get_option( 'fp_forms_recaptcha_settings', [
@@ -103,6 +121,216 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                     </td>
                 </tr>
                 
+                <tr>
+                    <th colspan="2">
+                        <h2 id="smtp"><?php _e( 'Configurazione SMTP', 'fp-forms' ); ?></h2>
+                        <p class="description" style="font-weight: normal;">
+                            <?php _e( 'Configura un server SMTP per inviare email in modo affidabile. Senza SMTP, WordPress usa la funzione PHP mail() che spesso finisce in spam.', 'fp-forms' ); ?>
+                        </p>
+                    </th>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <?php _e( 'Abilita SMTP', 'fp-forms' ); ?>
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="smtp_enabled" id="smtp_enabled" value="1" <?php checked( $smtp_enabled, true ); ?>>
+                            <strong><?php _e( 'Usa server SMTP per l\'invio email', 'fp-forms' ); ?></strong>
+                        </label>
+                        <p class="description">
+                            <?php _e( 'Quando abilitato, tutte le email inviate da FP Forms passeranno attraverso il server SMTP configurato.', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr class="fp-smtp-field">
+                    <th scope="row">
+                        <label for="smtp_host"><?php _e( 'Host SMTP', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="text" 
+                               id="smtp_host" 
+                               name="smtp_host" 
+                               value="<?php echo esc_attr( $smtp_host ); ?>" 
+                               class="regular-text"
+                               placeholder="smtp.gmail.com">
+                        <p class="description">
+                            <?php _e( 'Indirizzo del server SMTP (es. smtp.gmail.com, smtp.office365.com, in-v3.mailjet.com)', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr class="fp-smtp-field">
+                    <th scope="row">
+                        <label for="smtp_port"><?php _e( 'Porta SMTP', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="number" 
+                               id="smtp_port" 
+                               name="smtp_port" 
+                               value="<?php echo esc_attr( $smtp_port ); ?>" 
+                               class="small-text"
+                               min="1" 
+                               max="65535">
+                        <span class="description">
+                            <?php _e( 'Porte comuni: 587 (TLS), 465 (SSL), 25 (no encryption)', 'fp-forms' ); ?>
+                        </span>
+                    </td>
+                </tr>
+                <tr class="fp-smtp-field">
+                    <th scope="row">
+                        <label for="smtp_encryption"><?php _e( 'Crittografia', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <select id="smtp_encryption" name="smtp_encryption">
+                            <option value="tls" <?php selected( $smtp_encryption, 'tls' ); ?>>TLS (<?php _e( 'Raccomandato', 'fp-forms' ); ?>)</option>
+                            <option value="ssl" <?php selected( $smtp_encryption, 'ssl' ); ?>>SSL</option>
+                            <option value="none" <?php selected( $smtp_encryption, 'none' ); ?>><?php _e( 'Nessuna', 'fp-forms' ); ?></option>
+                        </select>
+                        <p class="description">
+                            <?php _e( 'TLS sulla porta 587 è la configurazione più comune e sicura.', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr class="fp-smtp-field">
+                    <th scope="row">
+                        <?php _e( 'Autenticazione', 'fp-forms' ); ?>
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="smtp_auth" id="smtp_auth" value="1" <?php checked( $smtp_auth, true ); ?>>
+                            <strong><?php _e( 'Richiedi autenticazione SMTP', 'fp-forms' ); ?></strong>
+                        </label>
+                        <p class="description">
+                            <?php _e( 'La maggior parte dei server SMTP richiede autenticazione con username e password.', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr class="fp-smtp-field fp-smtp-auth-field">
+                    <th scope="row">
+                        <label for="smtp_username"><?php _e( 'Username SMTP', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="text" 
+                               id="smtp_username" 
+                               name="smtp_username" 
+                               value="<?php echo esc_attr( $smtp_username ); ?>" 
+                               class="regular-text"
+                               autocomplete="off"
+                               placeholder="user@example.com">
+                        <p class="description">
+                            <?php _e( 'Solitamente è il tuo indirizzo email completo.', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr class="fp-smtp-field fp-smtp-auth-field">
+                    <th scope="row">
+                        <label for="smtp_password"><?php _e( 'Password SMTP', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <div style="position: relative; display: inline-block; width: 100%; max-width: 400px;">
+                            <input type="password" 
+                                   id="smtp_password" 
+                                   name="smtp_password" 
+                                   value="<?php echo esc_attr( $smtp_password ); ?>" 
+                                   class="regular-text"
+                                   autocomplete="new-password"
+                                   style="width: 100%; padding-right: 40px;">
+                            <button type="button" id="fp-toggle-smtp-password" 
+                                    style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px;"
+                                    title="<?php esc_attr_e( 'Mostra/Nascondi password', 'fp-forms' ); ?>">
+                                <span class="dashicons dashicons-visibility"></span>
+                            </button>
+                        </div>
+                        <p class="description">
+                            <?php _e( 'Per Gmail usa una "App Password" (non la password dell\'account). Per altri provider controlla la documentazione.', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr class="fp-smtp-field">
+                    <th scope="row">
+                        <?php _e( 'Test Email SMTP', 'fp-forms' ); ?>
+                    </th>
+                    <td>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <input type="email" 
+                                   id="smtp_test_email" 
+                                   value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" 
+                                   class="regular-text"
+                                   placeholder="test@example.com">
+                            <button type="button" id="fp-test-smtp" class="button">
+                                <span class="dashicons dashicons-email-alt"></span>
+                                <?php _e( 'Invia Email di Test', 'fp-forms' ); ?>
+                            </button>
+                        </div>
+                        <div id="fp-smtp-test-result" style="margin-top: 10px;"></div>
+                        <p class="description">
+                            <?php _e( 'Salva prima le impostazioni, poi invia un\'email di test per verificare la configurazione.', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+
+                <script>
+                (function($) {
+                    // Toggle SMTP fields visibility
+                    function toggleSmtpFields() {
+                        var enabled = $('#smtp_enabled').is(':checked');
+                        $('.fp-smtp-field').toggle(enabled);
+                        toggleSmtpAuthFields();
+                    }
+                    function toggleSmtpAuthFields() {
+                        var auth = $('#smtp_auth').is(':checked') && $('#smtp_enabled').is(':checked');
+                        $('.fp-smtp-auth-field').toggle(auth);
+                    }
+                    $('#smtp_enabled').on('change', toggleSmtpFields);
+                    $('#smtp_auth').on('change', toggleSmtpAuthFields);
+                    toggleSmtpFields();
+
+                    // Toggle password visibility
+                    $('#fp-toggle-smtp-password').on('click', function() {
+                        var $input = $('#smtp_password');
+                        var $icon = $(this).find('.dashicons');
+                        if ($input.attr('type') === 'password') {
+                            $input.attr('type', 'text');
+                            $icon.removeClass('dashicons-visibility').addClass('dashicons-hidden');
+                        } else {
+                            $input.attr('type', 'password');
+                            $icon.removeClass('dashicons-hidden').addClass('dashicons-visibility');
+                        }
+                    });
+
+                    // Test SMTP
+                    $('#fp-test-smtp').on('click', function() {
+                        var $btn = $(this);
+                        var $result = $('#fp-smtp-test-result');
+                        var email = $('#smtp_test_email').val();
+
+                        if (!email) {
+                            $result.html('<div class="notice notice-error inline"><p><?php echo esc_js( __( 'Inserisci un indirizzo email.', 'fp-forms' ) ); ?></p></div>');
+                            return;
+                        }
+
+                        $btn.prop('disabled', true).text('<?php echo esc_js( __( 'Invio in corso...', 'fp-forms' ) ); ?>');
+                        $result.html('<p><span class="spinner is-active" style="float:none;"></span> <?php echo esc_js( __( 'Invio email di test...', 'fp-forms' ) ); ?></p>');
+
+                        $.post(ajaxurl, {
+                            action: 'fp_forms_test_smtp',
+                            nonce: '<?php echo wp_create_nonce( 'fp_forms_admin' ); ?>',
+                            email: email
+                        }, function(response) {
+                            if (response.success) {
+                                $result.html('<div class="notice notice-success inline"><p>✅ ' + response.data.message + '</p></div>');
+                            } else {
+                                $result.html('<div class="notice notice-error inline"><p>❌ ' + response.data.message + '</p></div>');
+                            }
+                        }).fail(function() {
+                            $result.html('<div class="notice notice-error inline"><p>❌ <?php echo esc_js( __( 'Errore di connessione.', 'fp-forms' ) ); ?></p></div>');
+                        }).always(function() {
+                            $btn.prop('disabled', false).html('<span class="dashicons dashicons-email-alt"></span> <?php echo esc_js( __( 'Invia Email di Test', 'fp-forms' ) ); ?>');
+                        });
+                    });
+                })(jQuery);
+                </script>
+
                 <tr>
                     <th colspan="2">
                         <h2 id="recaptcha"><?php _e( 'Google reCAPTCHA 2025', 'fp-forms' ); ?></h2>

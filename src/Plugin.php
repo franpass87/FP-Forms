@@ -127,6 +127,9 @@ class Plugin {
         // Inizializza Logger
         \FPForms\Core\Logger::init();
         
+        // Inizializza traduttore (filtra gettext in base a lingua URL)
+        \FPForms\I18n\Translator::init();
+        
         // Registra hooks del plugin
         \FPForms\Core\Hooks::register();
     }
@@ -182,6 +185,9 @@ class Plugin {
         
         // Anti-spam
         $this->anti_spam = new Security\AntiSpam();
+        
+        // SMTP (configura PHPMailer se abilitato)
+        Email\Smtp::init();
         
         // Admin (solo se siamo in admin)
         if ( is_admin() ) {
