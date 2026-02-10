@@ -370,7 +370,7 @@ class FieldFactory {
         // Ottieni URL privacy policy
         $privacy_url = self::get_privacy_policy_url();
         $privacy_text = isset( $field['options']['privacy_text'] ) 
-            ? trim( $field['options']['privacy_text'] )
+            ? __( trim( $field['options']['privacy_text'] ), 'fp-forms' )
             : __( 'Ho letto e accetto la', 'fp-forms' );
         $privacy_link_text = __( 'Privacy Policy', 'fp-forms' );
         
@@ -541,7 +541,7 @@ class FieldFactory {
         $attrs = self::get_common_attrs( $field, $form_id );
         
         $marketing_text = isset( $field['options']['marketing_text'] ) 
-            ? $field['options']['marketing_text'] 
+            ? __( $field['options']['marketing_text'], 'fp-forms' ) 
             : __( 'Acconsento a ricevere comunicazioni marketing e newsletter', 'fp-forms' );
         
         // Marketing checkbox è sempre opzionale (a differenza del privacy)
