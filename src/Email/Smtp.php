@@ -100,49 +100,66 @@ class Smtp {
             ];
         }
 
-        // Assicura che l'hook phpmailer_init sia attivo per il test,
-        // anche se SMTP non è ancora "abilitato" nelle impostazioni.
-        // Senza questo, wp_mail() usa PHP mail() nativo che spesso fallisce.
-        $hook_registered = has_action( 'phpmailer_init', [ __CLASS__, 'configure_phpmailer' ] );
-        if ( ! $hook_registered ) {
-            add_action( 'phpmailer_init', [ __CLASS__, 'configure_phpmailer' ] );
-        }
+        // Usa PHPMailer direttamente per avere il pieno controllo e debug.
+        // wp_mail() maschera gli errori e può restituire true anche se l'email non parte.
+        require_once ABSPATH . WPINC . '/PHPMailer/PHPMailer.php';
+        require_once ABSPATH . WPINC . '/PHPMailer/SMTP.php';
+        require_once ABSPATH . WPINC . '/PHPMailer/Exception.php';
 
-        $subject = sprintf(
-            /* translators: %s: site name */
-            __( '[%s] Email di test SMTP - FP Forms', 'fp-forms' ),
-            get_bloginfo( 'name' )
-        );
+        $phpmailer = new \PHPMailer\PHPMailer\PHPMailer( true ); // true = abilita eccezioni
 
-        $message  = __( 'Questa è un\'email di test inviata da FP Forms.', 'fp-forms' ) . "\n\n";
-        $message .= __( 'Se ricevi questa email, la configurazione SMTP funziona correttamente!', 'fp-forms' ) . "\n\n";
-        $message .= '---' . "\n";
-        $message .= 'Host: ' . $settings['host'] . "\n";
-        $message .= 'Port: ' . $settings['port'] . "\n";
-        $message .= 'Encryption: ' . ( $settings['encryption'] ?: 'none' ) . "\n";
-        $message .= 'Auth: ' . ( $settings['auth'] ? 'yes' : 'no' ) . "\n";
-        $message .= 'Date: ' . date_i18n( 'Y-m-d H:i:s' ) . "\n";
+        try {
+            // Configura SMTP
+            $phpmailer->isSMTP();
+            $phpmailer->Host       = $settings['host'];
+            $phpmailer->Port       = intval( $settings['port'] );
+            $phpmailer->SMTPAuth   = ! empty( $settings['auth'] );
 
-        // Abilita debug PHPMailer per catturare errori dettagliati
-        add_action( 'phpmailer_init', function( $phpmailer ) {
-            $phpmailer->SMTPDebug = 0; // No output, ma errori catturati
-            $phpmailer->Debugoutput = function() {}; // Silenzia output
-        }, 999 );
+            if ( $phpmailer->SMTPAuth ) {
+                $phpmailer->Username = $settings['username'];
+                $phpmailer->Password = $settings['password'];
+            }
 
-        // Cattura eventuali errori da PHPMailer
-        $mail_error = null;
-        add_action( 'wp_mail_failed', function( $wp_error ) use ( &$mail_error ) {
-            $mail_error = $wp_error;
-        } );
+            $encryption = $settings['encryption'] ?? 'tls';
+            if ( 'tls' === $encryption ) {
+                $phpmailer->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            } elseif ( 'ssl' === $encryption ) {
+                $phpmailer->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+            } else {
+                $phpmailer->SMTPSecure = '';
+                $phpmailer->SMTPAutoTLS = false;
+            }
 
-        $result = wp_mail( $to, $subject, $message );
+            // Timeout ragionevole
+            $phpmailer->Timeout = 15;
 
-        // Rimuovi hook temporaneo se non era registrato prima
-        if ( ! $hook_registered ) {
-            remove_action( 'phpmailer_init', [ __CLASS__, 'configure_phpmailer' ] );
-        }
+            // From
+            $from_email = get_option( 'fp_forms_email_from_address', get_bloginfo( 'admin_email' ) );
+            $from_name  = get_option( 'fp_forms_email_from_name', get_bloginfo( 'name' ) );
+            $phpmailer->setFrom( $from_email, $from_name );
 
-        if ( $result ) {
+            // Destinatario
+            $phpmailer->addAddress( $to );
+
+            // Contenuto
+            $phpmailer->CharSet = 'UTF-8';
+            $phpmailer->isHTML( false );
+            $phpmailer->Subject = sprintf( '[%s] Email di test SMTP - FP Forms', get_bloginfo( 'name' ) );
+
+            $body  = "Questa email di test è stata inviata da FP Forms.\n\n";
+            $body .= "Se la ricevi, la configurazione SMTP funziona correttamente!\n\n";
+            $body .= "---\n";
+            $body .= 'Host: ' . $settings['host'] . "\n";
+            $body .= 'Port: ' . $settings['port'] . "\n";
+            $body .= 'Encryption: ' . ( $encryption ?: 'none' ) . "\n";
+            $body .= 'Auth: ' . ( $settings['auth'] ? 'yes' : 'no' ) . "\n";
+            $body .= 'From: ' . $from_email . "\n";
+            $body .= 'Date: ' . date_i18n( 'Y-m-d H:i:s' ) . "\n";
+            $phpmailer->Body = $body;
+
+            // Invia
+            $phpmailer->send();
+
             return [
                 'success' => true,
                 'message' => sprintf(
@@ -150,16 +167,17 @@ class Smtp {
                     $to
                 ),
             ];
-        }
 
-        $error_msg = __( 'Invio email fallito.', 'fp-forms' );
-        if ( $mail_error && is_wp_error( $mail_error ) ) {
-            $error_msg .= ' ' . $mail_error->get_error_message();
+        } catch ( \PHPMailer\PHPMailer\Exception $e ) {
+            return [
+                'success' => false,
+                'message' => __( 'Errore SMTP:', 'fp-forms' ) . ' ' . $phpmailer->ErrorInfo,
+            ];
+        } catch ( \Exception $e ) {
+            return [
+                'success' => false,
+                'message' => __( 'Errore:', 'fp-forms' ) . ' ' . $e->getMessage(),
+            ];
         }
-
-        return [
-            'success' => false,
-            'message' => $error_msg,
-        ];
     }
 }
