@@ -258,7 +258,8 @@
                             .text(errorMessage)
                             .attr('role', 'alert')
                             .attr('aria-live', 'assertive')
-                        .fadeIn();
+                            .fadeIn();
+                    }
                 }
             });
             
