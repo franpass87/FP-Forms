@@ -191,6 +191,10 @@ class Manager {
         
         // Verifica se l'email di conferma è abilitata
         if ( ! isset( $form['settings']['confirmation_enabled'] ) || ! $form['settings']['confirmation_enabled'] ) {
+            \FPForms\Core\Logger::debug( 'Confirmation email disabled for form', [
+                'form_id' => $form_id,
+                'confirmation_enabled' => $form['settings']['confirmation_enabled'] ?? 'NOT SET',
+            ] );
             return false;
         }
         

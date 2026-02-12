@@ -311,24 +311,56 @@ class Manager {
      * Invia email di conferma al cliente
      */
     private function send_confirmation( $form_id, $data ) {
-        // Estrai email dal form data
         $user_email = null;
         
-        foreach ( $data as $key => $value ) {
-            $clean_key = str_replace( 'fp_field_', '', $key );
-            
-            if ( stripos( $clean_key, 'email' ) !== false && is_email( $value ) ) {
-                $user_email = $value;
-                break;
+        // 1. Cerca per TIPO di campo (approccio più affidabile)
+        $forms_manager = \FPForms\Plugin::instance()->forms;
+        $fields = $forms_manager->get_fields( $form_id );
+        
+        if ( is_array( $fields ) ) {
+            foreach ( $fields as $field ) {
+                if ( isset( $field['type'] ) && $field['type'] === 'email' ) {
+                    $field_name = $field['name'];
+                    if ( isset( $data[ $field_name ] ) && is_email( $data[ $field_name ] ) ) {
+                        $user_email = $data[ $field_name ];
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // 2. Fallback: cerca per NOME del campo contenente "email"
+        if ( ! $user_email ) {
+            foreach ( $data as $key => $value ) {
+                if ( is_string( $value ) && stripos( $key, 'email' ) !== false && is_email( $value ) ) {
+                    $user_email = $value;
+                    break;
+                }
+            }
+        }
+        
+        // 3. Ultimo fallback: qualsiasi valore che sia un indirizzo email valido
+        if ( ! $user_email ) {
+            foreach ( $data as $key => $value ) {
+                if ( is_string( $value ) && is_email( $value ) ) {
+                    $user_email = $value;
+                    break;
+                }
             }
         }
         
         if ( ! $user_email ) {
-            \FPForms\Core\Logger::warning( 'Confirmation email skipped: no user email found', [
+            \FPForms\Core\Logger::warning( 'Confirmation email skipped: no user email found in form data', [
                 'form_id' => $form_id,
+                'data_keys' => array_keys( $data ),
             ] );
             return;
         }
+        
+        \FPForms\Core\Logger::debug( 'Sending confirmation email', [
+            'form_id' => $form_id,
+            'user_email' => $user_email,
+        ] );
         
         $email_manager = \FPForms\Plugin::instance()->email;
         $email_manager->send_confirmation( $form_id, $user_email, $data );

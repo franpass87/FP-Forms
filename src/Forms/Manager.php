@@ -82,6 +82,9 @@ class Manager {
                 $this->update_fields( $form_id, $data['fields'] );
             }
             
+            // Invalida cache per riflettere le modifiche immediatamente
+            Cache::invalidate_form( $form_id );
+            
             // Prepara dati form completi per hook
             $form_data = [
                 'title' => isset( $data['title'] ) ? $data['title'] : get_the_title( $form_id ),
