@@ -152,11 +152,18 @@ class Manager {
             return null;
         }
         
+        $settings = get_post_meta( $post->ID, '_fp_form_settings', true );
+        
+        // Assicura che settings sia sempre un array (get_post_meta ritorna '' se meta non esiste)
+        if ( ! is_array( $settings ) ) {
+            $settings = [];
+        }
+        
         $form = [
             'id' => $post->ID,
             'title' => $post->post_title,
             'description' => $post->post_content,
-            'settings' => get_post_meta( $post->ID, '_fp_form_settings', true ),
+            'settings' => $settings,
             'fields' => $this->get_fields( $post->ID ),
             'created_at' => $post->post_date,
             'modified_at' => $post->post_modified,
