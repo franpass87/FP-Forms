@@ -34,6 +34,11 @@ class Tracking {
     private $track_interactions;
     
     /**
+     * Debug mode (console.log attivo)
+     */
+    private $debug_mode;
+    
+    /**
      * Constructor
      */
     public function __construct() {
@@ -52,7 +57,8 @@ class Tracking {
         
         $this->gtm_id = $settings['gtm_id'] ?? '';
         $this->ga4_id = $settings['ga4_id'] ?? '';
-        $this->enabled = ! empty( $this->gtm_id ) || ! empty( $this->ga4_id );
+        $this->debug_mode = $settings['debug_mode'] ?? false;
+        $this->enabled = ! empty( $this->gtm_id ) || ! empty( $this->ga4_id ) || $this->debug_mode;
         $this->track_views = $settings['track_views'] ?? true;
         $this->track_interactions = $settings['track_interactions'] ?? false;
     }
@@ -159,7 +165,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         ga4Enabled: <?php echo ! empty( $this->ga4_id ) ? 'true' : 'false'; ?>,
         trackViews: <?php echo $this->track_views ? 'true' : 'false'; ?>,
         trackInteractions: <?php echo $this->track_interactions ? 'true' : 'false'; ?>,
+        debugMode: <?php echo $this->debug_mode ? 'true' : 'false'; ?>,
         trackedForms: [],
+        
+        /**
+         * Debug log (solo se debug mode attivo)
+         */
+        log: function() {
+            if (this.debugMode && window.console && window.console.log) {
+                var args = ['[FP Forms Tracking]'].concat(Array.prototype.slice.call(arguments));
+                console.log.apply(console, args);
+            }
+        },
         
         /**
          * Push event to dataLayer (GTM)
@@ -170,8 +187,38 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             window.dataLayer = window.dataLayer || [];
             window.dataLayer.push(eventData);
             
-            if (window.console && window.console.log) {
-                console.log('[FP Forms GTM]', eventData);
+            this.log('GTM dataLayer push:', eventData);
+        },
+        
+        /**
+         * Push event to dataLayer via sendBeacon (per beforeunload)
+         */
+        pushToDataLayerBeacon: function(eventData) {
+            // Prima prova il push diretto
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push(eventData);
+            
+            this.log('GTM beacon push:', eventData);
+            
+            // Usa sendBeacon come backup per garantire la consegna
+            if (navigator.sendBeacon) {
+                try {
+                    var payload = JSON.stringify({
+                        event: eventData.event,
+                        form_id: eventData.form_id
+                    });
+                    // Invia un pixel di tracking come fallback
+                    navigator.sendBeacon(
+                        window.fpForms ? fpForms.ajaxurl : '/wp-admin/admin-ajax.php',
+                        new Blob([
+                            'action=fp_forms_beacon_track&event=' + 
+                            encodeURIComponent(eventData.event) + 
+                            '&form_id=' + encodeURIComponent(eventData.form_id || '')
+                        ], { type: 'application/x-www-form-urlencoded' })
+                    );
+                } catch(e) {
+                    // Silently fail
+                }
             }
         },
         
@@ -183,9 +230,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             
             gtag('event', eventName, eventParams);
             
-            if (window.console && window.console.log) {
-                console.log('[FP Forms GA4]', eventName, eventParams);
-            }
+            this.log('GA4 event:', eventName, eventParams);
         },
         
         /**
@@ -265,7 +310,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         },
         
         /**
-         * Track form abandon
+         * Track form abandon (usa sendBeacon per beforeunload)
          */
         trackFormAbandon: function(formId, formTitle) {
             var timeSpent = 0;
@@ -273,7 +318,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 timeSpent = Math.round((Date.now() - this.formTimers[formId]) / 1000);
             }
             
-            this.pushToDataLayer({
+            // Usa beacon per garantire consegna durante beforeunload
+            this.pushToDataLayerBeacon({
                 'event': 'fp_form_abandon',
                 'form_id': formId,
                 'form_title': formTitle,
@@ -281,11 +327,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 'event_category': 'abandonment'
             });
             
-            this.sendToGA4('form_abandon', {
-                'form_id': formId,
-                'form_name': formTitle,
-                'time_spent': timeSpent
-            });
+            // GA4 con transport_type beacon
+            if (this.ga4Enabled && typeof gtag === 'function') {
+                gtag('event', 'form_abandon', {
+                    'form_id': formId,
+                    'form_name': formTitle,
+                    'time_spent': timeSpent,
+                    'transport_type': 'beacon'
+                });
+            }
         },
         
         /**
@@ -335,7 +385,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     'engagement_time_msec': timeSpent * 1000
                 });
                 
-                // Conversion event
+                // Conversion event (GTM dataLayer)
                 this.pushToDataLayer({
                     'event': 'fp_form_conversion',
                     'form_id': formId,
@@ -344,14 +394,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     'conversion_value': 1.0
                 });
                 
-                this.sendToGA4('conversion', {
-                    'send_to': 'AW-CONVERSION_ID', // User configurable
-                    'form_id': formId,
-                    'value': 1.0,
-                    'currency': 'EUR'
-                });
-                
-                // Generate Lead event (standard GA4)
+                // Generate Lead event (standard GA4 recommended event)
                 this.sendToGA4('generate_lead', {
                     'form_id': formId,
                     'form_name': formTitle,
@@ -397,15 +440,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         init: function() {
             var self = this;
             
+                this.log('Inizializzazione tracking...');
+                this.log('GTM attivo:', this.gtmEnabled, '| GA4 attivo:', this.ga4Enabled);
+                this.log('Track views:', this.trackViews, '| Track interactions:', this.trackInteractions);
+                
+                // Verifica che dataLayer esista
+                if (this.gtmEnabled) {
+                    window.dataLayer = window.dataLayer || [];
+                    this.log('dataLayer pronto, lunghezza attuale:', window.dataLayer.length);
+                }
+                
                 // Trova tutti i form FP-Forms
                 var forms = document.querySelectorAll('.fp-forms-container form');
+                
+                self.log('Form trovati:', forms.length);
                 
                 forms.forEach(function(form) {
                     var formIdElement = form.querySelector('[name="form_id"]');
                     var formId = formIdElement ? formIdElement.value : null;
                     var formTitle = form.closest('.fp-forms-container').dataset.formTitle || 'Untitled Form';
                     
-                    if (!formId) return;
+                    if (!formId) {
+                        self.log('WARN: form senza form_id, skip');
+                        return;
+                    }
+                    
+                    self.log('Tracking attivato per form:', formId, '(' + formTitle + ')');
                     
                     // Track view on page load
                     setTimeout(function() {

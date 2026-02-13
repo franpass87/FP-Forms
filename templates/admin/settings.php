@@ -46,11 +46,13 @@ $tracking_settings = get_option( 'fp_forms_tracking_settings', [
     'ga4_id' => '',
     'track_views' => true,
     'track_interactions' => false,
+    'debug_mode' => false,
 ] );
 $gtm_id = $tracking_settings['gtm_id'] ?? '';
 $ga4_id = $tracking_settings['ga4_id'] ?? '';
 $track_views = $tracking_settings['track_views'] ?? true;
 $track_interactions = $tracking_settings['track_interactions'] ?? false;
+$track_debug_mode = $tracking_settings['debug_mode'] ?? false;
 
 // Brevo (Sendinblue) settings
 $brevo_settings = get_option( 'fp_forms_brevo_settings', [
@@ -505,6 +507,14 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                                 <strong><?php _e( 'Field Interactions', 'fp-forms' ); ?></strong>
                             </label>
                             <p class="description"><?php _e( 'Traccia ogni interazione con i campi (focus, input). PuÃ² generare molti eventi.', 'fp-forms' ); ?></p>
+                            
+                            <br>
+                            
+                            <label>
+                                <input type="checkbox" name="track_debug_mode" value="1" <?php checked( $track_debug_mode, true ); ?>>
+                                <strong><?php _e( 'Debug Mode', 'fp-forms' ); ?></strong>
+                            </label>
+                            <p class="description"><?php _e( 'Mostra log dettagliati nella console del browser. Disattivare in produzione.', 'fp-forms' ); ?></p>
                         </fieldset>
                         
                         <div style="margin-top: 16px; padding: 12px; background: #f0f6fc; border-left: 4px solid #0073aa; border-radius: 4px;">

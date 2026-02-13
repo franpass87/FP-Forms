@@ -138,6 +138,7 @@
                     if (response.success) {
                         // Trigger tracking event: SUCCESS
                         $form[0].dispatchEvent(new CustomEvent('fpFormSubmitSuccess', {
+                            bubbles: true,
                             detail: {
                                 formId: formId,
                                 message: response.data.message,
@@ -201,6 +202,7 @@
                         
                         // Trigger tracking event: ERROR
                         $form[0].dispatchEvent(new CustomEvent('fpFormSubmitError', {
+                            bubbles: true,
                             detail: {
                                 formId: formId,
                                 message: response.data.message,
@@ -240,6 +242,17 @@
                     $form.removeClass('is-submitting');
                     $form.removeClass('is-loading');
                     $btn.prop('disabled', false).text(originalText);
+                    
+                    // Trigger tracking event: AJAX ERROR (rete/timeout/abort)
+                    $form[0].dispatchEvent(new CustomEvent('fpFormSubmitError', {
+                        bubbles: true,
+                        detail: {
+                            formId: formId,
+                            message: textStatus + (errorThrown ? ': ' + errorThrown : ''),
+                            errors: null,
+                            errorType: textStatus
+                        }
+                    }));
                     
                     // BUGFIX #22: Better error handling with user feedback (i18n)
                     var errorMessage = fpForms.strings.error_connection;

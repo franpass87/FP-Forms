@@ -403,6 +403,7 @@ class Manager {
                 'ga4_id' => sanitize_text_field( $_POST['ga4_id'] ?? '' ),
                 'track_views' => isset( $_POST['track_views'] ),
                 'track_interactions' => isset( $_POST['track_interactions'] ),
+                'debug_mode' => isset( $_POST['track_debug_mode'] ),
             ];
             update_option( 'fp_forms_tracking_settings', $tracking_settings );
             
