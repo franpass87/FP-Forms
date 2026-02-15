@@ -80,6 +80,10 @@ class Tracking {
         
         // Tracking eventi form
         add_action( 'wp_footer', [ $this, 'render_tracking_script' ] );
+
+        // Endpoint per sendBeacon (abandon/fallback) – risposta OK per evitare errori in console
+        add_action( 'wp_ajax_fp_forms_beacon_track', [ $this, 'ajax_beacon_track' ] );
+        add_action( 'wp_ajax_nopriv_fp_forms_beacon_track', [ $this, 'ajax_beacon_track' ] );
     }
     
     /**
@@ -87,6 +91,19 @@ class Tracking {
      */
     public function is_enabled() {
         return $this->enabled;
+    }
+
+    /**
+     * Handler AJAX per sendBeacon (fp_form_abandon / backup).
+     * Risponde 200 OK per evitare errori in console; opzionalmente logga l'evento.
+     */
+    public function ajax_beacon_track() {
+        $event = isset( $_POST['event'] ) ? sanitize_text_field( wp_unslash( $_POST['event'] ) ) : '';
+        $form_id = isset( $_POST['form_id'] ) ? sanitize_text_field( wp_unslash( $_POST['form_id'] ) ) : '';
+        if ( $this->debug_mode && ( $event || $form_id ) ) {
+            do_action( 'fp_forms_tracking_beacon', $event, $form_id );
+        }
+        wp_send_json_success( [ 'tracked' => true ] );
     }
     
     /**
@@ -238,9 +255,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
          */
         trackFormView: function(formId, formTitle) {
             if (!this.trackViews) return;
-            if (this.trackedForms.indexOf(formId) !== -1) return;
+            var id = String(formId);
+            if (this.trackedForms.indexOf(id) !== -1) return;
             
-            this.trackedForms.push(formId);
+            this.trackedForms.push(id);
             
             // GTM dataLayer
             this.pushToDataLayer({
@@ -457,7 +475,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 
                 forms.forEach(function(form) {
                     var formIdElement = form.querySelector('[name="form_id"]');
-                    var formId = formIdElement ? formIdElement.value : null;
+                    var formId = formIdElement ? String(formIdElement.value).trim() : null;
                     var formTitle = form.closest('.fp-forms-container').dataset.formTitle || 'Untitled Form';
                     
                     if (!formId) {

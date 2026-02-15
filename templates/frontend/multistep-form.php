@@ -10,7 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 $total_steps = count( $steps );
 ?>
 
-<div class="fp-forms-container fp-multistep-container" id="fp-forms-container-<?php echo esc_attr( $form['id'] ); ?>">
+<div class="fp-forms-container fp-multistep-container" 
+     id="fp-forms-container-<?php echo esc_attr( $form['id'] ); ?>"
+     data-form-title="<?php echo esc_attr( isset( $form['title'] ) ? $form['title'] : '' ); ?>">
     <!-- Progress Bar -->
     <div class="fp-multistep-progress">
         <div class="fp-progress-bar">
