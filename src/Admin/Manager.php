@@ -102,16 +102,15 @@ class Manager {
             }
         );
 
-        // Sottomenu: Submissions
+        // Sottomenu: Submissions (stessa capability del menu Form: chi gestisce i form vede le submissions)
         add_submenu_page(
             'fp-forms',
             __( 'Submissions', 'fp-forms' ),
             __( 'Submissions', 'fp-forms' ),
-            Capabilities::VIEW_SUBMISSIONS,
+            Capabilities::MANAGE_FORMS,
             'fp-forms-submissions',
             [ $this, 'render_submissions_page' ]
         );
-        remove_submenu_page( 'fp-forms', 'fp-forms-submissions' );
 
         // Sottomenu: Analytics (nascosto)
         add_submenu_page(
@@ -281,7 +280,7 @@ class Manager {
      * Renderizza pagina submissions
      */
     public function render_submissions_page() {
-        if ( ! Capabilities::can_view_submissions() ) {
+        if ( ! Capabilities::can_manage_forms() ) {
             wp_die( __( 'Non hai i permessi per accedere a questa pagina.', 'fp-forms' ) );
         }
 
@@ -336,7 +335,7 @@ class Manager {
      * Renderizza pagina analytics
      */
     public function render_analytics_page() {
-        if ( ! Capabilities::can_view_submissions() ) {
+        if ( ! Capabilities::can_manage_forms() ) {
             wp_die( __( 'Non hai i permessi per accedere a questa pagina.', 'fp-forms' ) );
         }
 
