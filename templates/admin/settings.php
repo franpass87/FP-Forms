@@ -122,7 +122,15 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                         </p>
                     </td>
                 </tr>
-                
+                <tr>
+                    <td colspan="2">
+                        <p class="description" style="margin-top:0; padding:10px; background:#f0f6fc; border-left:4px solid #2271b1; border-radius:2px;">
+                            <strong><?php _e( 'Per ridurre lo spam (es. email al proprietario):', 'fp-forms' ); ?></strong>
+                            <?php _e( 'Usa un indirizzo sul dominio del sito (es. no-reply@tuodominio.it) e configura SPF e DKIM nel DNS. Chiedi al hosting i record da aggiungere.', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+
                 <tr>
                     <th colspan="2">
                         <h2 id="smtp"><?php _e( 'Configurazione SMTP', 'fp-forms' ); ?></h2>

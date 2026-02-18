@@ -42,22 +42,26 @@ class Manager {
         $message = $this->replace_tags( $message, $data, $form );
         $message = \FPForms\Core\Hooks::filter_email_message( $message, $form_id, $data );
         
-        // Headers
-        $headers = $this->get_email_headers( $form, $data );
+        // Headers (con Message-ID identificabile per notifica proprietario)
+        $headers = $this->get_email_headers( $form, $data, [ 'submission_id' => $submission_id ] );
         $headers = \FPForms\Core\Hooks::filter_email_headers( $headers, $form_id, $data );
-        
+
         // Hook before send
         do_action( 'fp_forms_before_send_notification', $form_id, $data, $to );
-        
-        // Invia email
-        $success = wp_mail( $to, $subject, $message, $headers );
-        
+
+        $this->apply_fp_forms_mail_from();
+        try {
+            $success = wp_mail( $to, $subject, $message, $headers );
+        } finally {
+            $this->remove_fp_forms_mail_from();
+        }
+
         // Log email
         \FPForms\Core\Logger::log_email( $to, $subject, $success );
-        
+
         // Hook after send
         do_action( 'fp_forms_after_send_notification', $form_id, $data, $success );
-        
+
         return $success;
     }
     
@@ -105,21 +109,31 @@ class Manager {
     }
     
     /**
-     * Ottiene gli headers dell'email
+     * Ottiene gli headers dell'email (From, Reply-To, Message-ID, X-Mailer, MIME).
+     * Header ottimizzati per ridurre rischio spam e migliorare deliverability.
+     *
+     * @param array $form Form config.
+     * @param array $data Dati submission.
+     * @param array $options Opzionale: 'submission_id' per Message-ID più identificabile.
+     * @return array Lista header.
      */
-    private function get_email_headers( $form, $data ) {
+    private function get_email_headers( $form, $data, $options = [] ) {
         $headers = [];
-        
-        // From
-        $from_name = get_option( 'fp_forms_email_from_name', get_bloginfo( 'name' ) );
+
+        // From (RFC-compliant: nome tra virgolette se contiene virgole o backslash)
+        $from_name  = get_option( 'fp_forms_email_from_name', get_bloginfo( 'name' ) );
         $from_email = get_option( 'fp_forms_email_from_address', get_bloginfo( 'admin_email' ) );
-        
+        $from_name  = $from_name ?: get_bloginfo( 'name' );
+        $from_email = $from_email ?: get_bloginfo( 'admin_email' );
+        if ( preg_match( '/[,\\\"]/', $from_name ) ) {
+            $from_name = '"' . str_replace( [ '\\', '"' ], [ '\\\\', '\\"' ], $from_name ) . '"';
+        }
         $headers[] = 'From: ' . $from_name . ' <' . $from_email . '>';
-        
-        // Reply-To (cerca campo email nel form)
+
+        // Reply-To (email del cliente per risposta diretta)
         $reply_to = '';
         foreach ( $form['fields'] as $field ) {
-            if ( $field['type'] === 'email' ) {
+            if ( isset( $field['type'] ) && $field['type'] === 'email' ) {
                 $field_name = $field['name'];
                 if ( isset( $data[ $field_name ] ) && is_email( $data[ $field_name ] ) ) {
                     $reply_to = $data[ $field_name ];
@@ -127,14 +141,22 @@ class Manager {
                 }
             }
         }
-        
         if ( $reply_to ) {
             $headers[] = 'Reply-To: ' . $reply_to;
         }
-        
-        // Content-Type
+
+        // Message-ID univoco (riduce flag "duplicate" e migliora reputazione)
+        $domain = wp_parse_url( get_bloginfo( 'url' ), PHP_URL_HOST );
+        $domain = $domain ? str_replace( 'www.', '', $domain ) : 'localhost';
+        $suffix = isset( $options['submission_id'] ) ? (int) $options['submission_id'] : wp_rand( 10000, 99999 );
+        $msg_id = '<fpforms.' . uniqid( '', true ) . '.' . $suffix . '@' . $domain . '>';
+        $headers[] = 'Message-ID: ' . $msg_id;
+
+        // Identificazione e standard MIME (alcuni provider li controllano)
+        $headers[] = 'X-Mailer: FP Forms/' . ( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '1.0' ) . ' (WordPress)';
+        $headers[] = 'MIME-Version: 1.0';
         $headers[] = 'Content-Type: text/plain; charset=UTF-8';
-        
+
         return $headers;
     }
     
@@ -214,26 +236,26 @@ class Manager {
         $message = $this->replace_tags( $message, $data, $form );
         $message = \FPForms\Core\Hooks::filter_email_message( $message, $form_id, $data );
         
-        // Headers
-        $headers = [];
-        $from_name = get_option( 'fp_forms_email_from_name', get_bloginfo( 'name' ) );
-        $from_email = get_option( 'fp_forms_email_from_address', get_bloginfo( 'admin_email' ) );
-        $headers[] = 'From: ' . $from_name . ' <' . $from_email . '>';
-        $headers[] = 'Content-Type: text/plain; charset=UTF-8';
-        
+        // Headers (stessi standard anti-spam; senza Reply-To per conferma al cliente)
+        $headers = $this->get_email_headers( $form, $data, [] );
         $headers = \FPForms\Core\Hooks::filter_email_headers( $headers, $form_id, $data );
-        
+
         // Hook before send
         do_action( 'fp_forms_before_send_confirmation', $form_id, $data, $user_email );
-        
-        $success = wp_mail( $user_email, $subject, $message, $headers );
-        
+
+        $this->apply_fp_forms_mail_from();
+        try {
+            $success = wp_mail( $user_email, $subject, $message, $headers );
+        } finally {
+            $this->remove_fp_forms_mail_from();
+        }
+
         // Log email
-        \FPForms\Core\Logger::log_email( $user_email, $subject, $success );
-        
+        \FPForms\Core::Logger::log_email( $user_email, $subject, $success );
+
         // Hook after send
         do_action( 'fp_forms_after_send_confirmation', $form_id, $data, $success );
-        
+
         return $success;
     }
     
@@ -272,14 +294,18 @@ class Manager {
         $message = \FPForms\Core\Hooks::filter_email_message( $message, $form_id, $data );
         
         // Headers
-        $headers = $this->get_email_headers( $form, $data );
+        $headers = $this->get_email_headers( $form, $data, [ 'submission_id' => $submission_id ] );
         $headers = \FPForms\Core\Hooks::filter_email_headers( $headers, $form_id, $data );
-        
+
         // Hook before send
         do_action( 'fp_forms_before_send_staff_notification', $form_id, $data, $staff_email );
-        
-        // Invia email
-        $success = wp_mail( $staff_email, $subject, $message, $headers );
+
+        $this->apply_fp_forms_mail_from();
+        try {
+            $success = wp_mail( $staff_email, $subject, $message, $headers );
+        } finally {
+            $this->remove_fp_forms_mail_from();
+        }
         
         // Log email
         \FPForms\Core\Logger::log_email( $staff_email, $subject, $success );
@@ -288,5 +314,37 @@ class Manager {
         do_action( 'fp_forms_after_send_staff_notification', $form_id, $data, $success );
         
         return $success;
+    }
+
+    /**
+     * Applica i filtri WordPress wp_mail_from e wp_mail_from_name con le impostazioni FP Forms.
+     * Garantisce From coerente (es. no-reply@stefanosansevero.it) per tutti i transport (mail/SMTP).
+     */
+    private function apply_fp_forms_mail_from() {
+        $from_email = get_option( 'fp_forms_email_from_address', get_bloginfo( 'admin_email' ) );
+        if ( $from_email && is_email( $from_email ) ) {
+            add_filter( 'wp_mail_from', [ $this, 'filter_wp_mail_from' ], 20 );
+            add_filter( 'wp_mail_from_name', [ $this, 'filter_wp_mail_from_name' ], 20 );
+        }
+    }
+
+    /**
+     * Rimuove i filtri From applicati da apply_fp_forms_mail_from.
+     */
+    private function remove_fp_forms_mail_from() {
+        remove_filter( 'wp_mail_from', [ $this, 'filter_wp_mail_from' ], 20 );
+        remove_filter( 'wp_mail_from_name', [ $this, 'filter_wp_mail_from_name' ], 20 );
+    }
+
+    /** Callable per wp_mail_from (usato da apply/remove_fp_forms_mail_from). */
+    public function filter_wp_mail_from( $from ) {
+        $fp_from = get_option( 'fp_forms_email_from_address', get_bloginfo( 'admin_email' ) );
+        return ( $fp_from && is_email( $fp_from ) ) ? $fp_from : $from;
+    }
+
+    /** Callable per wp_mail_from_name (usato da apply/remove_fp_forms_mail_from). */
+    public function filter_wp_mail_from_name( $name ) {
+        $fp_name = get_option( 'fp_forms_email_from_name', get_bloginfo( 'name' ) );
+        return ( $fp_name !== '' ) ? $fp_name : $name;
     }
 }
