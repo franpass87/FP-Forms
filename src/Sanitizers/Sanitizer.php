@@ -10,6 +10,10 @@ class Sanitizer {
      * Sanitizza campo in base al tipo
      */
     public function sanitize_field( $value, $field_type ) {
+        if ( $value === null ) {
+            return '';
+        }
+
         if ( is_array( $value ) ) {
             return $this->sanitize_array( $value );
         }

@@ -287,7 +287,26 @@ class Manager {
         $form_id = isset( $_GET['form_id'] ) ? intval( $_GET['form_id'] ) : 0;
         
         if ( ! $form_id ) {
-            wp_die( __( 'Form non specificato.', 'fp-forms' ) );
+            $forms = \FPForms\Plugin::instance()->forms->get_forms();
+            $db    = \FPForms\Plugin::instance()->database;
+
+            $forms_data = [];
+            foreach ( $forms as $form ) {
+                $total  = $db->count_submissions( $form['id'] );
+                $unread = $db->count_submissions( $form['id'], 'unread' );
+                $last   = $db->get_last_submission_date( $form['id'] );
+
+                $forms_data[] = [
+                    'id'               => $form['id'],
+                    'title'            => $form['title'],
+                    'total'            => $total,
+                    'unread'           => $unread,
+                    'last_submission'  => $last,
+                ];
+            }
+
+            include FP_FORMS_PLUGIN_DIR . 'templates/admin/submissions-overview.php';
+            return;
         }
         
         // Pagination
@@ -443,6 +462,7 @@ class Manager {
         $title = isset( $_POST['title'] ) ? sanitize_text_field( $_POST['title'] ) : '';
         $description = isset( $_POST['description'] ) ? wp_kses_post( $_POST['description'] ) : '';
         $fields = isset( $_POST['fields'] ) ? json_decode( stripslashes( $_POST['fields'] ), true ) : [];
+        $fields = is_array( $fields ) ? $fields : [];
         $settings_raw = isset( $_POST['settings'] ) ? json_decode( stripslashes( $_POST['settings'] ), true ) : [];
         
         // BUGFIX #25: Sanitize and validate settings before save
@@ -579,7 +599,7 @@ class Manager {
             'date_from' => isset( $_POST['date_from'] ) ? sanitize_text_field( $_POST['date_from'] ) : '',
             'date_to' => isset( $_POST['date_to'] ) ? sanitize_text_field( $_POST['date_to'] ) : '',
             'status' => isset( $_POST['status'] ) ? sanitize_text_field( $_POST['status'] ) : '',
-            'fields' => isset( $_POST['fields'] ) ? array_map( 'sanitize_text_field', $_POST['fields'] ) : [],
+            'fields' => isset( $_POST['fields'] ) && is_array( $_POST['fields'] ) ? array_map( 'sanitize_text_field', $_POST['fields'] ) : [],
         ];
         
         if ( ! $form_id ) {
@@ -686,6 +706,10 @@ class Manager {
         
         // Ottieni form per nomi campi
         $form = \FPForms\Plugin::instance()->forms->get_form( $submission->form_id );
+
+        if ( ! $form || ! is_array( $form ) ) {
+            $form = [ 'fields' => [], 'title' => __( 'Form eliminato', 'fp-forms' ) ];
+        }
         
         // Formatta HTML
         $html = '<div class="fp-submission-details">';
@@ -891,8 +915,9 @@ class Manager {
         foreach ( $text_fields as $field ) {
             if ( isset( $settings[ $field ] ) ) {
                 if ( $field === 'notification_email' ) {
-                    // Email validation
-                    $sanitized[ $field ] = sanitize_email( $settings[ $field ] );
+                    $raw_emails = array_map( 'trim', explode( ',', $settings[ $field ] ) );
+                    $valid = array_filter( $raw_emails, 'is_email' );
+                    $sanitized[ $field ] = implode( ', ', $valid );
                 } elseif ( $field === 'success_redirect_url' ) {
                     // URL validation
                     $sanitized[ $field ] = esc_url_raw( $settings[ $field ] );
@@ -1079,5 +1104,186 @@ class Manager {
         } else {
             wp_send_json_error( [ 'message' => __( 'Errore nel ripristinare lo snapshot.', 'fp-forms' ) ] );
         }
+    }
+
+    /**
+     * AJAX: Azioni di massa sulle submissions
+     */
+    public function ajax_bulk_action_submissions() {
+        check_ajax_referer( 'fp_forms_admin', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
+        }
+
+        $bulk_action    = isset( $_POST['bulk_action'] ) ? sanitize_text_field( $_POST['bulk_action'] ) : '';
+        $submission_ids = isset( $_POST['submission_ids'] ) ? array_map( 'intval', (array) $_POST['submission_ids'] ) : [];
+        $submission_ids = array_filter( $submission_ids );
+
+        if ( empty( $bulk_action ) || empty( $submission_ids ) ) {
+            wp_send_json_error( [ 'message' => __( 'Parametri non validi.', 'fp-forms' ) ] );
+        }
+
+        $allowed_actions = [ 'delete', 'mark-read', 'mark-unread', 'export' ];
+        if ( ! in_array( $bulk_action, $allowed_actions, true ) ) {
+            wp_send_json_error( [ 'message' => __( 'Azione non valida.', 'fp-forms' ) ] );
+        }
+
+        $submissions = \FPForms\Plugin::instance()->submissions;
+        $db          = \FPForms\Plugin::instance()->database;
+        $processed   = 0;
+
+        switch ( $bulk_action ) {
+            case 'delete':
+                foreach ( $submission_ids as $id ) {
+                    if ( $submissions->delete_submission( $id ) ) {
+                        $processed++;
+                    }
+                }
+                break;
+
+            case 'mark-read':
+                foreach ( $submission_ids as $id ) {
+                    if ( $db->update_submission_status( $id, 'read' ) !== false ) {
+                        $processed++;
+                    }
+                }
+                break;
+
+            case 'mark-unread':
+                foreach ( $submission_ids as $id ) {
+                    if ( $db->update_submission_status( $id, 'unread' ) !== false ) {
+                        $processed++;
+                    }
+                }
+                break;
+
+            case 'export':
+                $rows = [];
+                $header_set = false;
+                $headers = [];
+
+                foreach ( $submission_ids as $id ) {
+                    $sub = $db->get_submission( $id );
+                    if ( ! $sub ) {
+                        continue;
+                    }
+                    $data = json_decode( $sub->data, true );
+                    if ( ! is_array( $data ) ) {
+                        $data = [];
+                    }
+
+                    if ( ! $header_set ) {
+                        $headers   = array_merge( [ 'ID', 'Data', 'Stato' ], array_keys( $data ) );
+                        $header_set = true;
+                    }
+
+                    $row = [ $sub->id, $sub->created_at, $sub->status ];
+                    foreach ( array_keys( $data ) as $key ) {
+                        $val = isset( $data[ $key ] ) ? $data[ $key ] : '';
+                        $row[] = is_array( $val ) ? implode( ', ', $val ) : $val;
+                    }
+                    $rows[] = $row;
+                }
+
+                $csv = fopen( 'php://temp', 'r+' );
+                fputcsv( $csv, $headers );
+                foreach ( $rows as $row ) {
+                    fputcsv( $csv, $row );
+                }
+                rewind( $csv );
+                $csv_content = stream_get_contents( $csv );
+                fclose( $csv );
+
+                wp_send_json_success( [
+                    'message'  => sprintf( __( '%d submissions esportate.', 'fp-forms' ), count( $rows ) ),
+                    'csv'      => base64_encode( $csv_content ),
+                    'filename' => 'fp-forms-export-' . date( 'Y-m-d' ) . '.csv',
+                ] );
+                break;
+        }
+
+        wp_send_json_success( [
+            'message' => sprintf( __( 'Operazione completata: %d submissions aggiornate.', 'fp-forms' ), $processed ),
+        ] );
+    }
+
+    /**
+     * AJAX: Export configurazione form come JSON
+     */
+    public function ajax_export_form_config() {
+        check_ajax_referer( 'fp_forms_admin', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
+        }
+
+        $form_id = isset( $_POST['form_id'] ) ? intval( $_POST['form_id'] ) : 0;
+
+        if ( ! $form_id ) {
+            wp_send_json_error( [ 'message' => __( 'Form non valido.', 'fp-forms' ) ] );
+        }
+
+        $form = \FPForms\Plugin::instance()->forms->get_form( $form_id );
+
+        if ( ! $form ) {
+            wp_send_json_error( [ 'message' => __( 'Form non trovato.', 'fp-forms' ) ] );
+        }
+
+        $export = [
+            'fp_forms_version' => FP_FORMS_VERSION,
+            'title'            => $form['title'],
+            'description'      => $form['description'],
+            'fields'           => $form['fields'],
+            'settings'         => $form['settings'],
+        ];
+
+        wp_send_json_success( [
+            'config'   => $export,
+            'filename' => sanitize_file_name( $form['title'] ) . '-config.json',
+        ] );
+    }
+
+    /**
+     * AJAX: Import configurazione form da JSON
+     */
+    public function ajax_import_form_config() {
+        check_ajax_referer( 'fp_forms_admin', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
+        }
+
+        $config_json = isset( $_POST['config'] ) ? wp_unslash( $_POST['config'] ) : '';
+        $config      = json_decode( $config_json, true );
+
+        if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $config ) ) {
+            wp_send_json_error( [ 'message' => __( 'JSON non valido.', 'fp-forms' ) ] );
+        }
+
+        if ( empty( $config['title'] ) || ! isset( $config['fields'] ) ) {
+            wp_send_json_error( [ 'message' => __( 'Configurazione incompleta: mancano titolo o campi.', 'fp-forms' ) ] );
+        }
+
+        $forms = \FPForms\Plugin::instance()->forms;
+
+        $form_id = $forms->create_form(
+            sanitize_text_field( $config['title'] ) . ' (' . __( 'Importato', 'fp-forms' ) . ')',
+            [
+                'description' => isset( $config['description'] ) ? sanitize_textarea_field( $config['description'] ) : '',
+                'fields'      => $config['fields'],
+                'settings'    => isset( $config['settings'] ) ? $this->sanitize_form_settings( $config['settings'] ) : [],
+            ]
+        );
+
+        if ( $form_id ) {
+            wp_send_json_success( [
+                'message'  => __( 'Form importato con successo!', 'fp-forms' ),
+                'form_id'  => $form_id,
+                'redirect' => admin_url( 'admin.php?page=fp-forms-edit&form_id=' . $form_id ),
+            ] );
+        }
+
+        wp_send_json_error( [ 'message' => __( 'Errore durante l\'importazione.', 'fp-forms' ) ] );
     }
 }

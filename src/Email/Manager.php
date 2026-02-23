@@ -69,43 +69,135 @@ class Manager {
      * Costruisce il messaggio di notifica
      */
     private function build_notification_message( $form, $data, $submission_id ) {
-        $message = '';
-        
-        // Intestazione
-        $message .= sprintf( __( 'Hai ricevuto una nuova submission dal form "%s"', 'fp-forms' ), $form['title'] ) . "\n\n";
-        $message .= str_repeat( '-', 50 ) . "\n\n";
-        
-        // Campi
+        $site_name = get_bloginfo( 'name' );
+        $lines = [];
+
+        $lines[] = sprintf( __( 'Nuova submission - %s', 'fp-forms' ), $form['title'] );
+        $lines[] = str_repeat( '=', 50 );
+        $lines[] = '';
+
+        // Dati compilati
+        $lines[] = __( 'DATI RICEVUTI', 'fp-forms' );
+        $lines[] = str_repeat( '-', 50 );
+
         foreach ( $form['fields'] as $field ) {
-            $field_name = $field['name'];
-            $field_label = $field['label'];
-            $field_value = $this->get_field_display_value( $field, $data );
-            
-            if ( is_array( $field_value ) ) {
-                $field_value = implode( ', ', $field_value );
+            $value = $this->get_field_display_value( $field, $data );
+            if ( is_array( $value ) ) {
+                $value = implode( ', ', $value );
             }
-            
-            $message .= $field_label . ': ' . $field_value . "\n";
+            $lines[] = $field['label'] . ': ' . ( $value !== '' ? $value : '—' );
         }
-        
-        $message .= "\n" . str_repeat( '-', 50 ) . "\n\n";
-        
-        // Info aggiuntive
+
+        $lines[] = '';
+
+        // Info tecniche
         $submission = \FPForms\Plugin::instance()->submissions->get_submission( $submission_id );
         if ( $submission ) {
-            $message .= __( 'Informazioni aggiuntive:', 'fp-forms' ) . "\n";
-            $message .= __( 'Data:', 'fp-forms' ) . ' ' . $submission->created_at . "\n";
-            $message .= __( 'IP:', 'fp-forms' ) . ' ' . $submission->user_ip . "\n";
-            
+            $lines[] = __( 'DETTAGLI TECNICI', 'fp-forms' );
+            $lines[] = str_repeat( '-', 50 );
+            $lines[] = __( 'Data:', 'fp-forms' ) . ' ' . date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $submission->created_at ) );
+            $lines[] = __( 'IP:', 'fp-forms' ) . ' ' . $submission->user_ip;
+
             if ( $submission->user_id ) {
                 $user = get_user_by( 'id', $submission->user_id );
                 if ( $user ) {
-                    $message .= __( 'Utente:', 'fp-forms' ) . ' ' . $user->display_name . ' (' . $user->user_email . ')' . "\n";
+                    $lines[] = __( 'Utente:', 'fp-forms' ) . ' ' . $user->display_name . ' (' . $user->user_email . ')';
+                }
+            }
+
+            $lines[] = '';
+        }
+
+        // Link admin
+        $admin_url = admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] );
+        $lines[] = __( 'Vedi tutte le submissions:', 'fp-forms' );
+        $lines[] = $admin_url;
+        $lines[] = '';
+
+        // Footer
+        $lines[] = str_repeat( '-', 50 );
+        $lines[] = sprintf( __( '%s - Notifica automatica via FP Forms', 'fp-forms' ), $site_name );
+
+        return implode( "\n", $lines );
+    }
+
+    /**
+     * Costruisce il messaggio di conferma per l'utente
+     */
+    private function build_confirmation_message( $form, $data ) {
+        $site_name = get_bloginfo( 'name' );
+        $lines = [];
+
+        // Saluto personalizzato (cerca nome tra i campi)
+        $user_name = $this->extract_user_name( $form, $data );
+        if ( $user_name ) {
+            $lines[] = sprintf( __( 'Ciao %s,', 'fp-forms' ), $user_name );
+        } else {
+            $lines[] = __( 'Ciao,', 'fp-forms' );
+        }
+        $lines[] = '';
+
+        $lines[] = sprintf(
+            __( 'grazie per averci contattato tramite il form "%s" su %s.', 'fp-forms' ),
+            $form['title'],
+            $site_name
+        );
+        $lines[] = __( 'Abbiamo ricevuto correttamente il tuo messaggio.', 'fp-forms' );
+        $lines[] = '';
+
+        // Riepilogo dati inviati
+        $lines[] = __( 'RIEPILOGO DATI INVIATI', 'fp-forms' );
+        $lines[] = str_repeat( '-', 40 );
+
+        foreach ( $form['fields'] as $field ) {
+            if ( in_array( $field['type'] ?? '', [ 'hidden', 'honeypot', 'recaptcha' ], true ) ) {
+                continue;
+            }
+            $value = $this->get_field_display_value( $field, $data );
+            if ( is_array( $value ) ) {
+                $value = implode( ', ', $value );
+            }
+            if ( $value !== '' ) {
+                $lines[] = $field['label'] . ': ' . $value;
+            }
+        }
+
+        $lines[] = '';
+        $lines[] = __( 'Ti risponderemo il prima possibile.', 'fp-forms' );
+        $lines[] = '';
+
+        // Firma
+        $lines[] = str_repeat( '-', 40 );
+        $lines[] = __( 'Cordiali saluti,', 'fp-forms' );
+        $lines[] = sprintf( __( 'Il team di %s', 'fp-forms' ), $site_name );
+        $lines[] = get_bloginfo( 'url' );
+
+        return implode( "\n", $lines );
+    }
+
+    /**
+     * Estrae il nome dell'utente dai dati della submission
+     */
+    private function extract_user_name( $form, $data ) {
+        foreach ( $form['fields'] as $field ) {
+            $type = $field['type'] ?? '';
+            if ( $type === 'fullname' ) {
+                $value = $this->get_field_display_value( $field, $data );
+                if ( ! empty( trim( $value ) ) ) {
+                    return trim( $value );
                 }
             }
         }
-        
-        return $message;
+        foreach ( $form['fields'] as $field ) {
+            $name = strtolower( $field['name'] ?? '' );
+            if ( in_array( $name, [ 'nome', 'name', 'first_name', 'nome_cognome' ], true ) ) {
+                $value = isset( $data[ $field['name'] ] ) ? $data[ $field['name'] ] : '';
+                if ( ! empty( trim( $value ) ) ) {
+                    return trim( $value );
+                }
+            }
+        }
+        return '';
     }
     
     /**
@@ -130,19 +222,23 @@ class Manager {
         }
         $headers[] = 'From: ' . $from_name . ' <' . $from_email . '>';
 
-        // Reply-To (email del cliente per risposta diretta)
-        $reply_to = '';
-        foreach ( $form['fields'] as $field ) {
-            if ( isset( $field['type'] ) && $field['type'] === 'email' ) {
-                $field_name = $field['name'];
-                if ( isset( $data[ $field_name ] ) && is_email( $data[ $field_name ] ) ) {
-                    $reply_to = $data[ $field_name ];
-                    break;
+        $skip_reply_to = ! empty( $options['skip_reply_to'] );
+
+        if ( ! $skip_reply_to ) {
+            // Reply-To (email del cliente per risposta diretta)
+            $reply_to = '';
+            foreach ( $form['fields'] as $field ) {
+                if ( isset( $field['type'] ) && $field['type'] === 'email' ) {
+                    $field_name = $field['name'];
+                    if ( isset( $data[ $field_name ] ) && is_email( $data[ $field_name ] ) ) {
+                        $reply_to = $data[ $field_name ];
+                        break;
+                    }
                 }
             }
-        }
-        if ( $reply_to ) {
-            $headers[] = 'Reply-To: ' . $reply_to;
+            if ( $reply_to ) {
+                $headers[] = 'Reply-To: ' . $reply_to;
+            }
         }
 
         // Message-ID univoco (riduce flag "duplicate" e migliora reputazione)
@@ -223,21 +319,21 @@ class Manager {
         // Oggetto
         $subject = isset( $form['settings']['confirmation_subject'] ) && ! empty( $form['settings']['confirmation_subject'] )
             ? $form['settings']['confirmation_subject']
-            : __( 'Conferma ricezione del tuo messaggio', 'fp-forms' );
+            : sprintf( __( 'Abbiamo ricevuto il tuo messaggio - %s', 'fp-forms' ), get_bloginfo( 'name' ) );
         
         $subject = $this->replace_tags( $subject, $data, $form );
         $subject = \FPForms\Core\Hooks::filter_email_subject( $subject, $form_id, $data );
         
-        // Messaggio
+        // Messaggio (template custom o auto-generato)
         $message = isset( $form['settings']['confirmation_message'] ) && ! empty( $form['settings']['confirmation_message'] )
             ? $form['settings']['confirmation_message']
-            : __( 'Grazie per averci contattato. Abbiamo ricevuto il tuo messaggio e ti risponderemo al più presto.', 'fp-forms' );
+            : $this->build_confirmation_message( $form, $data );
         
         $message = $this->replace_tags( $message, $data, $form );
         $message = \FPForms\Core\Hooks::filter_email_message( $message, $form_id, $data );
         
-        // Headers (stessi standard anti-spam; senza Reply-To per conferma al cliente)
-        $headers = $this->get_email_headers( $form, $data, [] );
+        // Headers (skip Reply-To: l'email va al cliente, non deve fare reply a se stesso)
+        $headers = $this->get_email_headers( $form, $data, [ 'skip_reply_to' => true ] );
         $headers = \FPForms\Core\Hooks::filter_email_headers( $headers, $form_id, $data );
 
         // Hook before send
@@ -251,7 +347,7 @@ class Manager {
         }
 
         // Log email
-        \FPForms\Core::Logger::log_email( $user_email, $subject, $success );
+        \FPForms\Core\Logger::log_email( $user_email, $subject, $success );
 
         // Hook after send
         do_action( 'fp_forms_after_send_confirmation', $form_id, $data, $success );

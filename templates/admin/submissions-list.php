@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <span class="dashicons dashicons-download"></span>
                 <?php _e( 'Export', 'fp-forms' ); ?>
             </button>
-            <a href="<?php echo admin_url( 'admin.php?page=fp-forms' ); ?>" class="button">
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">
                 &larr; <?php _e( 'Torna ai Form', 'fp-forms' ); ?>
             </a>
         </div>
@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     <div class="fp-search-filters-bar">
         <form method="get" action="" class="fp-search-form">
             <input type="hidden" name="page" value="fp-forms-submissions">
-            <input type="hidden" name="form_id" value="<?php echo $form['id']; ?>">
+            <input type="hidden" name="form_id" value="<?php echo esc_attr( $form['id'] ); ?>">
             
             <div class="fp-search-input-wrapper">
                 <span class="dashicons dashicons-search"></span>
@@ -41,7 +41,7 @@ if ( ! defined( 'ABSPATH' ) ) {
             
             <button type="submit" class="button"><?php _e( 'Filtra', 'fp-forms' ); ?></button>
             <?php if ( ! empty( $search ) || ! empty( $status_filter ) ) : ?>
-            <a href="<?php echo admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] ); ?>" class="button">
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] ) ); ?>" class="button">
                 <?php _e( 'Reset', 'fp-forms' ); ?>
             </a>
             <?php endif; ?>
@@ -69,7 +69,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <span class="dashicons dashicons-admin-page"></span>
                     <?php _e( 'Copia Shortcode', 'fp-forms' ); ?>
                 </button>
-                <a href="<?php echo admin_url( 'admin.php?page=fp-forms-edit&form_id=' . $form['id'] ); ?>" class="button button-large">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-edit&form_id=' . $form['id'] ) ); ?>" class="button button-large">
                     <span class="dashicons dashicons-edit"></span>
                     <?php _e( 'Modifica Form', 'fp-forms' ); ?>
                 </a>
@@ -126,7 +126,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                         if ( is_array( $value ) ) {
                             $value = implode( ', ', $value );
                         }
-                        $preview .= '<strong>' . esc_html( $key ) . ':</strong> ' . esc_html( substr( $value, 0, 50 ) ) . ' | ';
+                        $preview .= '<strong>' . esc_html( $key ) . ':</strong> ' . esc_html( substr( (string) $value, 0, 50 ) ) . ' | ';
                     }
                 ?>
                     <tr class="<?php echo $submission->status === 'unread' ? 'fp-submission-unread' : ''; ?>" data-submission-id="<?php echo esc_attr( $submission->id ); ?>">
@@ -158,50 +158,57 @@ if ( ! defined( 'ABSPATH' ) ) {
         </table>
         </div>
         
-        <!-- Pagination -->
-        <?php if ( isset( $total_pages ) && $total_pages > 1 ) : ?>
-        <div class="fp-pagination">
-            <?php
-            $current_page = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
-            $base_url = admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] );
-            
-            if ( ! empty( $search ) ) {
-                $base_url .= '&s=' . urlencode( $search );
-            }
-            if ( ! empty( $status_filter ) ) {
-                $base_url .= '&status=' . urlencode( $status_filter );
-            }
-            
-            // First
-            if ( $current_page > 1 ) :
-            ?>
-            <a href="<?php echo $base_url . '&paged=1'; ?>" class="fp-page-link">«</a>
-            <a href="<?php echo $base_url . '&paged=' . ( $current_page - 1 ); ?>" class="fp-page-link">‹</a>
-            <?php endif; ?>
-            
-            <?php
-            // Pages
-            $range = 2;
-            for ( $i = max( 1, $current_page - $range ); $i <= min( $total_pages, $current_page + $range ); $i++ ) :
-            ?>
-            <a href="<?php echo $base_url . '&paged=' . $i; ?>" class="fp-page-link <?php echo $i === $current_page ? 'active' : ''; ?>">
-                <?php echo $i; ?>
-            </a>
-            <?php endfor; ?>
-            
-            <?php
-            // Last
-            if ( $current_page < $total_pages ) :
-            ?>
-            <a href="<?php echo $base_url . '&paged=' . ( $current_page + 1 ); ?>" class="fp-page-link">›</a>
-            <a href="<?php echo $base_url . '&paged=' . $total_pages; ?>" class="fp-page-link">»</a>
-            <?php endif; ?>
-            
-            <span class="fp-page-info">
-                <?php printf( __( 'Pagina %d di %d', 'fp-forms' ), $current_page, $total_pages ); ?>
-            </span>
+        <?php if ( $total_pages > 1 ) : ?>
+        <div class="fp-pagination-wrapper">
+            <div class="fp-pagination">
+                <?php
+                $base_url = admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] );
+                if ( ! empty( $search ) ) {
+                    $base_url .= '&s=' . urlencode( $search );
+                }
+                if ( ! empty( $status_filter ) ) {
+                    $base_url .= '&status=' . urlencode( $status_filter );
+                }
+                
+                if ( $page > 1 ) :
+                    $prev_url = $base_url . '&paged=' . ( $page - 1 );
+                ?>
+                    <a href="<?php echo esc_url( $prev_url ); ?>" class="button fp-pagination-btn fp-pagination-prev">
+                        &larr; <?php _e( 'Precedente', 'fp-forms' ); ?>
+                    </a>
+                <?php else : ?>
+                    <span class="button disabled fp-pagination-btn fp-pagination-prev" disabled>
+                        &larr; <?php _e( 'Precedente', 'fp-forms' ); ?>
+                    </span>
+                <?php endif; ?>
+                
+                <span class="fp-pagination-info">
+                    <?php 
+                    printf( 
+                        __( 'Pagina %d di %d (%d submissions totali)', 'fp-forms' ),
+                        $page,
+                        $total_pages,
+                        $total_submissions
+                    ); 
+                    ?>
+                </span>
+                
+                <?php
+                if ( $page < $total_pages ) :
+                    $next_url = $base_url . '&paged=' . ( $page + 1 );
+                ?>
+                    <a href="<?php echo esc_url( $next_url ); ?>" class="button fp-pagination-btn fp-pagination-next">
+                        <?php _e( 'Successivo', 'fp-forms' ); ?> &rarr;
+                    </a>
+                <?php else : ?>
+                    <span class="button disabled fp-pagination-btn fp-pagination-next" disabled>
+                        <?php _e( 'Successivo', 'fp-forms' ); ?> &rarr;
+                    </span>
+                <?php endif; ?>
+            </div>
         </div>
         <?php endif; ?>
+
     <?php endif; ?>
 </div>
 
@@ -213,7 +220,6 @@ if ( ! defined( 'ABSPATH' ) ) {
             <button class="fp-modal-close">&times;</button>
         </div>
         <div class="fp-modal-body" id="fp-submission-details">
-            <!-- Contenuto caricato via JS -->
         </div>
     </div>
 </div>
@@ -227,7 +233,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         </div>
         <div class="fp-modal-body">
             <form id="fp-export-form" method="post">
-                <input type="hidden" name="form_id" value="<?php echo $form['id']; ?>">
+                <input type="hidden" name="form_id" value="<?php echo esc_attr( $form['id'] ); ?>">
                 
                 <div class="fp-form-group">
                     <label><?php _e( 'Formato Export', 'fp-forms' ); ?></label>
@@ -265,59 +271,6 @@ if ( ! defined( 'ABSPATH' ) ) {
             </form>
         </div>
     </div>
-    
-    <?php if ( $total_pages > 1 ) : ?>
-    <div class="fp-pagination-wrapper">
-        <div class="fp-pagination">
-            <?php
-            $base_url = admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] );
-            if ( ! empty( $search ) ) {
-                $base_url .= '&s=' . urlencode( $search );
-            }
-            if ( ! empty( $status_filter ) ) {
-                $base_url .= '&status=' . urlencode( $status_filter );
-            }
-            
-            // Previous button
-            if ( $page > 1 ) :
-                $prev_url = $base_url . '&paged=' . ( $page - 1 );
-            ?>
-                <a href="<?php echo esc_url( $prev_url ); ?>" class="button fp-pagination-btn fp-pagination-prev">
-                    &larr; <?php _e( 'Precedente', 'fp-forms' ); ?>
-                </a>
-            <?php else : ?>
-                <span class="button disabled fp-pagination-btn fp-pagination-prev" disabled>
-                    &larr; <?php _e( 'Precedente', 'fp-forms' ); ?>
-                </span>
-            <?php endif; ?>
-            
-            <span class="fp-pagination-info">
-                <?php 
-                printf( 
-                    __( 'Pagina %d di %d (%d submissions totali)', 'fp-forms' ),
-                    $page,
-                    $total_pages,
-                    $total_submissions
-                ); 
-                ?>
-            </span>
-            
-            <?php
-            // Next button
-            if ( $page < $total_pages ) :
-                $next_url = $base_url . '&paged=' . ( $page + 1 );
-            ?>
-                <a href="<?php echo esc_url( $next_url ); ?>" class="button fp-pagination-btn fp-pagination-next">
-                    <?php _e( 'Successivo', 'fp-forms' ); ?> &rarr;
-                </a>
-            <?php else : ?>
-                <span class="button disabled fp-pagination-btn fp-pagination-next" disabled>
-                    <?php _e( 'Successivo', 'fp-forms' ); ?> &rarr;
-                </span>
-            <?php endif; ?>
-        </div>
-    </div>
-    <?php endif; ?>
 </div>
 
 <style>

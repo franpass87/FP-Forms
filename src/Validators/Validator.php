@@ -78,8 +78,9 @@ class Validator {
             return false;
         }
         
-        // Valida min
-        if ( isset( $options['min'] ) && $value < $options['min'] ) {
+        $num = (float) $value;
+
+        if ( isset( $options['min'] ) && $num < (float) $options['min'] ) {
             $this->add_error( $field_name, sprintf(
                 __( 'Il valore di "%s" deve essere almeno %s.', 'fp-forms' ),
                 $field_label,
@@ -88,8 +89,7 @@ class Validator {
             return false;
         }
         
-        // Valida max
-        if ( isset( $options['max'] ) && $value > $options['max'] ) {
+        if ( isset( $options['max'] ) && $num > (float) $options['max'] ) {
             $this->add_error( $field_name, sprintf(
                 __( 'Il valore di "%s" non può superare %s.', 'fp-forms' ),
                 $field_label,

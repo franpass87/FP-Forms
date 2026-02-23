@@ -88,11 +88,9 @@ class FileField {
         $max_size = isset( $field_options['max_size'] ) ? $field_options['max_size'] * 1024 * 1024 : $this->default_max_size;
         $allowed_types = isset( $field_options['allowed_types'] ) ? $field_options['allowed_types'] : $this->default_allowed_types;
         
-        // Se non è array (singolo file), converti in array
-        if ( ! isset( $files['name'][0] ) ) {
+        if ( ! is_array( $files['name'] ) ) {
             $files = [ $files ];
         } else {
-            // Riorganizza array per file multipli
             $files = $this->reorganize_files_array( $files );
         }
         

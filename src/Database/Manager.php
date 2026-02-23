@@ -111,23 +111,27 @@ class Manager {
         // FIX #2: Usa backticks per identificatori (orderby è già whitelisted, quindi sicuro)
         $orderby_safe = '`' . $orderby . '`';
         
-        $where = $wpdb->prepare( 'WHERE form_id = %d', $form_id );
-        
+        $where_parts  = [ 'form_id = %d' ];
+        $where_values = [ $form_id ];
+
         if ( ! empty( $args['status'] ) ) {
-            $where .= $wpdb->prepare( ' AND status = %s', $args['status'] );
+            $where_parts[]  = 'status = %s';
+            $where_values[] = $args['status'];
         }
-        
-        // Aggiungi search se presente (colonna si chiama 'data' nel database)
+
         if ( ! empty( $args['search'] ) ) {
-            $where .= $wpdb->prepare( ' AND data LIKE %s', '%' . $wpdb->esc_like( $args['search'] ) . '%' );
+            $where_parts[]  = 'data LIKE %s';
+            $where_values[] = '%' . $wpdb->esc_like( $args['search'] ) . '%';
         }
-        
-        // FIX #2: Costruisci query senza interpolazione diretta di orderby/order
-        // orderby e order sono già validati e whitelisted, quindi sicuri
+
+        $where = 'WHERE ' . implode( ' AND ', $where_parts );
+
+        $where_values[] = $args['limit'];
+        $where_values[] = $args['offset'];
+
         $query = $wpdb->prepare(
             "SELECT * FROM {$this->table_submissions} {$where} ORDER BY {$orderby_safe} {$order} LIMIT %d OFFSET %d",
-            $args['limit'],
-            $args['offset']
+            $where_values
         );
         
         return $wpdb->get_results( $query );
@@ -171,6 +175,18 @@ class Manager {
     }
     
     /**
+     * Ottiene la data dell'ultima submission per un form
+     */
+    public function get_last_submission_date( $form_id ) {
+        global $wpdb;
+
+        return $wpdb->get_var( $wpdb->prepare(
+            "SELECT created_at FROM {$this->table_submissions} WHERE form_id = %d ORDER BY created_at DESC LIMIT 1",
+            $form_id
+        ) );
+    }
+
+    /**
      * Ottiene una submission per ID
      */
     public function get_submission( $id ) {
@@ -188,13 +204,22 @@ class Manager {
     public function update_submission_status( $id, $status ) {
         global $wpdb;
         
-        return $wpdb->update(
+        $result = $wpdb->update(
             $this->table_submissions,
             [ 'status' => $status ],
             [ 'id' => $id ],
             [ '%s' ],
             [ '%d' ]
         );
+
+        if ( $result !== false ) {
+            $submission = $this->get_submission( $id );
+            if ( $submission ) {
+                \FPForms\Core\Cache::invalidate_submissions( $submission->form_id );
+            }
+        }
+
+        return $result;
     }
     
     /**
@@ -262,6 +287,10 @@ class Manager {
      * Salva i campi di un form
      */
     public function save_form_fields( $form_id, $fields ) {
+        if ( ! is_array( $fields ) ) {
+            $fields = [];
+        }
+
         global $wpdb;
         
         // Elimina i campi esistenti
@@ -313,19 +342,5 @@ class Manager {
         return $results;
     }
     
-    /**
-     * Ottiene IP dell'utente
-     */
-    private function get_user_ip() {
-        if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
-            $ip = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } else {
-            $ip = $_SERVER['REMOTE_ADDR'];
-        }
-        
-        return sanitize_text_field( $ip );
-    }
 }
 

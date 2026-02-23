@@ -106,6 +106,11 @@ class Manager {
      * Elimina un form (e tutti i dati associati)
      */
     public function delete_form( $form_id ) {
+        $form_id = absint( $form_id );
+        if ( ! $form_id ) {
+            return false;
+        }
+
         global $wpdb;
         $db = \FPForms\Plugin::instance()->database;
         

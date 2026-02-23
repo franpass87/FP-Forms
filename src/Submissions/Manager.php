@@ -93,12 +93,9 @@ class Manager {
         }
         
         // Sanitizza i dati
-        $sanitized_data = $this->sanitize_data( $form_data );
+        $sanitized_data = $this->sanitize_data( $form_data, $form_id );
         
-        // Gestisci upload file se presenti
-        $uploaded_files = $this->handle_file_uploads( $form_id );
-        
-        // Salva la submission
+        // Salva la submission prima di gestire i file
         $db = \FPForms\Plugin::instance()->database;
         $submission_id = $db->save_submission( $form_id, $sanitized_data );
         
@@ -108,7 +105,9 @@ class Manager {
             ] );
         }
         
-        // Salva riferimenti file se presenti
+        // Gestisci upload file dopo il salvataggio DB
+        $uploaded_files = $this->handle_file_uploads( $form_id );
+        
         if ( ! empty( $uploaded_files ) ) {
             $this->save_submission_files( $submission_id, $uploaded_files );
         }
@@ -226,6 +225,10 @@ class Manager {
         $forms_manager = \FPForms\Plugin::instance()->forms;
         $fields = $forms_manager->get_fields( $form_id );
         
+        if ( ! is_array( $fields ) ) {
+            $fields = [];
+        }
+        
         $validator = new \FPForms\Validators\Validator();
         
         foreach ( $fields as $field ) {
@@ -285,10 +288,16 @@ class Manager {
     /**
      * Sanitizza i dati
      */
-    private function sanitize_data( $data ) {
-        $form_id = isset( $_POST['form_id'] ) ? intval( $_POST['form_id'] ) : 0;
+    private function sanitize_data( $data, $form_id = 0 ) {
+        if ( ! $form_id ) {
+            $form_id = isset( $_POST['form_id'] ) ? intval( $_POST['form_id'] ) : 0;
+        }
         $forms_manager = \FPForms\Plugin::instance()->forms;
         $fields = $forms_manager->get_fields( $form_id );
+        
+        if ( ! is_array( $fields ) ) {
+            $fields = [];
+        }
         
         $sanitizer = new \FPForms\Sanitizers\Sanitizer();
         $sanitized = $sanitizer->sanitize_submission_data( $data, $fields );
@@ -442,7 +451,7 @@ class Manager {
                 $decoded = [];
             }
             
-            $submission->data = $decoded;
+            $submission->data = is_array( $decoded ) ? $decoded : [];
         }
         
         return $submission;
@@ -482,6 +491,10 @@ class Manager {
         
         $forms_manager = \FPForms\Plugin::instance()->forms;
         $fields = $forms_manager->get_fields( $form_id );
+        
+        if ( ! is_array( $fields ) ) {
+            return [];
+        }
         
         $uploaded_files = [];
         $file_handler = new \FPForms\Fields\FileField();

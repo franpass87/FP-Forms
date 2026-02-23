@@ -72,7 +72,7 @@ class Logger {
             $log_entry .= "Context: " . wp_json_encode( $context ) . "\n";
         }
         
-        $log_file = self::$log_dir . 'fp-forms-' . date( 'Y-m-d' ) . '.log';
+        $log_file = self::$log_dir . 'fp-forms-' . current_time( 'Y-m-d' ) . '.log';
         
         error_log( $log_entry, 3, $log_file );
     }
@@ -154,7 +154,7 @@ class Logger {
             self::init();
         }
         
-        $date = $date ? $date : date( 'Y-m-d' );
+        $date = $date ? $date : current_time( 'Y-m-d' );
         $log_file = self::$log_dir . 'fp-forms-' . $date . '.log';
         
         if ( ! file_exists( $log_file ) ) {

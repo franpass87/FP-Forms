@@ -911,7 +911,7 @@
                 $select.find('option:not(:first)').remove();
                 
                 fields.forEach(function(field) {
-                    $select.append('<option value="' + field.name + '">' + field.label + '</option>');
+                    $select.append($('<option></option>').val(field.name).text(field.label));
                 });
                 
                 // Ripristina valore
@@ -1029,10 +1029,27 @@
                 success: function(response) {
                     fpProgress.show(100);
                     if (response.success) {
-                        fpToast.success('Operazione completata con successo!');
-                        setTimeout(function() {
-                            location.reload();
-                        }, 800);
+                        if (response.data.csv) {
+                            var raw = atob(response.data.csv);
+                            var bytes = new Uint8Array(raw.length);
+                            for (var i = 0; i < raw.length; i++) { bytes[i] = raw.charCodeAt(i); }
+                            var blob = new Blob([bytes], {type: 'text/csv;charset=utf-8;'});
+                            var link = document.createElement('a');
+                            link.href = URL.createObjectURL(blob);
+                            link.download = response.data.filename || 'export.csv';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(link.href);
+                            fpToast.success(response.data.message || 'Export completato!');
+                            fpLoadingButtonReset($btn);
+                            fpProgress.hide();
+                        } else {
+                            fpToast.success(response.data.message || 'Operazione completata!');
+                            setTimeout(function() {
+                                location.reload();
+                            }, 800);
+                        }
                     } else {
                         fpToast.error(response.data.message || fpFormsAdmin.strings.error);
                         fpLoadingButtonReset($btn);

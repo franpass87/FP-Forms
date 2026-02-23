@@ -32,11 +32,11 @@ $default_settings = [
     'notification_subject' => __( 'Nuova submission da {form_title}', 'fp-forms' ),
     'notification_message' => '',
     'confirmation_enabled' => false,
-    'confirmation_subject' => __( 'Conferma ricezione messaggio', 'fp-forms' ),
-    'confirmation_message' => __( 'Grazie per averci contattato!', 'fp-forms' ),
+    'confirmation_subject' => __( 'Abbiamo ricevuto il tuo messaggio - {site_name}', 'fp-forms' ),
+    'confirmation_message' => '',
     'staff_notifications_enabled' => false,
     'staff_emails' => '',
-    'staff_notification_subject' => '',
+    'staff_notification_subject' => __( '[STAFF] Nuova submission: {form_title}', 'fp-forms' ),
     'staff_notification_message' => '',
     'brevo_enabled' => true,
     'brevo_list_id' => '',
@@ -49,7 +49,7 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
 <div class="wrap fp-forms-admin fp-forms-builder">
     <div class="fp-forms-admin__header">
         <h1><?php echo $is_new ? __( 'Nuovo Form', 'fp-forms' ) : __( 'Modifica Form', 'fp-forms' ); ?></h1>
-        <a href="<?php echo admin_url( 'admin.php?page=fp-forms' ); ?>" class="button">
+        <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">
             &larr; <?php _e( 'Torna ai Form', 'fp-forms' ); ?>
         </a>
     </div>
@@ -391,7 +391,8 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 
                 <div class="fp-setting-field">
                     <label><?php _e( 'Email Destinatario', 'fp-forms' ); ?></label>
-                    <input type="email" name="notification_email" value="<?php echo esc_attr( $form_settings['notification_email'] ); ?>">
+                    <input type="text" name="notification_email" value="<?php echo esc_attr( $form_settings['notification_email'] ); ?>" placeholder="admin@example.com, altro@example.com">
+                    <small><?php _e( 'Puoi inserire più indirizzi separati da virgola.', 'fp-forms' ); ?></small>
                 </div>
                 
                 <div class="fp-setting-field">
@@ -422,7 +423,8 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 
                 <div class="fp-setting-field">
                     <label><?php _e( 'Messaggio Email Conferma', 'fp-forms' ); ?></label>
-                    <textarea name="confirmation_message" rows="3"><?php echo esc_textarea( $form_settings['confirmation_message'] ); ?></textarea>
+                    <textarea name="confirmation_message" rows="5" placeholder="<?php esc_attr_e( 'Lascia vuoto per usare il template automatico con saluto personalizzato, riepilogo dati e firma.', 'fp-forms' ); ?>"><?php echo esc_textarea( $form_settings['confirmation_message'] ); ?></textarea>
+                    <small><?php _e( 'Template personalizzato per il cliente. Lascia vuoto per il template automatico. Tag disponibili: {form_title}, {site_name}, {date}', 'fp-forms' ); ?></small>
                 </div>
                 
                 <h4><?php _e( 'Notifiche Staff', 'fp-forms' ); ?></h4>

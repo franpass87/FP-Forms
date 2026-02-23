@@ -52,7 +52,10 @@ class Cache {
      * Flush cache gruppo
      */
     public static function flush() {
-        return wp_cache_flush_group( self::GROUP );
+        if ( function_exists( 'wp_cache_flush_group' ) ) {
+            return wp_cache_flush_group( self::GROUP );
+        }
+        return false;
     }
     
     /**
