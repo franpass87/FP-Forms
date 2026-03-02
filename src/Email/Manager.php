@@ -52,14 +52,16 @@ class Manager {
         $this->apply_fp_forms_mail_from();
         try {
             $success = wp_mail( $to, $subject, $message, $headers );
+        } catch ( \Throwable $e ) {
+            self::log_email_diagnostic( 'notification', $to, $subject, false, $e->getMessage() );
+            throw $e;
         } finally {
             $this->remove_fp_forms_mail_from();
         }
 
-        // Log email
+        self::log_email_diagnostic( 'notification', $to, $subject, $success );
         \FPForms\Core\Logger::log_email( $to, $subject, $success );
 
-        // Hook after send
         do_action( 'fp_forms_after_send_notification', $form_id, $data, $success );
 
         return $success;
@@ -342,14 +344,16 @@ class Manager {
         $this->apply_fp_forms_mail_from();
         try {
             $success = wp_mail( $user_email, $subject, $message, $headers );
+        } catch ( \Throwable $e ) {
+            self::log_email_diagnostic( 'confirmation', $user_email, $subject, false, $e->getMessage() );
+            throw $e;
         } finally {
             $this->remove_fp_forms_mail_from();
         }
 
-        // Log email
+        self::log_email_diagnostic( 'confirmation', $user_email, $subject, $success );
         \FPForms\Core\Logger::log_email( $user_email, $subject, $success );
 
-        // Hook after send
         do_action( 'fp_forms_after_send_confirmation', $form_id, $data, $success );
 
         return $success;
@@ -399,16 +403,18 @@ class Manager {
         $this->apply_fp_forms_mail_from();
         try {
             $success = wp_mail( $staff_email, $subject, $message, $headers );
+        } catch ( \Throwable $e ) {
+            self::log_email_diagnostic( 'staff', $staff_email, $subject, false, $e->getMessage() );
+            throw $e;
         } finally {
             $this->remove_fp_forms_mail_from();
         }
-        
-        // Log email
+
+        self::log_email_diagnostic( 'staff', $staff_email, $subject, $success );
         \FPForms\Core\Logger::log_email( $staff_email, $subject, $success );
-        
-        // Hook after send
+
         do_action( 'fp_forms_after_send_staff_notification', $form_id, $data, $success );
-        
+
         return $success;
     }
 
@@ -442,5 +448,34 @@ class Manager {
     public function filter_wp_mail_from_name( $name ) {
         $fp_name = get_option( 'fp_forms_email_from_name', get_bloginfo( 'name' ) );
         return ( $fp_name !== '' ) ? $fp_name : $name;
+    }
+
+    /**
+     * Scrive diagnostica email in un log dedicato (sempre attivo, indipendente da WP_DEBUG).
+     * Il file ruota automaticamente oltre 500 KB.
+     */
+    private static function log_email_diagnostic( string $type, string $to, string $subject, bool $success, string $error = '' ): void {
+        $dir = WP_CONTENT_DIR . '/uploads/fp-forms-logs/';
+        if ( ! is_dir( $dir ) ) {
+            wp_mkdir_p( $dir );
+        }
+
+        $file = $dir . 'email-diagnostic.log';
+
+        if ( file_exists( $file ) && filesize( $file ) > 512000 ) {
+            @rename( $file, $dir . 'email-diagnostic-prev.log' );
+        }
+
+        $line = sprintf(
+            "[%s] %s | to=%s | subject=%s | result=%s%s\n",
+            current_time( 'Y-m-d H:i:s' ),
+            strtoupper( $type ),
+            $to,
+            mb_substr( $subject, 0, 80 ),
+            $success ? 'OK' : 'FAIL',
+            $error ? ' | error=' . $error : ''
+        );
+
+        @file_put_contents( $file, $line, FILE_APPEND | LOCK_EX );
     }
 }

@@ -138,12 +138,13 @@ class Manager {
         if ( ! $emails_disabled ) {
             try {
                 $this->send_notification( $form_id, $submission_id, $sanitized_data );
-            } catch ( \Exception $e ) {
+            } catch ( \Throwable $e ) {
                 \FPForms\Core\Logger::error( 'Admin notification failed', [
                     'submission_id' => $submission_id,
                     'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                 ] );
-                // Non bloccare submission se email fallisce
+                error_log( '[FP Forms] Admin notification error: ' . $e->getMessage() );
             }
         }
         
@@ -151,11 +152,13 @@ class Manager {
         if ( ! $emails_disabled ) {
             try {
                 $this->send_confirmation( $form_id, $sanitized_data );
-            } catch ( \Exception $e ) {
+            } catch ( \Throwable $e ) {
                 \FPForms\Core\Logger::error( 'User confirmation failed', [
                     'submission_id' => $submission_id,
                     'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                 ] );
+                error_log( '[FP Forms] User confirmation error: ' . $e->getMessage() );
             }
         }
         
@@ -163,11 +166,13 @@ class Manager {
         if ( ! $emails_disabled ) {
             try {
                 $this->send_staff_notifications( $form_id, $submission_id, $sanitized_data );
-            } catch ( \Exception $e ) {
+            } catch ( \Throwable $e ) {
                 \FPForms\Core\Logger::error( 'Staff notifications failed', [
                     'submission_id' => $submission_id,
                     'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                 ] );
+                error_log( '[FP Forms] Staff notification error: ' . $e->getMessage() );
             }
         }
         

@@ -13,6 +13,10 @@ class Smtp {
 
     /**
      * Inizializza la configurazione SMTP.
+     *
+     * Se WP Mail SMTP (o altro plugin SMTP noto) è attivo, FP Forms
+     * gli cede il controllo del transport per evitare doppia configurazione
+     * di PHPMailer sullo stesso hook phpmailer_init.
      */
     public static function init() {
         $settings = self::get_settings();
@@ -21,7 +25,36 @@ class Smtp {
             return;
         }
 
+        if ( self::external_smtp_plugin_active() ) {
+            return;
+        }
+
         add_action( 'phpmailer_init', [ __CLASS__, 'configure_phpmailer' ] );
+    }
+
+    /**
+     * Rileva se un plugin SMTP esterno gestisce già il transport.
+     */
+    private static function external_smtp_plugin_active(): bool {
+        $smtp_plugins = [
+            'wp-mail-smtp/wp_mail_smtp.php',
+            'wp-mail-smtp-pro/wp_mail_smtp.php',
+            'easy-wp-smtp/easy-wp-smtp.php',
+            'post-smtp/postman-smtp.php',
+            'fluent-smtp/fluent-smtp.php',
+        ];
+
+        if ( ! function_exists( 'is_plugin_active' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
+        foreach ( $smtp_plugins as $plugin ) {
+            if ( is_plugin_active( $plugin ) ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
