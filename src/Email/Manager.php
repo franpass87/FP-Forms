@@ -214,20 +214,14 @@ class Manager {
     private function get_email_headers( $form, $data, $options = [] ) {
         $headers = [];
 
-        // From (RFC-compliant: nome tra virgolette se contiene virgole o backslash)
-        $from_name  = get_option( 'fp_forms_email_from_name', get_bloginfo( 'name' ) );
-        $from_email = get_option( 'fp_forms_email_from_address', get_bloginfo( 'admin_email' ) );
-        $from_name  = $from_name ?: get_bloginfo( 'name' );
-        $from_email = $from_email ?: get_bloginfo( 'admin_email' );
-        if ( preg_match( '/[,\\\"]/', $from_name ) ) {
-            $from_name = '"' . str_replace( [ '\\', '"' ], [ '\\\\', '\\"' ], $from_name ) . '"';
-        }
-        $headers[] = 'From: ' . $from_name . ' <' . $from_email . '>';
+        // From: NON impostato qui per evitare conflitti con WP Mail SMTP e altri
+        // plugin che gestiscono il From via phpmailer_init.
+        // Il From viene gestito da apply_fp_forms_mail_from() tramite i filtri
+        // wp_mail_from / wp_mail_from_name, che sono sovrascrivibili da WP Mail SMTP.
 
         $skip_reply_to = ! empty( $options['skip_reply_to'] );
 
         if ( ! $skip_reply_to ) {
-            // Reply-To (email del cliente per risposta diretta)
             $reply_to = '';
             foreach ( $form['fields'] as $field ) {
                 if ( isset( $field['type'] ) && $field['type'] === 'email' ) {
@@ -243,16 +237,6 @@ class Manager {
             }
         }
 
-        // Message-ID univoco (riduce flag "duplicate" e migliora reputazione)
-        $domain = wp_parse_url( get_bloginfo( 'url' ), PHP_URL_HOST );
-        $domain = $domain ? str_replace( 'www.', '', $domain ) : 'localhost';
-        $suffix = isset( $options['submission_id'] ) ? (int) $options['submission_id'] : wp_rand( 10000, 99999 );
-        $msg_id = '<fpforms.' . uniqid( '', true ) . '.' . $suffix . '@' . $domain . '>';
-        $headers[] = 'Message-ID: ' . $msg_id;
-
-        // Identificazione e standard MIME (alcuni provider li controllano)
-        $headers[] = 'X-Mailer: FP Forms/' . ( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '1.0' ) . ' (WordPress)';
-        $headers[] = 'MIME-Version: 1.0';
         $headers[] = 'Content-Type: text/plain; charset=UTF-8';
 
         return $headers;
