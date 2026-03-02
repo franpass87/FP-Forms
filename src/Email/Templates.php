@@ -41,10 +41,9 @@ class Templates {
         $vars = wp_parse_args( $vars, self::get_global_vars() );
 
         ob_start();
-        // Le variabili $vars sono accessibili nel template via extract
         extract( $vars, EXTR_SKIP );
         include $file;
-        return ob_get_clean();
+        return (string) ob_get_clean();
     }
 
     /**
@@ -79,7 +78,7 @@ class Templates {
 
         foreach ( $form['fields'] as $field ) {
             $type = $field['type'] ?? 'text';
-            if ( in_array( $type, [ 'hidden', 'honeypot', 'recaptcha', 'step_break' ], true ) ) {
+            if ( in_array( $type, [ 'hidden', 'honeypot', 'recaptcha', 'step_break', 'privacy-checkbox', 'marketing-checkbox' ], true ) ) {
                 continue;
             }
 

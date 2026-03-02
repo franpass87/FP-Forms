@@ -930,7 +930,7 @@ class Manager {
                 } elseif ( $field === 'success_redirect_url' ) {
                     // URL validation
                     $sanitized[ $field ] = esc_url_raw( $settings[ $field ] );
-                } elseif ( in_array( $field, [ 'success_message', 'notification_message', 'confirmation_message', 'staff_notification_message' ] ) ) {
+                } elseif ( in_array( $field, [ 'success_message', 'notification_message', 'confirmation_message', 'staff_notification_message', 'confirmation_footer_info' ] ) ) {
                     // Textarea - allow line breaks
                     $sanitized[ $field ] = sanitize_textarea_field( $settings[ $field ] );
                 } else {

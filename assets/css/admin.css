@@ -1194,16 +1194,51 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
 /* ============================================
    Email Template Selector
    ============================================ */
+.fp-template-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+}
 .fp-template-card {
-    transition: all 0.2s ease;
+    position: relative;
+    display: block;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    background: #fff;
+}
+.fp-template-card .fp-template-radio {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.fp-template-card__icon {
+    display: block;
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+.fp-template-card__name {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+}
+.fp-template-card__desc {
+    display: block;
+    font-size: 10px;
+    color: #9ca3af;
 }
 .fp-template-card:hover {
-    border-color: var(--fp-color-primary, #3b82f6) !important;
-    background: #f8faff !important;
+    border-color: #93c5fd;
+    background: #f8faff;
     transform: translateY(-1px);
 }
 .fp-template-card:has(.fp-template-radio:checked) {
-    border-color: var(--fp-color-primary, #3b82f6) !important;
-    background: #eff6ff !important;
+    border-color: var(--fp-color-primary, #3b82f6);
+    background: #eff6ff;
     box-shadow: 0 0 0 1px var(--fp-color-primary, #3b82f6);
 }

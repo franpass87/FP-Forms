@@ -1489,17 +1489,5 @@
     // Bind evento restore snapshot
     $(document).on('click', '.fp-restore-snapshot', FPFormsAdmin.restoreSnapshot);
 
-    // Email template selector - visual highlight on change
-    $(document).on('change', '.fp-template-radio', function() {
-        var $cards = $(this).closest('.fp-template-cards');
-        $cards.find('.fp-template-card').css({
-            'border-color': '#e5e7eb',
-            'background': ''
-        });
-        $(this).closest('.fp-template-card').css({
-            'border-color': '#3b82f6',
-            'background': '#eff6ff'
-        });
-    });
     
 })(jQuery);

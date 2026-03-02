@@ -532,10 +532,10 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                         </span>
                         <p class="description">
                             <?php _e( 'Score piÃ¹ alto = piÃ¹ restrittivo. 0.0 = bot sicuro, 1.0 = umano sicuro. Valori tipici:', 'fp-forms' ); ?><br>
-                            â€¢ <code>0.9</code>: <?php _e( 'Molto restrittivo (pochi falsi positivi)', 'fp-forms' ); ?><br>
-                            â€¢ <code>0.7</code>: <?php _e( 'Restrittivo', 'fp-forms' ); ?><br>
-                            â€¢ <code>0.5</code>: <?php _e( 'Bilanciato (raccomandato)', 'fp-forms' ); ?><br>
-                            â€¢ <code>0.3</code>: <?php _e( 'Permissivo', 'fp-forms' ); ?>
+                            &#x2022; <code>0.9</code>: <?php _e( 'Molto restrittivo (pochi falsi positivi)', 'fp-forms' ); ?><br>
+                            &#x2022; <code>0.7</code>: <?php _e( 'Restrittivo', 'fp-forms' ); ?><br>
+                            &#x2022; <code>0.5</code>: <?php _e( 'Bilanciato (raccomandato)', 'fp-forms' ); ?><br>
+                            &#x2022; <code>0.3</code>: <?php _e( 'Permissivo', 'fp-forms' ); ?>
                         </p>
                     </td>
                 </tr>
@@ -637,20 +637,20 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                         
                         <div style="margin-top: 16px; padding: 12px; background: #f0f6fc; border-left: 4px solid #0073aa; border-radius: 4px;">
                             <p style="margin: 0; font-weight: 600; color: #0073aa;">
-                                ðŸ“Š <?php _e( 'Eventi Tracciati Automaticamente (Funnel Completo):', 'fp-forms' ); ?>
+                                &#x1F4CA; <?php _e( 'Eventi Tracciati Automaticamente (Funnel Completo):', 'fp-forms' ); ?>
                             </p>
                             <ul style="margin: 8px 0 0 20px; font-size: 13px;">
-                                <li><code>fp_form_view</code> - ðŸ‘ï¸ <?php _e( 'Form visualizzato (awareness)', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_start</code> - âœï¸ <?php _e( 'Inizio compilazione - primo campo focus (interest)', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_progress</code> - ðŸ“Š <?php _e( 'Progressione form (25%, 50%, 75%)', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_submit</code> - âœ… <?php _e( 'Form completato con successo (conversion)', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_conversion</code> - ðŸŽ¯ <?php _e( 'Conversione per Google Ads', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_abandon</code> - âŒ <?php _e( 'Abbandono form (remarketing)', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_validation_error</code> - âš ï¸ <?php _e( 'Errore validazione campo (optimization)', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_error</code> - ðŸš« <?php _e( 'Errore invio generale', 'fp-forms' ); ?></li>
+                                <li><code>fp_form_view</code> - &#x1F441;&#xFE0F; <?php _e( 'Form visualizzato (awareness)', 'fp-forms' ); ?></li>
+                                <li><code>fp_form_start</code> - &#x270F;&#xFE0F; <?php _e( 'Inizio compilazione - primo campo focus (interest)', 'fp-forms' ); ?></li>
+                                <li><code>fp_form_progress</code> - &#x1F4CA; <?php _e( 'Progressione form (25%, 50%, 75%)', 'fp-forms' ); ?></li>
+                                <li><code>fp_form_submit</code> - &#x2705; <?php _e( 'Form completato con successo (conversion)', 'fp-forms' ); ?></li>
+                                <li><code>fp_form_conversion</code> - &#x1F3AF; <?php _e( 'Conversione per Google Ads', 'fp-forms' ); ?></li>
+                                <li><code>fp_form_abandon</code> - &#x274C; <?php _e( 'Abbandono form (remarketing)', 'fp-forms' ); ?></li>
+                                <li><code>fp_form_validation_error</code> - &#x26A0;&#xFE0F; <?php _e( 'Errore validazione campo (optimization)', 'fp-forms' ); ?></li>
+                                <li><code>fp_form_error</code> - &#x1F6AB; <?php _e( 'Errore invio generale', 'fp-forms' ); ?></li>
                             </ul>
                             <p style="margin: 12px 0 0; font-size: 12px; padding: 8px; background: #fff; border-radius: 4px;">
-                                <strong>ðŸ“ˆ Metriche Incluse:</strong> Tempo compilazione, % progress, error_field, conversion_value
+                                <strong>&#x1F4C8; Metriche Incluse:</strong> Tempo compilazione, % progress, error_field, conversion_value
                             </p>
                         </div>
                     </td>
@@ -668,12 +668,12 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                             </p>
                             <?php if ( ! empty( $gtm_id ) ) : ?>
                             <p style="margin: 8px 0 0; font-size: 13px;">
-                                âœ… Google Tag Manager: <code><?php echo esc_html( $gtm_id ); ?></code>
+                                &#x2705; Google Tag Manager: <code><?php echo esc_html( $gtm_id ); ?></code>
                             </p>
                             <?php endif; ?>
                             <?php if ( ! empty( $ga4_id ) ) : ?>
                             <p style="margin: 8px 0 0; font-size: 13px;">
-                                âœ… Google Analytics 4: <code><?php echo esc_html( $ga4_id ); ?></code>
+                                &#x2705; Google Analytics 4: <code><?php echo esc_html( $ga4_id ); ?></code>
                             </p>
                             <?php endif; ?>
                         </div>
@@ -708,7 +708,7 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                                class="regular-text"
                                placeholder="xkeysib-...">
                         <p class="description">
-                            <?php _e( 'La tua API Key v3 da Brevo (Settings â†’ API Keys)', 'fp-forms' ); ?>
+                            <?php _e( 'La tua API Key v3 da Brevo (Settings &#x2192; API Keys)', 'fp-forms' ); ?>
                         </p>
                     </td>
                 </tr>
@@ -782,7 +782,7 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                     <td>
                         <div style="padding: 12px; background: #f0f6fc; border-left: 4px solid #0073aa; border-radius: 4px;">
                             <p style="margin: 0 0 8px; font-weight: 600; color: #0073aa;">
-                                ðŸ“¤ <?php _e( 'Per ogni submission:', 'fp-forms' ); ?>
+                                &#x1F4E4; <?php _e( 'Per ogni submission:', 'fp-forms' ); ?>
                             </p>
                             <ul style="margin: 0 0 12px 20px; font-size: 13px;">
                                 <li><strong><?php _e( 'Contatto:', 'fp-forms' ); ?></strong> <?php _e( 'Email + attributi (nome, cognome, telefono, ecc.)', 'fp-forms' ); ?></li>
@@ -790,7 +790,7 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                                 <li><strong><?php _e( 'Evento:', 'fp-forms' ); ?></strong> <code>form_submission</code> <?php _e( 'con metadata (form_id, form_title, submission_id)', 'fp-forms' ); ?></li>
                             </ul>
                             <p style="margin: 0; font-size: 13px; color: #666;">
-                                ðŸ’¡ <?php _e( 'Puoi personalizzare il nome evento e la lista per ogni form nelle impostazioni form.', 'fp-forms' ); ?>
+                                &#x1F4A1; <?php _e( 'Puoi personalizzare il nome evento e la lista per ogni form nelle impostazioni form.', 'fp-forms' ); ?>
                             </p>
                         </div>
                     </td>
@@ -846,11 +846,11 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                         </p>
                         <div style="margin-top: 12px; padding: 12px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
                             <p style="margin: 0; font-size: 13px; color: #856404;">
-                                <strong>âš ï¸ PerchÃ© Conversions API?</strong><br>
-                                â€¢ iOS 14.5+ blocca molti pixel client-side<br>
-                                â€¢ Ad blockers impediscono tracking<br>
-                                â€¢ Server-side = 100% affidabile<br>
-                                â€¢ Migliora accuratezza campagne Meta Ads
+                                <strong>&#x26A0;&#xFE0F; PerchÃ© Conversions API?</strong><br>
+                                &#x2022; iOS 14.5+ blocca molti pixel client-side<br>
+                                &#x2022; Ad blockers impediscono tracking<br>
+                                &#x2022; Server-side = 100% affidabile<br>
+                                &#x2022; Migliora accuratezza campagne Meta Ads
                             </p>
                         </div>
                     </td>
@@ -892,32 +892,32 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                     <td>
                         <div style="padding: 12px; background: #f0f6fc; border-left: 4px solid #0073aa; border-radius: 4px;">
                             <p style="margin: 0 0 8px; font-weight: 600; color: #0073aa;">
-                                ðŸ“Š <?php _e( 'Eventi Meta (Funnel Completo):', 'fp-forms' ); ?>
+                                &#x1F4CA; <?php _e( 'Eventi Meta (Funnel Completo):', 'fp-forms' ); ?>
                             </p>
                             
                             <p style="margin: 8px 0 4px; font-weight: 600; font-size: 12px; color: #0073aa;">
-                                <?php _e( 'âœ… Eventi Standard (usabili in Meta Ads):', 'fp-forms' ); ?>
+                                <?php _e( '&#x2705; Eventi Standard (usabili in Meta Ads):', 'fp-forms' ); ?>
                             </p>
                             <ul style="margin: 0 0 12px 20px; font-size: 13px;">
                                 <li><code>PageView</code> - <?php _e( 'Caricamento pagina', 'fp-forms' ); ?></li>
-                                <li><code>ViewContent</code> - ðŸ‘ï¸ <?php _e( 'Form visualizzato', 'fp-forms' ); ?></li>
-                                <li><code>Lead</code> - ðŸŽ¯ <?php _e( 'Form submission (CONVERSIONE PRINCIPALE)', 'fp-forms' ); ?></li>
-                                <li><code>CompleteRegistration</code> - âœ… <?php _e( 'Completata registrazione (se signup form)', 'fp-forms' ); ?></li>
+                                <li><code>ViewContent</code> - &#x1F441;&#xFE0F; <?php _e( 'Form visualizzato', 'fp-forms' ); ?></li>
+                                <li><code>Lead</code> - &#x1F3AF; <?php _e( 'Form submission (CONVERSIONE PRINCIPALE)', 'fp-forms' ); ?></li>
+                                <li><code>CompleteRegistration</code> - &#x2705; <?php _e( 'Completata registrazione (se signup form)', 'fp-forms' ); ?></li>
                             </ul>
                             
                             <p style="margin: 8px 0 4px; font-weight: 600; font-size: 12px; color: #666;">
-                                <?php _e( 'ðŸ”§ Eventi Custom (analytics & optimization):', 'fp-forms' ); ?>
+                                <?php _e( '&#x1F527; Eventi Custom (analytics & optimization):', 'fp-forms' ); ?>
                             </p>
                             <ul style="margin: 0 0 12px 20px; font-size: 13px;">
-                                <li><code>FormStart</code> - âœï¸ <?php _e( 'Inizio compilazione', 'fp-forms' ); ?></li>
-                                <li><code>FormProgress</code> - ðŸ“Š <?php _e( 'Progressione (25%, 50%, 75%)', 'fp-forms' ); ?></li>
-                                <li><code>FormAbandoned</code> - âŒ <?php _e( 'Abbandono form', 'fp-forms' ); ?></li>
-                                <li><code>FormValidationError</code> - âš ï¸ <?php _e( 'Errore validazione', 'fp-forms' ); ?></li>
-                                <li><code>FormSubmission</code> - ðŸ“ <?php _e( 'Metadata dettagliati submission', 'fp-forms' ); ?></li>
+                                <li><code>FormStart</code> - &#x270F;&#xFE0F; <?php _e( 'Inizio compilazione', 'fp-forms' ); ?></li>
+                                <li><code>FormProgress</code> - &#x1F4CA; <?php _e( 'Progressione (25%, 50%, 75%)', 'fp-forms' ); ?></li>
+                                <li><code>FormAbandoned</code> - &#x274C; <?php _e( 'Abbandono form', 'fp-forms' ); ?></li>
+                                <li><code>FormValidationError</code> - &#x26A0;&#xFE0F; <?php _e( 'Errore validazione', 'fp-forms' ); ?></li>
+                                <li><code>FormSubmission</code> - &#x1F4DD; <?php _e( 'Metadata dettagliati submission', 'fp-forms' ); ?></li>
                             </ul>
                             
                             <p style="margin: 0; padding: 8px; background: #fff; border-radius: 4px; font-size: 13px; color: #666;">
-                                ðŸ’¡ <?php _e( 'Eventi Lead e CompleteRegistration sono ottimizzabili in campagne Meta Ads. Eventi custom per remarketing e analytics.', 'fp-forms' ); ?>
+                                &#x1F4A1; <?php _e( 'Eventi Lead e CompleteRegistration sono ottimizzabili in campagne Meta Ads. Eventi custom per remarketing e analytics.', 'fp-forms' ); ?>
                             </p>
                         </div>
                     </td>
@@ -929,7 +929,7 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                     <td>
                         <div style="padding: 12px; background: #f0f6fc; border-left: 4px solid #0073aa; border-radius: 4px;">
                             <p style="margin: 0 0 8px; font-weight: 600; color: #0073aa;">
-                                ðŸ”’ <?php _e( 'Dati Hashed (SHA256) per Privacy:', 'fp-forms' ); ?>
+                                &#x1F512; <?php _e( 'Dati Hashed (SHA256) per Privacy:', 'fp-forms' ); ?>
                             </p>
                             <ul style="margin: 0; font-size: 13px;">
                                 <li><strong>em</strong> - Email (hashed)</li>
@@ -942,7 +942,7 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                             </ul>
                         </div>
                         <p class="description" style="margin-top: 12px;">
-                            â„¹ï¸ <?php _e( 'Tutti i dati personali sono hashed con SHA256 prima dell\'invio (GDPR compliant)', 'fp-forms' ); ?>
+                            &#x2139;&#xFE0F; <?php _e( 'Tutti i dati personali sono hashed con SHA256 prima dell\'invio (GDPR compliant)', 'fp-forms' ); ?>
                         </p>
                     </td>
                 </tr>

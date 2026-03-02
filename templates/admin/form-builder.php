@@ -426,12 +426,12 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                     $current_template = $form_settings['confirmation_template'] ?? '';
                     ?>
                     <div class="fp-email-template-selector">
-                        <div class="fp-template-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-                            <label class="fp-template-card" style="display:block;padding:12px;border:2px solid <?php echo $current_template === '' ? '#ccc' : '#e5e7eb'; ?>;border-radius:8px;cursor:pointer;text-align:center;transition:all .2s;<?php echo $current_template === '' ? 'border-color:#3b82f6;background:#eff6ff;' : ''; ?>">
-                                <input type="radio" name="confirmation_template" value="" <?php checked( $current_template, '' ); ?> style="display:none;" class="fp-template-radio">
-                                <span style="display:block;font-size:20px;margin-bottom:4px;">&#9993;</span>
-                                <span style="display:block;font-size:12px;font-weight:600;color:#374151;"><?php _e( 'Plain Text', 'fp-forms' ); ?></span>
-                                <span style="display:block;font-size:10px;color:#9ca3af;"><?php _e( 'Classico', 'fp-forms' ); ?></span>
+                        <div class="fp-template-cards">
+                            <label class="fp-template-card">
+                                <input type="radio" name="confirmation_template" value="" <?php checked( $current_template, '' ); ?> class="fp-template-radio">
+                                <span class="fp-template-card__icon">&#9993;</span>
+                                <span class="fp-template-card__name"><?php _e( 'Plain Text', 'fp-forms' ); ?></span>
+                                <span class="fp-template-card__desc"><?php _e( 'Classico', 'fp-forms' ); ?></span>
                             </label>
                             <?php
                             $template_icons = [
@@ -447,13 +447,12 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                                 'minimal'      => __( 'Universale', 'fp-forms' ),
                             ];
                             foreach ( $available_templates as $slug => $label ) :
-                                $is_selected = $current_template === $slug;
                             ?>
-                            <label class="fp-template-card" style="display:block;padding:12px;border:2px solid <?php echo $is_selected ? '#3b82f6' : '#e5e7eb'; ?>;border-radius:8px;cursor:pointer;text-align:center;transition:all .2s;<?php echo $is_selected ? 'background:#eff6ff;' : ''; ?>">
-                                <input type="radio" name="confirmation_template" value="<?php echo esc_attr( $slug ); ?>" <?php checked( $current_template, $slug ); ?> style="display:none;" class="fp-template-radio">
-                                <span style="display:block;font-size:20px;margin-bottom:4px;"><?php echo $template_icons[ $slug ]; ?></span>
-                                <span style="display:block;font-size:12px;font-weight:600;color:#374151;"><?php echo esc_html( explode( ' (', $label )[0] ); ?></span>
-                                <span style="display:block;font-size:10px;color:#9ca3af;"><?php echo esc_html( $template_desc[ $slug ] ); ?></span>
+                            <label class="fp-template-card">
+                                <input type="radio" name="confirmation_template" value="<?php echo esc_attr( $slug ); ?>" <?php checked( $current_template, $slug ); ?> class="fp-template-radio">
+                                <span class="fp-template-card__icon"><?php echo $template_icons[ $slug ]; ?></span>
+                                <span class="fp-template-card__name"><?php echo esc_html( explode( ' (', $label )[0] ); ?></span>
+                                <span class="fp-template-card__desc"><?php echo esc_html( $template_desc[ $slug ] ); ?></span>
                             </label>
                             <?php endforeach; ?>
                         </div>

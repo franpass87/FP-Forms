@@ -152,7 +152,7 @@ class Manager {
         $lines[] = str_repeat( '-', 40 );
 
         foreach ( $form['fields'] as $field ) {
-            if ( in_array( $field['type'] ?? '', [ 'hidden', 'honeypot', 'recaptcha' ], true ) ) {
+            if ( in_array( $field['type'] ?? '', [ 'hidden', 'honeypot', 'recaptcha', 'step_break', 'privacy-checkbox', 'marketing-checkbox' ], true ) ) {
                 continue;
             }
             $value = $this->get_field_display_value( $field, $data );
