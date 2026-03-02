@@ -214,11 +214,6 @@ class Manager {
     private function get_email_headers( $form, $data, $options = [] ) {
         $headers = [];
 
-        // From: NON impostato qui per evitare conflitti con WP Mail SMTP e altri
-        // plugin che gestiscono il From via phpmailer_init.
-        // Il From viene gestito da apply_fp_forms_mail_from() tramite i filtri
-        // wp_mail_from / wp_mail_from_name, che sono sovrascrivibili da WP Mail SMTP.
-
         $skip_reply_to = ! empty( $options['skip_reply_to'] );
 
         if ( ! $skip_reply_to ) {
@@ -237,7 +232,8 @@ class Manager {
             }
         }
 
-        $headers[] = 'Content-Type: text/plain; charset=UTF-8';
+        $content_type = ! empty( $options['html'] ) ? 'text/html' : 'text/plain';
+        $headers[] = 'Content-Type: ' . $content_type . '; charset=UTF-8';
 
         return $headers;
     }
@@ -293,7 +289,6 @@ class Manager {
             return false;
         }
         
-        // Verifica se l'email di conferma è abilitata
         if ( ! isset( $form['settings']['confirmation_enabled'] ) || ! $form['settings']['confirmation_enabled'] ) {
             \FPForms\Core\Logger::debug( 'Confirmation email disabled for form', [
                 'form_id' => $form_id,
@@ -309,20 +304,55 @@ class Manager {
         
         $subject = $this->replace_tags( $subject, $data, $form );
         $subject = \FPForms\Core\Hooks::filter_email_subject( $subject, $form_id, $data );
-        
-        // Messaggio (template custom o auto-generato)
-        $message = isset( $form['settings']['confirmation_message'] ) && ! empty( $form['settings']['confirmation_message'] )
-            ? $form['settings']['confirmation_message']
-            : $this->build_confirmation_message( $form, $data );
-        
-        $message = $this->replace_tags( $message, $data, $form );
+
+        // Template HTML o plain text?
+        $template_slug = $form['settings']['confirmation_template'] ?? '';
+        $is_html = ! empty( $template_slug );
+
+        if ( $is_html ) {
+            // Messaggio custom sovrascrive il template? No: il template HTML genera tutto.
+            // Se c'è un messaggio custom, usiamo plain text come fallback.
+            $has_custom_message = isset( $form['settings']['confirmation_message'] ) && ! empty( $form['settings']['confirmation_message'] );
+            if ( $has_custom_message ) {
+                $is_html = false;
+            }
+        }
+
+        if ( $is_html ) {
+            $accent = $form['settings']['confirmation_accent_color'] ?? '';
+            if ( ! $accent || ! preg_match( '/^#[0-9A-Fa-f]{6}$/', $accent ) ) {
+                $accent = get_option( 'fp_forms_email_accent_color', '#3b82f6' );
+            }
+
+            $footer_extra = $form['settings']['confirmation_footer_info'] ?? '';
+            $global_footer = get_option( 'fp_forms_email_footer_text', '' );
+            $footer = $global_footer;
+            if ( $footer_extra ) {
+                $footer = $footer ? $footer . "\n" . $footer_extra : $footer_extra;
+            }
+
+            $fields_html = Templates::build_fields_table( $form, $data, $accent );
+
+            $message = Templates::render( $template_slug, [
+                'accent_color' => $accent,
+                'footer_text'  => $footer,
+                'user_name'    => $this->extract_user_name( $form, $data ),
+                'form_title'   => $form['title'],
+                'fields_html'  => $fields_html,
+            ] );
+        } else {
+            $message = isset( $form['settings']['confirmation_message'] ) && ! empty( $form['settings']['confirmation_message'] )
+                ? $form['settings']['confirmation_message']
+                : $this->build_confirmation_message( $form, $data );
+            
+            $message = $this->replace_tags( $message, $data, $form );
+        }
+
         $message = \FPForms\Core\Hooks::filter_email_message( $message, $form_id, $data );
         
-        // Headers (skip Reply-To: l'email va al cliente, non deve fare reply a se stesso)
-        $headers = $this->get_email_headers( $form, $data, [ 'skip_reply_to' => true ] );
+        $headers = $this->get_email_headers( $form, $data, [ 'skip_reply_to' => true, 'html' => $is_html ] );
         $headers = \FPForms\Core\Hooks::filter_email_headers( $headers, $form_id, $data );
 
-        // Hook before send
         do_action( 'fp_forms_before_send_confirmation', $form_id, $data, $user_email );
 
         $this->apply_fp_forms_mail_from();

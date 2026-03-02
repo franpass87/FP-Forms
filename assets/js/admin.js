@@ -568,6 +568,9 @@
                 notification_subject: $('input[name="notification_subject"]').val(),
                 notification_message: $('textarea[name="notification_message"]').val(),
                 confirmation_enabled: $('input[name="confirmation_enabled"]').is(':checked'),
+                confirmation_template: $('input[name="confirmation_template"]:checked').val() || '',
+                confirmation_accent_color: $('input[name="confirmation_accent_color"]').val() || '',
+                confirmation_footer_info: $('textarea[name="confirmation_footer_info"]').val() || '',
                 confirmation_subject: $('input[name="confirmation_subject"]').val(),
                 confirmation_message: $('textarea[name="confirmation_message"]').val(),
                 // Staff notifications (v1.2)
@@ -1485,5 +1488,18 @@
     
     // Bind evento restore snapshot
     $(document).on('click', '.fp-restore-snapshot', FPFormsAdmin.restoreSnapshot);
+
+    // Email template selector - visual highlight on change
+    $(document).on('change', '.fp-template-radio', function() {
+        var $cards = $(this).closest('.fp-template-cards');
+        $cards.find('.fp-template-card').css({
+            'border-color': '#e5e7eb',
+            'background': ''
+        });
+        $(this).closest('.fp-template-card').css({
+            'border-color': '#3b82f6',
+            'background': '#eff6ff'
+        });
+    });
     
 })(jQuery);

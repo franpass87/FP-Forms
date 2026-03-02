@@ -1190,3 +1190,20 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
 .fp-skip-link:focus {
     top: 0;
 }
+
+/* ============================================
+   Email Template Selector
+   ============================================ */
+.fp-template-card {
+    transition: all 0.2s ease;
+}
+.fp-template-card:hover {
+    border-color: var(--fp-color-primary, #3b82f6) !important;
+    background: #f8faff !important;
+    transform: translateY(-1px);
+}
+.fp-template-card:has(.fp-template-radio:checked) {
+    border-color: var(--fp-color-primary, #3b82f6) !important;
+    background: #eff6ff !important;
+    box-shadow: 0 0 0 1px var(--fp-color-primary, #3b82f6);
+}

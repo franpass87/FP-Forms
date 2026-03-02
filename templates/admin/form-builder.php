@@ -32,6 +32,9 @@ $default_settings = [
     'notification_subject' => __( 'Nuova submission da {form_title}', 'fp-forms' ),
     'notification_message' => '',
     'confirmation_enabled' => false,
+    'confirmation_template' => '',
+    'confirmation_accent_color' => '',
+    'confirmation_footer_info' => '',
     'confirmation_subject' => __( 'Abbiamo ricevuto il tuo messaggio - {site_name}', 'fp-forms' ),
     'confirmation_message' => '',
     'staff_notifications_enabled' => false,
@@ -417,6 +420,63 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 </div>
                 
                 <div class="fp-setting-field">
+                    <label><?php _e( 'Template Email HTML', 'fp-forms' ); ?></label>
+                    <?php
+                    $available_templates = \FPForms\Email\Templates::get_available_templates();
+                    $current_template = $form_settings['confirmation_template'] ?? '';
+                    ?>
+                    <div class="fp-email-template-selector">
+                        <div class="fp-template-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+                            <label class="fp-template-card" style="display:block;padding:12px;border:2px solid <?php echo $current_template === '' ? '#ccc' : '#e5e7eb'; ?>;border-radius:8px;cursor:pointer;text-align:center;transition:all .2s;<?php echo $current_template === '' ? 'border-color:#3b82f6;background:#eff6ff;' : ''; ?>">
+                                <input type="radio" name="confirmation_template" value="" <?php checked( $current_template, '' ); ?> style="display:none;" class="fp-template-radio">
+                                <span style="display:block;font-size:20px;margin-bottom:4px;">&#9993;</span>
+                                <span style="display:block;font-size:12px;font-weight:600;color:#374151;"><?php _e( 'Plain Text', 'fp-forms' ); ?></span>
+                                <span style="display:block;font-size:10px;color:#9ca3af;"><?php _e( 'Classico', 'fp-forms' ); ?></span>
+                            </label>
+                            <?php
+                            $template_icons = [
+                                'elegant'      => '&#127968;',
+                                'professional' => '&#9879;',
+                                'modern'       => '&#9733;',
+                                'minimal'      => '&#9634;',
+                            ];
+                            $template_desc = [
+                                'elegant'      => __( 'Hospitality', 'fp-forms' ),
+                                'professional' => __( 'Medical/Corp', 'fp-forms' ),
+                                'modern'       => __( 'Retail', 'fp-forms' ),
+                                'minimal'      => __( 'Universale', 'fp-forms' ),
+                            ];
+                            foreach ( $available_templates as $slug => $label ) :
+                                $is_selected = $current_template === $slug;
+                            ?>
+                            <label class="fp-template-card" style="display:block;padding:12px;border:2px solid <?php echo $is_selected ? '#3b82f6' : '#e5e7eb'; ?>;border-radius:8px;cursor:pointer;text-align:center;transition:all .2s;<?php echo $is_selected ? 'background:#eff6ff;' : ''; ?>">
+                                <input type="radio" name="confirmation_template" value="<?php echo esc_attr( $slug ); ?>" <?php checked( $current_template, $slug ); ?> style="display:none;" class="fp-template-radio">
+                                <span style="display:block;font-size:20px;margin-bottom:4px;"><?php echo $template_icons[ $slug ]; ?></span>
+                                <span style="display:block;font-size:12px;font-weight:600;color:#374151;"><?php echo esc_html( explode( ' (', $label )[0] ); ?></span>
+                                <span style="display:block;font-size:10px;color:#9ca3af;"><?php echo esc_html( $template_desc[ $slug ] ); ?></span>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                        <small><?php _e( 'Seleziona un template HTML per email di conferma visivamente ricche, oppure Plain Text per il formato classico.', 'fp-forms' ); ?></small>
+                    </div>
+                </div>
+                
+                <div class="fp-setting-field">
+                    <label><?php _e( 'Colore Accent Email (opzionale)', 'fp-forms' ); ?></label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="color" name="confirmation_accent_color" value="<?php echo esc_attr( $form_settings['confirmation_accent_color'] ?? '' ); ?>" style="width: 50px; height: 34px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                        <button type="button" class="button button-small" onclick="this.previousElementSibling.value = '';"><?php _e( 'Usa default', 'fp-forms' ); ?></button>
+                    </div>
+                    <small><?php _e( 'Lascia vuoto per usare il colore globale configurato nelle impostazioni plugin.', 'fp-forms' ); ?></small>
+                </div>
+
+                <div class="fp-setting-field">
+                    <label><?php _e( 'Info Footer Email (opzionale)', 'fp-forms' ); ?></label>
+                    <textarea name="confirmation_footer_info" rows="3" placeholder="<?php esc_attr_e( 'Come raggiungerci: ...\nOrari: ...', 'fp-forms' ); ?>"><?php echo esc_textarea( $form_settings['confirmation_footer_info'] ?? '' ); ?></textarea>
+                    <small><?php _e( 'Informazioni aggiuntive nel footer email, specifiche per questo form.', 'fp-forms' ); ?></small>
+                </div>
+                
+                <div class="fp-setting-field">
                     <label><?php _e( 'Oggetto Email Conferma', 'fp-forms' ); ?></label>
                     <input type="text" name="confirmation_subject" value="<?php echo esc_attr( $form_settings['confirmation_subject'] ); ?>">
                 </div>
@@ -424,7 +484,7 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 <div class="fp-setting-field">
                     <label><?php _e( 'Messaggio Email Conferma', 'fp-forms' ); ?></label>
                     <textarea name="confirmation_message" rows="5" placeholder="<?php esc_attr_e( 'Lascia vuoto per usare il template automatico con saluto personalizzato, riepilogo dati e firma.', 'fp-forms' ); ?>"><?php echo esc_textarea( $form_settings['confirmation_message'] ); ?></textarea>
-                    <small><?php _e( 'Template personalizzato per il cliente. Lascia vuoto per il template automatico. Tag disponibili: {form_title}, {site_name}, {date}', 'fp-forms' ); ?></small>
+                    <small><?php _e( 'Sovrascrive il contenuto del template HTML. Lascia vuoto per il template automatico. Tag disponibili: {form_title}, {site_name}, {date}', 'fp-forms' ); ?></small>
                 </div>
                 
                 <h4><?php _e( 'Notifiche Staff', 'fp-forms' ); ?></h4>

@@ -10,6 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 $email_from_name = get_option( 'fp_forms_email_from_name', get_bloginfo( 'name' ) );
 $email_from_address = get_option( 'fp_forms_email_from_address', get_bloginfo( 'admin_email' ) );
 
+// Email template settings
+$email_logo_url = get_option( 'fp_forms_email_logo_url', '' );
+$email_accent_color = get_option( 'fp_forms_email_accent_color', '#3b82f6' );
+$email_footer_text = get_option( 'fp_forms_email_footer_text', '' );
+$email_response_time = get_option( 'fp_forms_email_response_time', '' );
+
 // SMTP settings
 $smtp_settings = get_option( 'fp_forms_smtp_settings', [
     'enabled'    => false,
@@ -130,6 +136,110 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                         </p>
                     </td>
                 </tr>
+
+                <tr>
+                    <th colspan="2">
+                        <h2 id="email-template"><?php _e( 'Template Email HTML', 'fp-forms' ); ?></h2>
+                        <p class="description" style="font-weight: normal;">
+                            <?php _e( 'Configura l\'aspetto delle email di conferma inviate ai clienti. Il template si seleziona nelle impostazioni di ogni singolo form.', 'fp-forms' ); ?>
+                        </p>
+                    </th>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="email_logo_url"><?php _e( 'Logo Aziendale', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <input type="text"
+                                   id="email_logo_url"
+                                   name="email_logo_url"
+                                   value="<?php echo esc_url( $email_logo_url ); ?>"
+                                   class="regular-text"
+                                   placeholder="https://example.com/logo.png">
+                            <button type="button" id="fp-upload-email-logo" class="button">
+                                <span class="dashicons dashicons-upload"></span>
+                                <?php _e( 'Carica', 'fp-forms' ); ?>
+                            </button>
+                        </div>
+                        <?php if ( $email_logo_url ) : ?>
+                        <div style="margin-top: 10px;">
+                            <img src="<?php echo esc_url( $email_logo_url ); ?>" alt="Logo" style="max-height: 60px; border: 1px solid #ddd; border-radius: 4px; padding: 4px;">
+                        </div>
+                        <?php endif; ?>
+                        <p class="description">
+                            <?php _e( 'Mostrato nell\'header delle email HTML. Dimensione consigliata: 200x60px.', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="email_accent_color"><?php _e( 'Colore Accent', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="color"
+                                   id="email_accent_color"
+                                   name="email_accent_color"
+                                   value="<?php echo esc_attr( $email_accent_color ); ?>"
+                                   style="width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                            <input type="text" value="<?php echo esc_attr( $email_accent_color ); ?>" style="width: 100px;" readonly id="email_accent_color_text">
+                        </div>
+                        <p class="description">
+                            <?php _e( 'Colore principale delle email (header, pulsanti, accenti). Sovrascrivibile per-form.', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="email_response_time"><?php _e( 'Tempi di Risposta', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="text"
+                               id="email_response_time"
+                               name="email_response_time"
+                               value="<?php echo esc_attr( $email_response_time ); ?>"
+                               class="regular-text"
+                               placeholder="<?php esc_attr_e( 'entro 24 ore', 'fp-forms' ); ?>">
+                        <p class="description">
+                            <?php _e( 'Mostrato nell\'email di conferma (es. "entro 24 ore", "entro 48 ore lavorative").', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="email_footer_text"><?php _e( 'Footer Email', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <textarea id="email_footer_text"
+                                  name="email_footer_text"
+                                  rows="4"
+                                  class="large-text"
+                                  placeholder="<?php esc_attr_e( "Via Roma 1 - 00100 Roma\nTel: +39 06 1234567\nP.IVA 12345678901", 'fp-forms' ); ?>"><?php echo esc_textarea( $email_footer_text ); ?></textarea>
+                        <p class="description">
+                            <?php _e( 'Indirizzo, contatti, P.IVA e altre informazioni mostrate nel footer delle email.', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+
+                <script>
+                (function($) {
+                    // Logo upload via WP Media Library
+                    $('#fp-upload-email-logo').on('click', function(e) {
+                        e.preventDefault();
+                        var frame = wp.media({ title: '<?php echo esc_js( __( 'Seleziona Logo', 'fp-forms' ) ); ?>', multiple: false, library: { type: 'image' } });
+                        frame.on('select', function() {
+                            var url = frame.state().get('selection').first().toJSON().url;
+                            $('#email_logo_url').val(url);
+                        });
+                        frame.open();
+                    });
+                    // Sync color picker
+                    $('#email_accent_color').on('input change', function() {
+                        $('#email_accent_color_text').val(this.value);
+                    });
+                })(jQuery);
+                </script>
 
                 <tr>
                     <th colspan="2">

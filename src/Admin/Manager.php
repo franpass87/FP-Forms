@@ -148,6 +148,8 @@ class Manager {
             return $classes . ' fp-forms-admin-shell';
         } );
         
+        wp_enqueue_media();
+
         // CSS
         wp_enqueue_style(
             'fp-forms-admin',
@@ -385,6 +387,13 @@ class Manager {
             
             update_option( 'fp_forms_email_from_name', sanitize_text_field( $_POST['email_from_name'] ) );
             update_option( 'fp_forms_email_from_address', sanitize_email( $_POST['email_from_address'] ) );
+            
+            // Salva impostazioni template email
+            update_option( 'fp_forms_email_logo_url', esc_url_raw( $_POST['email_logo_url'] ?? '' ) );
+            $accent = sanitize_text_field( $_POST['email_accent_color'] ?? '#3b82f6' );
+            update_option( 'fp_forms_email_accent_color', preg_match( '/^#[0-9A-Fa-f]{6}$/', $accent ) ? $accent : '#3b82f6' );
+            update_option( 'fp_forms_email_response_time', sanitize_text_field( $_POST['email_response_time'] ?? '' ) );
+            update_option( 'fp_forms_email_footer_text', sanitize_textarea_field( $_POST['email_footer_text'] ?? '' ) );
             
             // Salva impostazioni SMTP
             $smtp_settings = [
@@ -909,7 +918,7 @@ class Manager {
             'submit_button_text', 'success_message', 'notification_subject', 'notification_message',
             'confirmation_subject', 'confirmation_message', 'staff_notification_subject', 
             'staff_notification_message', 'custom_css_class', 'success_redirect_url',
-            'brevo_event_name', 'notification_email'
+            'brevo_event_name', 'notification_email', 'confirmation_footer_info'
         ];
         
         foreach ( $text_fields as $field ) {
@@ -961,6 +970,12 @@ class Manager {
             }
         }
         
+        // Confirmation accent color (HEX, empty = use global)
+        if ( isset( $settings['confirmation_accent_color'] ) ) {
+            $ca = $settings['confirmation_accent_color'];
+            $sanitized['confirmation_accent_color'] = preg_match( '/^#[0-9A-Fa-f]{6}$/', $ca ) ? $ca : '';
+        }
+
         // Custom colors (HEX validation)
         $custom_colors = [
             'custom_border_color' => '#d1d5db',
@@ -988,6 +1003,7 @@ class Manager {
             'submit_button_width' => [ 'auto', 'full' ],
             'submit_button_icon' => [ '', 'paper-plane', 'send', 'check', 'arrow-right', 'save' ],
             'success_message_type' => [ 'success', 'info', 'celebration' ],
+            'confirmation_template' => [ '', 'elegant', 'professional', 'modern', 'minimal' ],
         ];
         
         foreach ( $whitelist_fields as $field => $allowed_values ) {
