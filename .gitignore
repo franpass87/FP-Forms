@@ -1,5 +1,5 @@
-# Composer
-/vendor/
+# Composer - vendor è incluso nel repo perché il server di produzione non ha Composer
+# /vendor/
 
 # IDE
 .idea/
