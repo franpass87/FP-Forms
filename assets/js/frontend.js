@@ -12,8 +12,67 @@
          */
         init: function() {
             this.bindEvents();
+            this.initFunnelTracking();
         },
-        
+
+        /**
+         * Funnel tracking: form_start, form_abandon, form_step_complete.
+         * Dispatches CustomEvents picked up by fp-tracking.js.
+         */
+        initFunnelTracking: function() {
+            // Track form_start on first focusin (once per form instance)
+            $(document).on('focusin', '.fp-forms-form input, .fp-forms-form textarea, .fp-forms-form select', function() {
+                var $form = $(this).closest('.fp-forms-form');
+                if ($form.data('fp-tracking-started')) return;
+                $form.data('fp-tracking-started', true);
+
+                $form[0].dispatchEvent(new CustomEvent('fpFormStart', {
+                    bubbles: true,
+                    detail: {
+                        formId: $form.data('form-id'),
+                        formTitle: $form.closest('.fp-forms-container').data('form-title') || ''
+                    }
+                }));
+            });
+
+            // Track form_step_complete on multi-step next button
+            $(document).on('click', '.fp-forms-form .fp-next-step', function() {
+                var $form = $(this).closest('.fp-forms-form');
+                var currentStep = parseInt($form.find('.fp-step-content:not([style*="display: none"])').data('step') || 1, 10);
+                $form[0].dispatchEvent(new CustomEvent('fpFormStepComplete', {
+                    bubbles: true,
+                    detail: {
+                        formId: $form.data('form-id'),
+                        step: currentStep
+                    }
+                }));
+            });
+
+            // form_submit_error is handled by fp-tracking.js listening to the fpFormSubmitError CustomEvent.
+
+            // Track form_abandon on beforeunload if form was started but not submitted
+            $(window).on('beforeunload', function() {
+                $('.fp-forms-form').each(function() {
+                    var $form = $(this);
+                    if ($form.data('fp-tracking-started') && !$form.data('fp-tracking-submitted')) {
+                        // Use sendBeacon for reliability on page unload
+                        var detail = {
+                            formId: $form.data('form-id'),
+                            formTitle: $form.closest('.fp-forms-container').data('form-title') || '',
+                            fieldsFilledCount: $form.find('input:not([type="hidden"]):not([type="submit"]), textarea, select').filter(function() {
+                                return $(this).val() !== '';
+                            }).length
+                        };
+                        // form_abandon is dispatched as fpFormAbandon CustomEvent and handled by fp-tracking.js.
+                        $form[0].dispatchEvent(new CustomEvent('fpFormAbandon', {
+                            bubbles: true,
+                            detail: detail,
+                        }));
+                    }
+                });
+            });
+        },
+
         /**
          * Bind degli eventi
          */
@@ -142,6 +201,9 @@
                     $btn.prop('disabled', false).html(originalHtml);
                     
                     if (response.success) {
+                        // Mark form as submitted (prevents form_abandon on unload)
+                        $form.data('fp-tracking-submitted', true);
+
                         // Trigger tracking event: SUCCESS
                         $form[0].dispatchEvent(new CustomEvent('fpFormSubmitSuccess', {
                             bubbles: true,
