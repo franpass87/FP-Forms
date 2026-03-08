@@ -219,12 +219,13 @@ class Plugin {
     private function init_hooks() {
         // Carica text domain per traduzioni
         add_action( 'init', [ $this, 'load_textdomain' ] );
-        
-        // Registra shortcode
-        add_action( 'init', [ $this, 'register_shortcodes' ] );
-        
+
         // Registra custom post type per i form
         add_action( 'init', [ $this, 'register_post_types' ] );
+
+        // Registra shortcode immediatamente (Plugin::instance() viene chiamato
+        // dentro l'hook 'init', quindi add_action('init',...) qui sarebbe troppo tardi).
+        $this->register_shortcodes();
     }
     
     /**
