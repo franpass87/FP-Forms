@@ -11,6 +11,7 @@ return array(
     'FPForms\\Admin\\Manager' => $baseDir . '/src/Admin/Manager.php',
     'FPForms\\Analytics\\Tracker' => $baseDir . '/src/Analytics/Tracker.php',
     'FPForms\\Analytics\\Tracking' => $baseDir . '/src/Analytics/Tracking.php',
+    'FPForms\\Analytics\\TrackingBridge' => $baseDir . '/src/Analytics/TrackingBridge.php',
     'FPForms\\Core\\Cache' => $baseDir . '/src/Core/Cache.php',
     'FPForms\\Core\\Capabilities' => $baseDir . '/src/Core/Capabilities.php',
     'FPForms\\Core\\Hooks' => $baseDir . '/src/Core/Hooks.php',

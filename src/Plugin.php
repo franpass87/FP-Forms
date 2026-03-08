@@ -175,17 +175,17 @@ class Plugin {
         // Form versioning
         $this->versioning = new Versioning\FormHistory();
         
-        // Analytics tracker
+        // Analytics tracker (internal DB stats — not external platforms)
         $this->analytics = new Analytics\Tracker();
-        
-        // GTM & GA4 Tracking
-        $this->tracking = new Analytics\Tracking();
-        
+
+        // Tracking bridge — delegates to FP-Marketing-Tracking-Layer
+        $this->tracking = new Analytics\TrackingBridge();
+
+        // Meta Pixel stub — disabled, tracking delegated to FP-Marketing-Tracking-Layer
+        $this->meta_pixel = new Integrations\MetaPixel();
+
         // Brevo Integration
         $this->brevo = new Integrations\Brevo();
-        
-        // Meta Pixel Integration
-        $this->meta_pixel = new Integrations\MetaPixel();
         
         // Webhook Manager
         $this->webhooks = new Integrations\WebhookManager();

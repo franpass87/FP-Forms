@@ -67,6 +67,9 @@ class PaymentManager {
             'amount' => $amount,
         ] );
         
+        // Hook generico per tracking (sparato prima del provider specifico)
+        do_action( 'fp_forms_payment_started', $submission_id, $form_id, $payment_provider, $amount );
+
         // Trigger hook per provider specifico
         do_action( 'fp_forms_process_payment_' . $payment_provider, $submission_id, $form_id, $data, $amount );
     }

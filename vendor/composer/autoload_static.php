@@ -26,6 +26,7 @@ class ComposerStaticInit8f784f0db15d0ab802ba1283d7529161
         'FPForms\\Admin\\Manager' => __DIR__ . '/../..' . '/src/Admin/Manager.php',
         'FPForms\\Analytics\\Tracker' => __DIR__ . '/../..' . '/src/Analytics/Tracker.php',
         'FPForms\\Analytics\\Tracking' => __DIR__ . '/../..' . '/src/Analytics/Tracking.php',
+        'FPForms\\Analytics\\TrackingBridge' => __DIR__ . '/../..' . '/src/Analytics/TrackingBridge.php',
         'FPForms\\Core\\Cache' => __DIR__ . '/../..' . '/src/Core/Cache.php',
         'FPForms\\Core\\Capabilities' => __DIR__ . '/../..' . '/src/Core/Capabilities.php',
         'FPForms\\Core\\Hooks' => __DIR__ . '/../..' . '/src/Core/Hooks.php',

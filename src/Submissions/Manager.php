@@ -204,13 +204,8 @@ class Manager {
             $message_duration = 0;
         }
         
-        // Traccia submission con GTM/GA4 (server-side logging)
-        $tracking = \FPForms\Plugin::instance()->tracking;
-        if ( $tracking && $tracking->is_enabled() ) {
-            $tracking->track_submission( $form_id, $submission_id, true );
-        }
-        
-        // 🔥 HOOK CRITICO: Trigger per integrazioni esterne (Brevo, Meta CAPI, etc.)
+        // 🔥 HOOK CRITICO: Trigger per integrazioni esterne (TrackingBridge, Brevo, Meta CAPI, etc.)
+        // Il tracking è gestito da FP-Marketing-Tracking-Layer via TrackingBridge
         do_action( 'fp_forms_after_save_submission', $submission_id, $form_id, $sanitized_data );
         
         // Prepara response
