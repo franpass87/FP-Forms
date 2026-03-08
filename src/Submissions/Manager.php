@@ -18,10 +18,8 @@ class Manager {
      * Gestisce la submission di un form via AJAX
      */
     public function handle_submission() {
-        // DEBUG: Log raw POST data
         \FPForms\Core\Logger::debug( 'AJAX Submission received', [
             'POST_keys' => array_keys( $_POST ),
-            'form_data_raw' => isset( $_POST['form_data'] ) ? $_POST['form_data'] : 'NOT SET',
         ] );
         
         // Verifica nonce
@@ -40,26 +38,27 @@ class Manager {
         }
         
         // Ottieni i dati del form
-        $form_data = isset( $_POST['form_data'] ) ? json_decode( stripslashes( $_POST['form_data'] ), true ) : [];
+        // Limite di profondità esplicito per prevenire stack overflow su payload profondamente annidati
+        $form_data = isset( $_POST['form_data'] ) ? json_decode( stripslashes( $_POST['form_data'] ), true, 20 ) : [];
         
         if ( ! is_array( $form_data ) ) {
             $form_data = [];
         }
         
-        // BUGFIX: Rimuovi prefisso "fp_field_" dai nomi dei campi
-        // Il frontend aggiunge "fp_field_" ma il validator si aspetta solo il nome del campo
+        // Rimuovi prefisso "fp_field_" dai nomi dei campi (solo se è il prefisso iniziale)
         $cleaned_data = [];
         foreach ( $form_data as $key => $value ) {
-            // Rimuovi prefisso "fp_field_" se presente
-            $clean_key = str_replace( 'fp_field_', '', $key );
-            $cleaned_data[ $clean_key ] = $value;
+            $clean_key = strpos( $key, 'fp_field_' ) === 0 ? substr( $key, strlen( 'fp_field_' ) ) : $key;
+            // Evita sovrascrittura silenziosa di chiavi duplicate
+            if ( ! isset( $cleaned_data[ $clean_key ] ) ) {
+                $cleaned_data[ $clean_key ] = $value;
+            }
         }
         $form_data = $cleaned_data;
         
-        // DEBUG: Log parsed data
         \FPForms\Core\Logger::debug( 'Form data parsed and cleaned', [
-            'form_id' => $form_id,
-            'form_data' => $form_data,
+            'form_id'    => $form_id,
+            'data_keys'  => array_keys( $form_data ),
             'data_count' => count( $form_data ),
         ] );
         
@@ -75,13 +74,15 @@ class Manager {
             ] );
         }
         
-        // Valida i dati
-        $validation = $this->validate_submission( $form_id, $form_data );
+        // Sanitizza prima di validare (i validator ricevono dati già puliti)
+        $sanitized_data = $this->sanitize_data( $form_data, $form_id );
         
-        // DEBUG: Log validation result
+        // Valida i dati sanitizzati
+        $validation = $this->validate_submission( $form_id, $sanitized_data );
+        
         \FPForms\Core\Logger::debug( 'Validation result', [
-            'valid' => $validation['valid'],
-            'errors' => $validation['errors'],
+            'valid'       => $validation['valid'],
+            'errors'      => $validation['errors'],
             'error_count' => count( $validation['errors'] ),
         ] );
         
@@ -92,8 +93,8 @@ class Manager {
             ] );
         }
         
-        // Sanitizza i dati
-        $sanitized_data = $this->sanitize_data( $form_data, $form_id );
+        // Ricalcola i campi di tipo "calculated" server-side per prevenire manipolazioni client
+        $sanitized_data = $this->recalculate_calculated_fields( $form_id, $sanitized_data );
         
         // Salva la submission prima di gestire i file
         $db = \FPForms\Plugin::instance()->database;
@@ -183,6 +184,9 @@ class Manager {
         
         // Replace tag dinamici nel messaggio di successo
         $success_message = $this->replace_success_tags( $success_message, $form, $sanitized_data );
+        
+        // Permette a QuickFeatures (e plugin terzi) di modificare il messaggio o aggiungere redirect
+        $success_message = apply_filters( 'fp_forms_success_message', $success_message, $form_id, $sanitized_data );
         
         // Ottieni tipo e durata messaggio con validazione
         $message_type = isset( $form['settings']['success_message_type'] ) ? $form['settings']['success_message_type'] : 'success';
@@ -276,6 +280,21 @@ class Manager {
                 case 'date':
                     $validator->validate_date( $field_value, $field_name, $field_label, $field['options'] ?? [] );
                     break;
+                
+                case 'select':
+                case 'radio':
+                    // Whitelist: il valore deve essere tra le scelte configurate
+                    $choices = $field['options']['choices'] ?? [];
+                    $validator->validate_choices( $field_value, $choices, $field_name, $field_label );
+                    break;
+                
+                case 'checkbox':
+                    // Whitelist per checkbox multipli
+                    $choices = $field['options']['choices'] ?? [];
+                    if ( ! empty( $choices ) ) {
+                        $validator->validate_choices( $field_value, $choices, $field_name, $field_label );
+                    }
+                    break;
             }
         }
         
@@ -311,6 +330,207 @@ class Manager {
         $sanitized = \FPForms\Core\Hooks::filter_submission_data( $sanitized, $form_id );
         
         return $sanitized;
+    }
+    
+    /**
+     * Ricalcola i campi di tipo "calculated" server-side.
+     * Previene la manipolazione del valore calcolato da parte del client.
+     * La formula usa i nomi dei campi (es. {field_name}) sostituiti con i valori numerici sanitizzati.
+     * Usa un parser matematico ricorsivo senza eval().
+     */
+    private function recalculate_calculated_fields( $form_id, $data ) {
+        $fields = \FPForms\Plugin::instance()->forms->get_fields( $form_id );
+        
+        if ( ! is_array( $fields ) ) {
+            return $data;
+        }
+        
+        foreach ( $fields as $field ) {
+            if ( ( $field['type'] ?? '' ) !== 'calculated' ) {
+                continue;
+            }
+            
+            $formula = $field['options']['formula'] ?? '';
+            if ( empty( $formula ) ) {
+                continue;
+            }
+            
+            // Sostituisce i placeholder {nome_campo} con i valori numerici sanitizzati
+            $expression = $formula;
+            foreach ( $data as $key => $value ) {
+                $numeric = is_numeric( $value ) ? (float) $value : 0;
+                $expression = str_replace( '{' . $key . '}', (string) $numeric, $expression );
+            }
+            
+            // Rimuove placeholder non sostituiti
+            $expression = preg_replace( '/\{[^}]+\}/', '0', $expression );
+            
+            // Valida che l'espressione contenga solo caratteri matematici sicuri
+            if ( ! preg_match( '/^[0-9+\-*\/().\s]+$/', $expression ) ) {
+                \FPForms\Core\Logger::warning( 'Calculated field: formula non sicura ignorata', [
+                    'form_id'    => $form_id,
+                    'field_name' => $field['name'],
+                ] );
+                continue;
+            }
+            
+            // Normalizza doppi segni per prevenire ricorsione infinita nel parser:
+            // -- → +, -+ → -, +- → -, ++ → +
+            $expression = str_replace( [ '--', '-+', '+-', '++' ], [ '+', '-', '-', '+' ], $expression );
+            
+            // Parser matematico sicuro senza eval()
+            $result = $this->math_evaluate( trim( $expression ) );
+            
+            $decimals = isset( $field['options']['decimals'] ) ? (int) $field['options']['decimals'] : 2;
+            $data[ $field['name'] ] = round( (float) $result, $decimals );
+        }
+        
+        return $data;
+    }
+    
+    /**
+     * Parser matematico ricorsivo per espressioni con +, -, *, /, parentesi.
+     * Non usa eval(). Supporta numeri decimali e negativi.
+     *
+     * @param string $expr Espressione già validata (solo [0-9+\-*\/().\s])
+     * @return float
+     */
+    private function math_evaluate( $expr ) {
+        $expr = str_replace( ' ', '', $expr );
+        
+        if ( $expr === '' ) {
+            return 0.0;
+        }
+        
+        // Gestisce addizione e sottrazione (priorità più bassa, valutate per ultime)
+        $result = $this->math_parse_additive( $expr, 0, strlen( $expr ) );
+        return is_numeric( $result ) ? (float) $result : 0.0;
+    }
+    
+    private function math_parse_additive( $expr, $start, $end ) {
+        $depth  = 0;
+        $result = null;
+        $op     = '+';
+        $i      = $start;
+        $seg_start = $start;
+        
+        while ( $i <= $end ) {
+            $ch = $i < $end ? $expr[ $i ] : null;
+            
+            if ( $ch === '(' ) {
+                $depth++;
+            } elseif ( $ch === ')' ) {
+                $depth--;
+            }
+            
+            $is_additive = $depth === 0 && ( $ch === '+' || $ch === '-' );
+            // Segno unario all'inizio o dopo un operatore: non è addizione
+            $is_unary = $is_additive && ( $i === $start || in_array( $expr[ $i - 1 ] ?? '', [ '+', '-', '*', '/', '(' ], true ) );
+            
+            if ( ( $is_additive && ! $is_unary ) || $ch === null ) {
+                $segment = substr( $expr, $seg_start, $i - $seg_start );
+                $val     = $this->math_parse_multiplicative( $segment, 0, strlen( $segment ) );
+                
+                if ( $result === null ) {
+                    $result = (float) $val;
+                } elseif ( $op === '+' ) {
+                    $result += (float) $val;
+                } else {
+                    $result -= (float) $val;
+                }
+                
+                $op        = $ch;
+                $seg_start = $i + 1;
+            }
+            
+            $i++;
+        }
+        
+        return $result ?? 0.0;
+    }
+    
+    private function math_parse_multiplicative( $expr, $start, $end ) {
+        $depth     = 0;
+        $result    = null;
+        $op        = '*';
+        $i         = $start;
+        $seg_start = $start;
+        $first     = true;
+        
+        while ( $i <= $end ) {
+            $ch = $i < $end ? $expr[ $i ] : null;
+            
+            if ( $ch === '(' ) {
+                $depth++;
+            } elseif ( $ch === ')' ) {
+                $depth--;
+            }
+            
+            $is_mult = $depth === 0 && ( $ch === '*' || $ch === '/' );
+            
+            if ( $is_mult || $ch === null ) {
+                $segment = substr( $expr, $seg_start, $i - $seg_start );
+                $val     = $this->math_parse_primary( $segment );
+                
+                if ( $first ) {
+                    $result = (float) $val;
+                    $first  = false;
+                } elseif ( $op === '*' ) {
+                    $result *= (float) $val;
+                } else {
+                    $divisor = (float) $val;
+                    $result  = $divisor != 0.0 ? $result / $divisor : 0.0;
+                }
+                
+                $op        = $ch;
+                $seg_start = $i + 1;
+            }
+            
+            $i++;
+        }
+        
+        return $result ?? 0.0;
+    }
+    
+    private function math_parse_primary( $expr ) {
+        $expr = trim( $expr );
+        
+        if ( $expr === '' ) {
+            return 0.0;
+        }
+        
+        // Parentesi: verifica che inizino e finiscano con () E che siano bilanciate
+        if ( $expr[0] === '(' && $expr[ strlen( $expr ) - 1 ] === ')' ) {
+            // Verifica bilanciamento: la parentesi aperta iniziale deve chiudersi all'ultima posizione
+            $depth = 0;
+            $len   = strlen( $expr );
+            for ( $i = 0; $i < $len - 1; $i++ ) {
+                if ( $expr[ $i ] === '(' ) {
+                    $depth++;
+                } elseif ( $expr[ $i ] === ')' ) {
+                    $depth--;
+                }
+                // Se la profondità torna a 0 prima della fine, le parentesi esterne non avvolgono tutto
+                if ( $depth === 0 ) {
+                    break;
+                }
+            }
+            if ( $depth > 0 ) {
+                return $this->math_evaluate( substr( $expr, 1, $len - 2 ) );
+            }
+        }
+        
+        // Numero (inclusi negativi e decimali)
+        if ( is_numeric( $expr ) ) {
+            return (float) $expr;
+        }
+        
+        // Segno unario negativo: -(...) o -numero
+        if ( $expr[0] === '-' ) {
+            return -1.0 * (float) $this->math_parse_primary( substr( $expr, 1 ) );
+        }
+        
+        return 0.0;
     }
     
     /**
@@ -353,15 +573,9 @@ class Manager {
             }
         }
         
-        // 3. Ultimo fallback: qualsiasi valore che sia un indirizzo email valido
-        if ( ! $user_email ) {
-            foreach ( $data as $key => $value ) {
-                if ( is_string( $value ) && is_email( $value ) ) {
-                    $user_email = $value;
-                    break;
-                }
-            }
-        }
+        // Il terzo fallback (qualsiasi email nei dati) è stato rimosso perché troppo permissivo:
+        // potrebbe inviare la conferma all'indirizzo sbagliato (es. email dell'admin nel form).
+        // Se i primi due metodi falliscono, la conferma viene semplicemente saltata.
         
         if ( ! $user_email ) {
             \FPForms\Core\Logger::warning( 'Confirmation email skipped: no user email found in form data', [

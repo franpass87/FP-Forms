@@ -36,22 +36,65 @@ class Tracker {
     }
     
     /**
-     * Incrementa contatore views
+     * Incrementa contatore views con query SQL atomica per evitare race condition.
+     * UPDATE ... SET value = value + 1 è atomico a livello di riga in InnoDB.
      */
     private function increment_views( $form_id ) {
-        $current = (int) get_post_meta( $form_id, '_fp_form_views_total', true );
-        update_post_meta( $form_id, '_fp_form_views_total', $current + 1 );
+        global $wpdb;
+
+        $form_id  = (int) $form_id;
+        $meta_key = '_fp_form_views_total';
+
+        // Prova prima l'UPDATE atomico (riga già esistente).
+        // Se non aggiorna nessuna riga, il meta non esiste ancora: inseriscilo.
+        // Questo evita la race condition SELECT-then-INSERT.
+        $updated = $wpdb->query( $wpdb->prepare(
+            "UPDATE {$wpdb->postmeta} SET meta_value = meta_value + 1 WHERE post_id = %d AND meta_key = %s",
+            $form_id,
+            $meta_key
+        ) );
+
+        if ( $updated === 0 ) {
+            // Nessuna riga aggiornata: inserisci con unique=true per gestire
+            // la race condition nel caso due richieste arrivino contemporaneamente.
+            $inserted = add_post_meta( $form_id, $meta_key, 1, true );
+            if ( $inserted === false ) {
+                // Un'altra richiesta ha già inserito il meta: aggiorna ora.
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$wpdb->postmeta} SET meta_value = meta_value + 1 WHERE post_id = %d AND meta_key = %s",
+                    $form_id,
+                    $meta_key
+                ) );
+            }
+        }
     }
     
     /**
-     * Traccia views giornaliere
+     * Traccia views giornaliere con query SQL atomica per evitare race condition.
      */
     private function track_daily_view( $form_id ) {
-        $date = current_time( 'Y-m-d' );
-        $key = '_fp_form_views_' . $date;
-        
-        $current = (int) get_post_meta( $form_id, $key, true );
-        update_post_meta( $form_id, $key, $current + 1 );
+        global $wpdb;
+
+        $form_id  = (int) $form_id;
+        $meta_key = '_fp_form_views_' . current_time( 'Y-m-d' );
+
+        // Stesso pattern UPDATE-first per evitare race condition.
+        $updated = $wpdb->query( $wpdb->prepare(
+            "UPDATE {$wpdb->postmeta} SET meta_value = meta_value + 1 WHERE post_id = %d AND meta_key = %s",
+            $form_id,
+            $meta_key
+        ) );
+
+        if ( $updated === 0 ) {
+            $inserted = add_post_meta( $form_id, $meta_key, 1, true );
+            if ( $inserted === false ) {
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$wpdb->postmeta} SET meta_value = meta_value + 1 WHERE post_id = %d AND meta_key = %s",
+                    $form_id,
+                    $meta_key
+                ) );
+            }
+        }
         
         // Cleanup vecchie date (>30 giorni)
         $this->cleanup_old_data( $form_id );
@@ -86,7 +129,7 @@ class Tracker {
         $views = [];
         
         for ( $i = 6; $i >= 0; $i-- ) {
-            $date = date( 'Y-m-d', strtotime( "-{$i} days" ) );
+            $date = wp_date( 'Y-m-d', strtotime( "-{$i} days" ) );
             $key = '_fp_form_views_' . $date;
             $views[ $date ] = (int) get_post_meta( $form_id, $key, true );
         }
@@ -104,7 +147,7 @@ class Tracker {
         $submissions = [];
         
         for ( $i = 6; $i >= 0; $i-- ) {
-            $date = date( 'Y-m-d', strtotime( "-{$i} days" ) );
+            $date = wp_date( 'Y-m-d', strtotime( "-{$i} days" ) );
             
             $count = $wpdb->get_var( $wpdb->prepare(
                 "SELECT COUNT(*) FROM {$table} 
@@ -167,14 +210,14 @@ class Tracker {
      */
     private function cleanup_old_data( $form_id ) {
         // Solo 1 volta su 100 per non impattare performance
-        if ( rand( 1, 100 ) !== 1 ) {
+        if ( wp_rand( 1, 100 ) !== 1 ) {
             return;
         }
         
         global $wpdb;
         
-        // Elimina meta views più vecchie di 30 giorni
-        $cutoff_date = date( 'Y-m-d', strtotime( '-30 days' ) );
+        // Elimina meta views più vecchie di 30 giorni (usa wp_date per rispettare il timezone WP)
+        $cutoff_date = wp_date( 'Y-m-d', strtotime( '-30 days' ) );
         
         $wpdb->query( $wpdb->prepare(
             "DELETE FROM {$wpdb->postmeta} 

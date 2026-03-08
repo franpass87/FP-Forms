@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wrap fp-forms-admin">
     <div class="fp-forms-admin__header">
         <h1><?php _e( 'I tuoi Form', 'fp-forms' ); ?></h1>
-        <a href="<?php echo admin_url( 'admin.php?page=fp-forms-new' ); ?>" class="page-title-action">
+        <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-new' ) ); ?>" class="page-title-action">
             <?php _e( 'Aggiungi Nuovo', 'fp-forms' ); ?>
         </a>
     </div>
@@ -41,27 +41,33 @@ if ( ! defined( 'ABSPATH' ) ) {
             </div>
             
             <div class="fp-empty-actions">
-                <a href="<?php echo admin_url( 'admin.php?page=fp-forms-new' ); ?>" class="button button-primary button-hero">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-new' ) ); ?>" class="button button-primary button-hero">
                     <span class="dashicons dashicons-plus-alt"></span>
                     <?php _e( 'Crea il tuo primo Form', 'fp-forms' ); ?>
                 </a>
-                <a href="<?php echo admin_url( 'admin.php?page=fp-forms-templates' ); ?>" class="button button-secondary button-hero">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-templates' ) ); ?>" class="button button-secondary button-hero">
                     <span class="dashicons dashicons-book"></span>
                     <?php _e( 'Usa un Template', 'fp-forms' ); ?>
                 </a>
             </div>
         </div>
-    <?php else : ?>
+    <?php else :
+        // Pre-carica tutti i post meta in un colpo solo per evitare N+1 query nel loop
+        $form_ids = array_column( $forms, 'id' );
+        if ( ! empty( $form_ids ) ) {
+            update_meta_cache( 'post', $form_ids );
+        }
+    ?>
         <div class="fp-forms-table-container">
         <table class="wp-list-table widefat fixed striped">
             <thead>
                 <tr>
-                    <th><?php _e( 'Titolo', 'fp-forms' ); ?></th>
-                    <th><?php _e( 'Shortcode', 'fp-forms' ); ?></th>
-                    <th><?php _e( 'Submissions', 'fp-forms' ); ?></th>
-                    <th><?php _e( 'Conversione', 'fp-forms' ); ?></th>
-                    <th><?php _e( 'Data Creazione', 'fp-forms' ); ?></th>
-                    <th><?php _e( 'Azioni', 'fp-forms' ); ?></th>
+                    <th><?php esc_html_e( 'Titolo', 'fp-forms' ); ?></th>
+                    <th><?php esc_html_e( 'Shortcode', 'fp-forms' ); ?></th>
+                    <th><?php esc_html_e( 'Submissions', 'fp-forms' ); ?></th>
+                    <th><?php esc_html_e( 'Conversione', 'fp-forms' ); ?></th>
+                    <th><?php esc_html_e( 'Data Creazione', 'fp-forms' ); ?></th>
+                    <th><?php esc_html_e( 'Azioni', 'fp-forms' ); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -75,7 +81,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <tr>
                         <td>
                             <strong>
-                                <a href="<?php echo admin_url( 'admin.php?page=fp-forms-edit&form_id=' . $form['id'] ); ?>">
+                                <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-edit&form_id=' . intval( $form['id'] ) ) ); ?>">
                                     <?php echo esc_html( $form['title'] ); ?>
                                 </a>
                             </strong>
@@ -87,26 +93,26 @@ if ( ! defined( 'ABSPATH' ) ) {
                             </button>
                         </td>
                         <td>
-                            <a href="<?php echo admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] ); ?>">
-                                <?php echo $submissions_count; ?>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . intval( $form['id'] ) ) ); ?>">
+                                <?php echo intval( $submissions_count ); ?>
                                 <?php if ( $unread_count > 0 ) : ?>
-                                    <span class="fp-badge-unread"><?php echo $unread_count; ?> non lette</span>
+                                    <span class="fp-badge-unread"><?php echo intval( $unread_count ); ?> non lette</span>
                                 <?php endif; ?>
                             </a>
                         </td>
                         <td>
                             <div class="fp-analytics-mini">
                                 <span class="fp-views-count" title="<?php _e( 'Visualizzazioni', 'fp-forms' ); ?>">
-                                    <span class="dashicons dashicons-visibility"></span> <?php echo $views; ?>
+                                    <span class="dashicons dashicons-visibility"></span> <?php echo intval( $views ); ?>
                                 </span>
                                 <span class="fp-conversion-badge <?php echo $conversion > 5 ? 'good' : ( $conversion > 0 ? 'medium' : 'low' ); ?>" title="<?php _e( 'Tasso di conversione', 'fp-forms' ); ?>">
-                                    <?php echo $conversion; ?>%
+                                    <?php echo esc_html( $conversion ); ?>%
                                 </span>
                             </div>
                         </td>
-                        <td><?php echo date_i18n( get_option( 'date_format' ), strtotime( $form['created_at'] ) ); ?></td>
+                        <td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $form['created_at'] ) ) ); ?></td>
                         <td>
-                            <a href="<?php echo admin_url( 'admin.php?page=fp-forms-edit&form_id=' . $form['id'] ); ?>" class="button button-small">
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-edit&form_id=' . intval( $form['id'] ) ) ); ?>" class="button button-small">
                                 <?php _e( 'Modifica', 'fp-forms' ); ?>
                             </a>
                             <button class="button button-small fp-duplicate-form" data-form-id="<?php echo esc_attr( $form['id'] ); ?>" data-tooltip="Crea una copia di questo form">

@@ -8,6 +8,25 @@
     var FPFormsAdmin = {
         
         /**
+         * Costruisce un notice DOM in modo sicuro (senza concatenazione HTML con dati non trusted).
+         * @param {string} type  'success' | 'error'
+         * @param {string} message  Testo del messaggio (verrà escaped)
+         * @param {jQuery|null} $extra  Nodo jQuery opzionale da appendere dopo il testo
+         * @returns {jQuery}
+         */
+        _safeNotice: function(type, message, $extra) {
+            var isSuccess = (type === 'success');
+            var $div = $('<div>').addClass('notice inline').css({ margin: 0, padding: '8px 12px' });
+            $div.addClass(isSuccess ? 'notice-success' : 'notice-error');
+            var $icon = $('<span>').addClass('dashicons').css('color', isSuccess ? '#46b450' : '#dc3232');
+            $icon.addClass(isSuccess ? 'dashicons-yes' : 'dashicons-no');
+            $div.append($icon);
+            $div.append(document.createTextNode(' ' + (message || (isSuccess ? 'OK' : 'Errore durante il test'))));
+            if ($extra) { $div.append($extra); }
+            return $div;
+        },
+        
+        /**
          * Inizializza
          */
         init: function() {
@@ -87,22 +106,33 @@
         copyShortcode: function(e) {
             e.preventDefault();
             var shortcode = $(this).data('shortcode');
-            
-            // Crea elemento temporaneo
-            var $temp = $('<input>');
-            $('body').append($temp);
-            $temp.val(shortcode).select();
-            document.execCommand('copy');
-            $temp.remove();
-            
-            // Feedback visivo
             var $btn = $(this);
             var originalText = $btn.text();
-            $btn.text('Copiato!').addClass('copied');
             
-            setTimeout(function() {
-                $btn.text(originalText).removeClass('copied');
-            }, 2000);
+            function showCopied() {
+                $btn.text('Copiato!').addClass('copied');
+                setTimeout(function() {
+                    $btn.text(originalText).removeClass('copied');
+                }, 2000);
+            }
+            
+            // Usa Clipboard API moderna con fallback a execCommand
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(shortcode).then(showCopied).catch(function() {
+                    fallbackCopy();
+                });
+            } else {
+                fallbackCopy();
+            }
+            
+            function fallbackCopy() {
+                var $temp = $('<input>');
+                $('body').append($temp);
+                $temp.val(shortcode).select();
+                try { document.execCommand('copy'); } catch(err) {}
+                $temp.remove();
+                showCopied();
+            }
         },
         
         /**
@@ -690,7 +720,7 @@
                 confirmText: 'Elimina',
                 cancelText: 'Annulla',
                 onConfirm: function() {
-                    fpLoadingButton($btn, 'Eliminazione...');
+                    if (typeof window.fpLoadingButton !== 'undefined') fpLoadingButton($btn, 'Eliminazione...');
                     
                     $.ajax({
                         url: fpFormsAdmin.ajaxurl,
@@ -702,18 +732,18 @@
                         },
                         success: function(response) {
                             if (response.success) {
-                                fpToast.success('Submission eliminata');
+                                if (typeof window.fpToast !== 'undefined') fpToast.success('Submission eliminata');
                                 $row.fadeOut(400, function() {
                                     $(this).remove();
                                 });
                     } else {
-                        fpToast.error(response.data.message || fpFormsAdmin.strings.error);
-                        fpLoadingButtonReset($btn);
+                        if (typeof window.fpToast !== 'undefined') fpToast.error(response.data.message || fpFormsAdmin.strings.error);
+                        if (typeof window.fpLoadingButtonReset !== 'undefined') fpLoadingButtonReset($btn);
                     }
                 },
                 error: function() {
-                    fpToast.error(fpFormsAdmin.strings.error);
-                    fpLoadingButtonReset($btn);
+                    if (typeof window.fpToast !== 'undefined') fpToast.error(fpFormsAdmin.strings.error);
+                    if (typeof window.fpLoadingButtonReset !== 'undefined') fpLoadingButtonReset($btn);
                 }
                     });
                 }
@@ -791,8 +821,8 @@
             var customTitle = $('#template-title').val();
             var $btn = $(this).find('button[type="submit"]');
             
-            fpLoadingButton($btn, 'Importazione...');
-            fpProgress.show(50);
+            if (typeof window.fpLoadingButton !== 'undefined') fpLoadingButton($btn, 'Importazione...');
+            if (typeof window.fpProgress !== 'undefined') fpProgress.show(50);
             
             $.ajax({
                 url: fpFormsAdmin.ajaxurl,
@@ -804,22 +834,25 @@
                     custom_title: customTitle
                 },
                 success: function(response) {
-                    fpProgress.show(100);
+                    if (typeof window.fpProgress !== 'undefined') fpProgress.show(100);
                     if (response.success) {
-                        fpToast.success('Template importato con successo!');
+                        if (typeof window.fpToast !== 'undefined') fpToast.success('Template importato con successo!');
                         setTimeout(function() {
-                            window.location.href = response.data.redirect;
+                            var redir = (typeof response.data.redirect === 'string') ? response.data.redirect : '';
+                            if (redir && (redir.charAt(0) === '/' || redir.indexOf(window.location.origin) === 0)) {
+                                window.location.href = redir;
+                            }
                         }, 600);
                     } else {
-                        fpToast.error(response.data.message || fpFormsAdmin.strings.error);
-                        fpLoadingButtonReset($btn);
-                        fpProgress.hide();
+                        if (typeof window.fpToast !== 'undefined') fpToast.error(response.data.message || fpFormsAdmin.strings.error);
+                        if (typeof window.fpLoadingButtonReset !== 'undefined') fpLoadingButtonReset($btn);
+                        if (typeof window.fpProgress !== 'undefined') fpProgress.hide();
                     }
                 },
                 error: function() {
-                    fpToast.error(fpFormsAdmin.strings.error);
-                    fpLoadingButtonReset($btn);
-                    fpProgress.hide();
+                    if (typeof window.fpToast !== 'undefined') fpToast.error(fpFormsAdmin.strings.error);
+                    if (typeof window.fpLoadingButtonReset !== 'undefined') fpLoadingButtonReset($btn);
+                    if (typeof window.fpProgress !== 'undefined') fpProgress.hide();
                 }
             });
         },
@@ -989,12 +1022,12 @@
             });
             
             if (submissionIds.length === 0) {
-                fpToast.warning('Seleziona almeno una submission');
+                if (typeof window.fpToast !== 'undefined') fpToast.warning('Seleziona almeno una submission');
                 return;
             }
             
             if (!action) {
-                fpToast.warning('Seleziona un\'azione da applicare');
+                if (typeof window.fpToast !== 'undefined') fpToast.warning('Seleziona un\'azione da applicare');
                 return;
             }
             
@@ -1017,8 +1050,8 @@
             executeBulkAction();
             
             function executeBulkAction() {
-                fpLoadingButton($btn, 'Elaborazione...');
-                fpProgress.show(50);
+                if (typeof window.fpLoadingButton !== 'undefined') fpLoadingButton($btn, 'Elaborazione...');
+                if (typeof window.fpProgress !== 'undefined') fpProgress.show(50);
                 
                 $.ajax({
                 url: fpFormsAdmin.ajaxurl,
@@ -1030,7 +1063,7 @@
                     submission_ids: submissionIds
                 },
                 success: function(response) {
-                    fpProgress.show(100);
+                    if (typeof window.fpProgress !== 'undefined') fpProgress.show(100);
                     if (response.success) {
                         if (response.data.csv) {
                             var raw = atob(response.data.csv);
@@ -1044,25 +1077,25 @@
                             link.click();
                             document.body.removeChild(link);
                             URL.revokeObjectURL(link.href);
-                            fpToast.success(response.data.message || 'Export completato!');
-                            fpLoadingButtonReset($btn);
-                            fpProgress.hide();
+                            if (typeof window.fpToast !== 'undefined') fpToast.success(response.data.message || 'Export completato!');
+                            if (typeof window.fpLoadingButtonReset !== 'undefined') fpLoadingButtonReset($btn);
+                            if (typeof window.fpProgress !== 'undefined') fpProgress.hide();
                         } else {
-                            fpToast.success(response.data.message || 'Operazione completata!');
+                            if (typeof window.fpToast !== 'undefined') fpToast.success(response.data.message || 'Operazione completata!');
                             setTimeout(function() {
                                 location.reload();
                             }, 800);
                         }
                     } else {
-                        fpToast.error(response.data.message || fpFormsAdmin.strings.error);
-                        fpLoadingButtonReset($btn);
-                        fpProgress.hide();
+                        if (typeof window.fpToast !== 'undefined') fpToast.error(response.data.message || fpFormsAdmin.strings.error);
+                        if (typeof window.fpLoadingButtonReset !== 'undefined') fpLoadingButtonReset($btn);
+                        if (typeof window.fpProgress !== 'undefined') fpProgress.hide();
                     }
                 },
                 error: function() {
-                    fpToast.error(fpFormsAdmin.strings.error);
-                    fpLoadingButtonReset($btn);
-                    fpProgress.hide();
+                    if (typeof window.fpToast !== 'undefined') fpToast.error(fpFormsAdmin.strings.error);
+                    if (typeof window.fpLoadingButtonReset !== 'undefined') fpLoadingButtonReset($btn);
+                    if (typeof window.fpProgress !== 'undefined') fpProgress.hide();
                 }
             });
             }
@@ -1161,28 +1194,14 @@
                         $btn.prop('disabled', false).html(originalHtml);
                         
                         if (response.success) {
-                            $result.html(
-                                '<div class="notice notice-success inline" style="margin:0; padding:8px 12px;">' +
-                                '<span class="dashicons dashicons-yes" style="color:#46b450;"></span> ' +
-                                response.data.message +
-                                '</div>'
-                            );
+                            $result.empty().append(FPFormsAdmin._safeNotice('success', response.data.message));
                         } else {
-                            $result.html(
-                                '<div class="notice notice-error inline" style="margin:0; padding:8px 12px;">' +
-                                '<span class="dashicons dashicons-no" style="color:#dc3232;"></span> ' +
-                                (response.data.message || 'Errore durante il test') +
-                                '</div>'
-                            );
+                            $result.empty().append(FPFormsAdmin._safeNotice('error', response.data.message));
                         }
                     },
                     error: function() {
                         $btn.prop('disabled', false).html(originalHtml);
-                        $result.html(
-                            '<div class="notice notice-error inline" style="margin:0; padding:8px 12px;">' +
-                            '<span class="dashicons dashicons-no"></span> Errore di connessione' +
-                            '</div>'
-                        );
+                        $result.empty().append(FPFormsAdmin._safeNotice('error', 'Errore di connessione'));
                     }
                 });
             });
@@ -1214,31 +1233,22 @@
                         $btn.prop('disabled', false).html(originalHtml);
                         
                         if (response.success) {
-                            var accountInfo = response.data.account ? 
-                                '<br><small>Email: ' + response.data.account.email + ' | Plan: ' + response.data.account.plan + '</small>' : '';
-                            
-                            $result.html(
-                                '<div class="notice notice-success inline" style="margin:0; padding:8px 12px;">' +
-                                '<span class="dashicons dashicons-yes" style="color:#46b450;"></span> ' +
-                                response.data.message + accountInfo +
-                                '</div>'
-                            );
+                            var $extra = null;
+                            if (response.data.account) {
+                                $extra = $('<small>');
+                                $extra.append(document.createTextNode(
+                                    ' Email: ' + String(response.data.account.email || '') +
+                                    ' | Plan: ' + String(response.data.account.plan || '')
+                                ));
+                            }
+                            $result.empty().append(FPFormsAdmin._safeNotice('success', response.data.message, $extra));
                         } else {
-                            $result.html(
-                                '<div class="notice notice-error inline" style="margin:0; padding:8px 12px;">' +
-                                '<span class="dashicons dashicons-no" style="color:#dc3232;"></span> ' +
-                                (response.data.message || 'Errore durante il test') +
-                                '</div>'
-                            );
+                            $result.empty().append(FPFormsAdmin._safeNotice('error', response.data.message));
                         }
                     },
                     error: function() {
                         $btn.prop('disabled', false).html(originalHtml);
-                        $result.html(
-                            '<div class="notice notice-error inline" style="margin:0; padding:8px 12px;">' +
-                            '<span class="dashicons dashicons-no"></span> Errore di connessione' +
-                            '</div>'
-                        );
+                        $result.empty().append(FPFormsAdmin._safeNotice('error', 'Errore di connessione'));
                     }
                 });
             });
@@ -1265,27 +1275,27 @@
                         $btn.prop('disabled', false).html(originalHtml);
                         
                         if (response.success && response.data.lists) {
-                            var html = '<div class="notice notice-info inline" style="margin:0; padding:8px 12px;"><strong>Liste disponibili:</strong><ul style="margin:8px 0 0 20px;">';
+                            var $notice = $('<div>').addClass('notice notice-info inline').css({'margin': '0', 'padding': '8px 12px'});
+                            $notice.append($('<strong>').text('Liste disponibili:'));
+                            var $ul = $('<ul>').css({'margin': '8px 0 0 20px'});
                             
                             response.data.lists.forEach(function(list) {
-                                html += '<li><code>' + list.id + '</code> - ' + list.name + ' (' + list.total_subscribers + ' contatti)</li>';
+                                var $li = $('<li>');
+                                $li.append($('<code>').text(String(list.id)));
+                                $li.append(document.createTextNode(' - ' + String(list.name) + ' (' + parseInt(list.total_subscribers || 0) + ' contatti)'));
+                                $ul.append($li);
                             });
                             
-                            html += '</ul></div>';
-                            $container.html(html);
+                            $notice.append($ul);
+                            $container.empty().append($notice);
                         } else {
-                            $container.html(
-                                '<div class="notice notice-error inline" style="margin:0; padding:8px 12px;">' +
-                                (response.data && response.data.message ? response.data.message : 'Errore caricamento liste') +
-                                '</div>'
-                            );
+                            var errMsg = (response.data && response.data.message) ? response.data.message : 'Errore caricamento liste';
+                            $container.empty().append(FPFormsAdmin._safeNotice('error', errMsg));
                         }
                     },
                     error: function() {
                         $btn.prop('disabled', false).html(originalHtml);
-                        $container.html(
-                            '<div class="notice notice-error inline" style="margin:0; padding:8px 12px;">Errore di connessione</div>'
-                        );
+                        $container.empty().append(FPFormsAdmin._safeNotice('error', 'Errore di connessione'));
                     }
                 });
             });
@@ -1317,28 +1327,14 @@
                         $btn.prop('disabled', false).html(originalHtml);
                         
                         if (response.success) {
-                            $result.html(
-                                '<div class="notice notice-success inline" style="margin:0; padding:8px 12px;">' +
-                                '<span class="dashicons dashicons-yes" style="color:#46b450;"></span> ' +
-                                response.data.message +
-                                '</div>'
-                            );
+                            $result.empty().append(FPFormsAdmin._safeNotice('success', response.data.message));
                         } else {
-                            $result.html(
-                                '<div class="notice notice-error inline" style="margin:0; padding:8px 12px;">' +
-                                '<span class="dashicons dashicons-no" style="color:#dc3232;"></span> ' +
-                                (response.data.message || 'Errore durante il test') +
-                                '</div>'
-                            );
+                            $result.empty().append(FPFormsAdmin._safeNotice('error', response.data.message));
                         }
                     },
                     error: function() {
                         $btn.prop('disabled', false).html(originalHtml);
-                        $result.html(
-                            '<div class="notice notice-error inline" style="margin:0; padding:8px 12px;">' +
-                            '<span class="dashicons dashicons-no"></span> Errore di connessione' +
-                            '</div>'
-                        );
+                        $result.empty().append(FPFormsAdmin._safeNotice('error', 'Errore di connessione'));
                     }
                 });
             });
@@ -1435,9 +1431,9 @@
     };
     
     // Bind eventi webhooks (4 arg espliciti: events, selector, data, handler evita "guid on string")
-    $(document).on('click', '#fp-add-webhook', null, FPFormsAdmin.addWebhook);
-    $(document).on('click', '.fp-webhook-delete', FPFormsAdmin.deleteWebhook);
-    $(document).on('click', '.fp-test-webhook', FPFormsAdmin.testWebhook);
+    $(document).on('click', '#fp-add-webhook', null, FPFormsSettings.addWebhook);
+    $(document).on('click', '.fp-webhook-delete', FPFormsSettings.deleteWebhook);
+    $(document).on('click', '.fp-test-webhook', FPFormsSettings.testWebhook);
     
     /**
      * Ripristina snapshot
@@ -1468,17 +1464,20 @@
                     },
                     success: function(response) {
                         if (response.success) {
-                            fpToast.success(response.data.message);
+                            if (typeof window.fpToast !== 'undefined') fpToast.success(response.data.message);
                             setTimeout(function() {
-                                window.location.href = response.data.redirect;
+                                var redir = (typeof response.data.redirect === 'string') ? response.data.redirect : '';
+                                if (redir && (redir.charAt(0) === '/' || redir.indexOf(window.location.origin) === 0)) {
+                                    window.location.href = redir;
+                                }
                             }, 1000);
                         } else {
-                            fpToast.error(response.data.message || 'Errore nel ripristinare lo snapshot');
+                            if (typeof window.fpToast !== 'undefined') fpToast.error(response.data.message || 'Errore nel ripristinare lo snapshot');
                             $btn.prop('disabled', false).html(originalHtml);
                         }
                     },
                     error: function() {
-                        fpToast.error('Errore di connessione');
+                        if (typeof window.fpToast !== 'undefined') fpToast.error('Errore di connessione');
                         $btn.prop('disabled', false).html(originalHtml);
                     }
                 });

@@ -68,15 +68,16 @@ class Sanitizer {
      * Sanitizza numero
      */
     public function sanitize_number( $value ) {
-        // Rimuovi tutto tranne numeri, punto e segno meno
-        $value = preg_replace( '/[^0-9.\-]/', '', $value );
+        $value = trim( (string) $value );
         
-        // Converti in float se contiene punto, altrimenti in int
-        if ( strpos( $value, '.' ) !== false ) {
-            return (float) $value;
+        // Accetta solo numeri nel formato: opzionale segno meno, cifre, opzionale punto decimale + cifre
+        if ( preg_match( '/^-?\d+(\.\d+)?$/', $value ) ) {
+            return strpos( $value, '.' ) !== false ? (float) $value : (int) $value;
         }
         
-        return (int) $value;
+        // Fallback sicuro con filter_var
+        $float = filter_var( $value, FILTER_VALIDATE_FLOAT );
+        return $float !== false ? $float : 0;
     }
     
     /**
@@ -93,11 +94,11 @@ class Sanitizer {
     public function sanitize_date( $value ) {
         $timestamp = strtotime( $value );
         
-        if ( ! $timestamp ) {
+        if ( $timestamp === false || $timestamp === 0 ) {
             return '';
         }
         
-        return date( 'Y-m-d', $timestamp );
+        return wp_date( 'Y-m-d', $timestamp );
     }
     
     /**

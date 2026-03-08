@@ -107,6 +107,9 @@ class Smtp {
             $phpmailer->SMTPAutoTLS = false;
         }
 
+        // Timeout connessione SMTP: default PHPMailer è 300s, troppo alto per una request web
+        $phpmailer->Timeout = 10;
+
         // From override (usa le impostazioni email del plugin)
         $from_email = get_option( 'fp_forms_email_from_address' );
         $from_name  = get_option( 'fp_forms_email_from_name' );

@@ -133,10 +133,9 @@ class Activator {
      */
     private static function set_default_options() {
         $default_options = [
-            'fp_forms_version' => FP_FORMS_VERSION,
-            'fp_forms_recaptcha_enabled' => false,
-            'fp_forms_email_from_name' => get_bloginfo( 'name' ),
-            'fp_forms_email_from_address' => get_bloginfo( 'admin_email' ),
+            'fp_forms_version'             => FP_FORMS_VERSION,
+            'fp_forms_email_from_name'     => get_bloginfo( 'name' ),
+            'fp_forms_email_from_address'  => get_option( 'admin_email' ),
         ];
         
         foreach ( $default_options as $key => $value ) {

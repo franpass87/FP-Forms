@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 <div class="wrap fp-forms-admin">
     <div class="fp-forms-admin__header">
-        <h1><?php printf( __( 'Submissions: %s', 'fp-forms' ), $form['title'] ); ?></h1>
+        <h1><?php printf( esc_html__( 'Submissions: %s', 'fp-forms' ), esc_html( $form['title'] ) ); ?></h1>
         <div class="fp-header-actions">
             <button class="button fp-export-submissions-btn" data-form-id="<?php echo esc_attr( $form['id'] ); ?>">
                 <span class="dashicons dashicons-download"></span>
@@ -41,7 +41,7 @@ if ( ! defined( 'ABSPATH' ) ) {
             
             <button type="submit" class="button"><?php _e( 'Filtra', 'fp-forms' ); ?></button>
             <?php if ( ! empty( $search ) || ! empty( $status_filter ) ) : ?>
-            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] ) ); ?>" class="button">
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . intval( $form['id'] ) ) ); ?>" class="button">
                 <?php _e( 'Reset', 'fp-forms' ); ?>
             </a>
             <?php endif; ?>
@@ -136,7 +136,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                             <?php echo rtrim( $preview, ' | ' ); ?>
                             <?php if ( $count >= 3 ) echo '...'; ?>
                         </td>
-                        <td><?php echo date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $submission->created_at ) ); ?></td>
+                        <td><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $submission->created_at ) ) ); ?></td>
                         <td>
                             <?php if ( $submission->status === 'unread' ) : ?>
                                 <span class="fp-status-unread"><?php _e( 'Non letta', 'fp-forms' ); ?></span>
@@ -162,7 +162,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         <div class="fp-pagination-wrapper">
             <div class="fp-pagination">
                 <?php
-                $base_url = admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] );
+                $base_url = admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . intval( $form['id'] ) );
                 if ( ! empty( $search ) ) {
                     $base_url .= '&s=' . urlencode( $search );
                 }
@@ -185,10 +185,10 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <span class="fp-pagination-info">
                     <?php 
                     printf( 
-                        __( 'Pagina %d di %d (%d submissions totali)', 'fp-forms' ),
-                        $page,
-                        $total_pages,
-                        $total_submissions
+                        esc_html__( 'Pagina %d di %d (%d submissions totali)', 'fp-forms' ),
+                        (int) $page,
+                        (int) $total_pages,
+                        (int) $total_submissions
                     ); 
                     ?>
                 </span>

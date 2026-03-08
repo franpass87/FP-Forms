@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FP Forms Tracking Test - Standalone</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #0073aa;
+            padding-bottom: 10px;
+        }
+        .fp-forms-container {
+            margin: 20px 0;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        label {
+            font-weight: bold;
+            color: #555;
+        }
+        input, textarea, select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #0073aa;
+        }
+        button {
+            background: #0073aa;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        .console-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 4px;
+            margin-top: 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .console-output h3 {
+            color: #4ec9b0;
+            margin-top: 0;
+        }
+        .event-log {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #4ec9b0;
+            padding-left: 10px;
+        }
+        .event-name {
+            color: #ce9178;
+            font-weight: bold;
+        }
+        .event-data {
+            color: #9cdcfe;
+            margin-left: 10px;
+        }
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .instructions ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 FP Forms Tracking Test - Standalone</h1>
+        
+        <div class="instructions">
+            <h3>📋 Testing Instructions</h3>
+            <ul>
+                <li><strong>Step 1:</strong> Open browser DevTools (F12) and go to Console tab</li>
+                <li><strong>Step 2:</strong> Watch for <code>[FP Forms GTM]</code> messages in console</li>
+                <li><strong>Step 3:</strong> Click on any form field to trigger <code>fp_form_start</code></li>
+                <li><strong>Step 4:</strong> Fill in fields to see <code>fp_form_progress</code> events</li>
+                <li><strong>Step 5:</strong> Submit the form to see <code>fp_form_submit</code> event</li>
+                <li><strong>Step 6:</strong> Check the "Event Log" section below for captured events</li>
+            </ul>
+        </div>
+
+        <div class="fp-forms-container" data-form-title="Test Contact Form">
+            <form id="test-form">
+                <input type="hidden" name="form_id" value="999">
+                
+                <div>
+                    <label for="name">Name *</label>
+                    <input type="text" id="name" name="fp_field_name" required>
+                </div>
+                
+                <div>
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="fp_field_email" required>
+                </div>
+                
+                <div>
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone" name="fp_field_phone">
+                </div>
+                
+                <div>
+                    <label for="subject">Subject</label>
+                    <select id="subject" name="fp_field_subject">
+                        <option value="">Select a subject</option>
+                        <option value="general">General Inquiry</option>
+                        <option value="support">Support</option>
+                        <option value="sales">Sales</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="message">Message *</label>
+                    <textarea id="message" name="fp_field_message" rows="5" required></textarea>
+                </div>
+                
+                <button type="submit">Submit Form</button>
+            </form>
+        </div>
+
+        <div class="console-output">
+            <h3>📊 Event Log (Real-time)</h3>
+            <div id="event-log"></div>
+        </div>
+    </div>
+
+    <!-- Initialize dataLayer -->
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        console.log('✅ dataLayer initialized');
+    </script>
+
+    <!-- FP Forms Tracking Script (Extracted from Tracking.php) -->
+    <script>
+    (function() {
+        'use strict';
+        
+        var fpFormsTracking = {
+            gtmEnabled: true,  // Simulating GTM enabled
+            ga4Enabled: false, // Simulating GA4 disabled for this test
+            trackViews: true,
+            trackInteractions: true,
+            trackedForms: [],
+            
+            /**
+             * Push event to dataLayer (GTM)
+             */
+            pushToDataLayer: function(eventData) {
+                if (!this.gtmEnabled) return;
+                
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push(eventData);
+                
+                // Log to console
+                console.log('[FP Forms GTM]', eventData);
+                
+                // Log to page
+                this.logToPage(eventData);
+            },
+            
+            /**
+             * Log event to page
+             */
+            logToPage: function(eventData) {
+                var logDiv = document.getElementById('event-log');
+                var eventDiv = document.createElement('div');
+                eventDiv.className = 'event-log';
+                
+                var timestamp = new Date().toLocaleTimeString();
+                var eventName = eventData.event || 'unknown';
+                var eventDataStr = JSON.stringify(eventData, null, 2);
+                
+                eventDiv.innerHTML = '<span class="event-name">[' + timestamp + '] ' + eventName + '</span><br>' +
+                                   '<span class="event-data">' + eventDataStr + '</span>';
+                
+                logDiv.appendChild(eventDiv);
+                logDiv.scrollTop = logDiv.scrollHeight;
+            },
+            
+            /**
+             * Send event to GA4
+             */
+            sendToGA4: function(eventName, eventParams) {
+                if (!this.ga4Enabled || typeof gtag !== 'function') return;
+                
+                gtag('event', eventName, eventParams);
+                
+                if (window.console && window.console.log) {
+                    console.log('[FP Forms GA4]', eventName, eventParams);
+                }
+            },
+            
+            /**
+             * Track form view
+             */
+            trackFormView: function(formId, formTitle) {
+                if (!this.trackViews) return;
+                if (this.trackedForms.indexOf(formId) !== -1) return;
+                
+                this.trackedForms.push(formId);
+                
+                // GTM dataLayer
+                this.pushToDataLayer({
+                    'event': 'fp_form_view',
+                    'form_id': formId,
+                    'form_title': formTitle,
+                    'form_name': 'FP Form #' + formId
+                });
+                
+                // GA4 event
+                this.sendToGA4('form_view', {
+                    'form_id': formId,
+                    'form_name': formTitle,
+                    'form_type': 'fp_forms'
+                });
+            },
+            
+            /**
+             * Track form start (first field interaction)
+             */
+            trackFormStart: function(formId, formTitle) {
+                // Save timestamp for time calculation
+                this.formTimers = this.formTimers || {};
+                this.formTimers[formId] = Date.now();
+                
+                // GTM dataLayer
+                this.pushToDataLayer({
+                    'event': 'fp_form_start',
+                    'form_id': formId,
+                    'form_title': formTitle,
+                    'event_category': 'engagement'
+                });
+                
+                // GA4 event (standard)
+                this.sendToGA4('form_start', {
+                    'form_id': formId,
+                    'form_name': formTitle
+                });
+            },
+            
+            /**
+             * Track form progress
+             */
+            trackFormProgress: function(formId, formTitle, progress) {
+                this.formProgress = this.formProgress || {};
+                var progressKey = formId + '_' + progress;
+                
+                if (this.formProgress[progressKey]) return;
+                this.formProgress[progressKey] = true;
+                
+                // Only at 25%, 50%, 75%
+                if ([25, 50, 75].indexOf(progress) !== -1) {
+                    this.pushToDataLayer({
+                        'event': 'fp_form_progress',
+                        'form_id': formId,
+                        'form_title': formTitle,
+                        'progress_percent': progress,
+                        'event_category': 'engagement'
+                    });
+                    
+                    this.sendToGA4('form_progress', {
+                        'form_id': formId,
+                        'form_name': formTitle,
+                        'progress': progress
+                    });
+                }
+            },
+            
+            /**
+             * Track form abandon
+             */
+            trackFormAbandon: function(formId, formTitle) {
+                var timeSpent = 0;
+                if (this.formTimers && this.formTimers[formId]) {
+                    timeSpent = Math.round((Date.now() - this.formTimers[formId]) / 1000);
+                }
+                
+                this.pushToDataLayer({
+                    'event': 'fp_form_abandon',
+                    'form_id': formId,
+                    'form_title': formTitle,
+                    'time_spent_seconds': timeSpent,
+                    'event_category': 'abandonment'
+                });
+                
+                this.sendToGA4('form_abandon', {
+                    'form_id': formId,
+                    'form_name': formTitle,
+                    'time_spent': timeSpent
+                });
+            },
+            
+            /**
+             * Track validation error
+             */
+            trackValidationError: function(formId, formTitle, errorField, errorMessage) {
+                this.pushToDataLayer({
+                    'event': 'fp_form_validation_error',
+                    'form_id': formId,
+                    'form_title': formTitle,
+                    'error_field': errorField,
+                    'error_message': errorMessage,
+                    'event_category': 'error'
+                });
+                
+                this.sendToGA4('form_error', {
+                    'form_id': formId,
+                    'form_name': formTitle,
+                    'error_field': errorField,
+                    'error_type': 'validation'
+                });
+            },
+            
+            /**
+             * Track form submission
+             */
+            trackFormSubmit: function(formId, formTitle, success, errorMessage) {
+                var timeSpent = 0;
+                if (this.formTimers && this.formTimers[formId]) {
+                    timeSpent = Math.round((Date.now() - this.formTimers[formId]) / 1000);
+                }
+                
+                if (success) {
+                    // Submission success
+                    this.pushToDataLayer({
+                        'event': 'fp_form_submit',
+                        'form_id': formId,
+                        'form_title': formTitle,
+                        'form_status': 'success',
+                        'time_to_complete': timeSpent
+                    });
+                    
+                    this.sendToGA4('form_submit', {
+                        'form_id': formId,
+                        'form_name': formTitle,
+                        'success': true,
+                        'engagement_time_msec': timeSpent * 1000
+                    });
+                    
+                    // Conversion event
+                    this.pushToDataLayer({
+                        'event': 'fp_form_conversion',
+                        'form_id': formId,
+                        'form_title': formTitle,
+                        'conversion_type': 'form_submission',
+                        'conversion_value': 1.0
+                    });
+                    
+                    // Generate Lead event (standard GA4)
+                    this.sendToGA4('generate_lead', {
+                        'form_id': formId,
+                        'form_name': formTitle,
+                        'value': 1.0,
+                        'currency': 'EUR'
+                    });
+                    
+                } else {
+                    // Submission error
+                    this.pushToDataLayer({
+                        'event': 'fp_form_error',
+                        'form_id': formId,
+                        'form_title': formTitle,
+                        'error_message': errorMessage || 'Unknown error',
+                        'event_category': 'error'
+                    });
+                    
+                    this.sendToGA4('form_error', {
+                        'form_id': formId,
+                        'form_name': formTitle,
+                        'error_type': errorMessage || 'submission_error'
+                    });
+                }
+            },
+            
+            /**
+             * Track field interaction
+             */
+            trackFieldInteraction: function(formId, fieldName, fieldType) {
+                if (!this.trackInteractions) return;
+                
+                this.pushToDataLayer({
+                    'event': 'fp_form_field_interaction',
+                    'form_id': formId,
+                    'field_name': fieldName,
+                    'field_type': fieldType
+                });
+            },
+            
+            /**
+             * Initialize tracking for all forms
+             */
+            init: function() {
+                var self = this;
+                
+                // Find all FP-Forms
+                var forms = document.querySelectorAll('.fp-forms-container form');
+                
+                forms.forEach(function(form) {
+                    var formIdElement = form.querySelector('[name="form_id"]');
+                    var formId = formIdElement ? formIdElement.value : null;
+                    var formTitle = form.closest('.fp-forms-container').dataset.formTitle || 'Untitled Form';
+                    
+                    if (!formId) return;
+                    
+                    // Track view on page load
+                    setTimeout(function() {
+                        self.trackFormView(formId, formTitle);
+                    }, 100);
+                    
+                    // Track form start (first field focus)
+                    var hasStarted = false;
+                    var inputs = form.querySelectorAll('input:not([type="hidden"]), textarea, select');
+                    
+                    inputs.forEach(function(input) {
+                        // Track form start (once)
+                        input.addEventListener('focus', function() {
+                            if (!hasStarted) {
+                                hasStarted = true;
+                                self.trackFormStart(formId, formTitle);
+                            }
+                            
+                            // Track field interaction (if enabled)
+                            if (self.trackInteractions) {
+                                var fieldName = input.name.replace('fp_field_', '');
+                                var fieldType = input.type || input.tagName.toLowerCase();
+                                self.trackFieldInteraction(formId, fieldName, fieldType);
+                            }
+                        });
+                        
+                        // Track progress on input
+                        input.addEventListener('input', function() {
+                            var progress = self.calculateProgress(form);
+                            self.trackFormProgress(formId, formTitle, progress);
+                        });
+                    });
+                    
+                    // Track abandon (page unload without submit)
+                    window.addEventListener('beforeunload', function() {
+                        if (hasStarted && !form.dataset.submitted) {
+                            self.trackFormAbandon(formId, formTitle);
+                        }
+                    });
+                    
+                    // Track submission (simulate)
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        form.dataset.submitted = 'true';
+                        self.trackFormSubmit(formId, formTitle, true);
+                        alert('Form submitted! Check the Event Log below.');
+                    });
+                });
+            },
+            
+            /**
+             * Calculate form progress
+             */
+            calculateProgress: function(form) {
+                var fields = form.querySelectorAll('input:not([type="hidden"]), textarea, select');
+                var filled = 0;
+                
+                fields.forEach(function(field) {
+                    if (field.type === 'checkbox' || field.type === 'radio') {
+                        if (field.checked) filled++;
+                    } else if (field.value && field.value.trim() !== '') {
+                        filled++;
+                    }
+                });
+                
+                return Math.round((filled / fields.length) * 100);
+            }
+        };
+        
+        // Init on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                fpFormsTracking.init();
+            });
+        } else {
+            fpFormsTracking.init();
+        }
+        
+        // Make it globally accessible for debugging
+        window.fpFormsTracking = fpFormsTracking;
+        
+    })();
+    </script>
+
+    <script>
+        // Additional helper to check dataLayer
+        console.log('🔍 To check dataLayer events, run this in console:');
+        console.log('JSON.stringify(window.dataLayer.filter(e => e.event && e.event.indexOf("fp_") === 0), null, 2)');
+    </script>
+</body>
+</html>

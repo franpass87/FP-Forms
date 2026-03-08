@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 namespace FPForms\Integrations;
 
 /**
@@ -159,7 +159,7 @@ src="https://www.facebook.com/tr?id=<?php echo esc_attr( $this->pixel_id ); ?>&e
                 content_type: 'form_view'
             });
             
-            console.log('[FP Forms Meta] Form View tracked:', formId);
+            if (window.fpFormsDebug) console.log('[FP Forms Meta] Form View tracked:', formId);
         },
         
         /**
@@ -178,7 +178,7 @@ src="https://www.facebook.com/tr?id=<?php echo esc_attr( $this->pixel_id ); ?>&e
                 event_category: 'engagement'
             });
             
-            console.log('[FP Forms Meta] Form Start tracked:', formId);
+            if (window.fpFormsDebug) console.log('[FP Forms Meta] Form Start tracked:', formId);
         },
         
         /**
@@ -199,7 +199,7 @@ src="https://www.facebook.com/tr?id=<?php echo esc_attr( $this->pixel_id ); ?>&e
                     event_category: 'engagement'
                 });
                 
-                console.log('[FP Forms Meta] Form Progress tracked:', formId, progress + '%');
+                if (window.fpFormsDebug) console.log('[FP Forms Meta] Form Progress tracked:', formId, progress + '%');
             }
         },
         
@@ -220,7 +220,7 @@ src="https://www.facebook.com/tr?id=<?php echo esc_attr( $this->pixel_id ); ?>&e
                 event_category: 'abandonment'
             });
             
-            console.log('[FP Forms Meta] Form Abandoned:', formId, timeSpent + 's');
+            if (window.fpFormsDebug) console.log('[FP Forms Meta] Form Abandoned:', formId, timeSpent + 's');
         },
         
         /**
@@ -235,7 +235,7 @@ src="https://www.facebook.com/tr?id=<?php echo esc_attr( $this->pixel_id ); ?>&e
                 event_category: 'error'
             });
             
-            console.log('[FP Forms Meta] Validation Error:', fieldName, errorMessage);
+            if (window.fpFormsDebug) console.log('[FP Forms Meta] Validation Error:', fieldName, errorMessage);
         },
         
         /**
@@ -284,7 +284,7 @@ src="https://www.facebook.com/tr?id=<?php echo esc_attr( $this->pixel_id ); ?>&e
                     event_category: 'conversion'
                 });
                 
-                console.log('[FP Forms Meta] Lead tracked:', formId, '(' + timeSpent + 's)');
+                if (window.fpFormsDebug) console.log('[FP Forms Meta] Lead tracked:', formId, '(' + timeSpent + 's)');
             }
         },
         
@@ -526,18 +526,24 @@ src="https://www.facebook.com/tr?id=<?php echo esc_attr( $this->pixel_id ); ?>&e
         $url = self::CAPI_ENDPOINT . '/' . $this->pixel_id . '/events';
         
         $payload = [
-            'data' => [ $event_data ],
-            'test_event_code' => apply_filters( 'fp_forms_meta_test_event_code', '' ),
+            'data'         => [ $event_data ],
+            'access_token' => $this->access_token,
         ];
         
-        // Invia a Conversions API con access token
-        $response = wp_remote_post( 
-            $url . '?access_token=' . urlencode( $this->access_token ),
+        // Aggiunge test_event_code solo se valorizzato (evita invio di stringa vuota a Meta)
+        $test_event_code = apply_filters( 'fp_forms_meta_test_event_code', '' );
+        if ( ! empty( $test_event_code ) ) {
+            $payload['test_event_code'] = $test_event_code;
+        }
+        
+        // Invia a Conversions API — access token nel body, non nella URL (evita log exposure)
+        $response = wp_remote_post(
+            $url,
             [
                 'headers' => [
                     'Content-Type' => 'application/json',
                 ],
-                'body' => wp_json_encode( $payload ),
+                'body'    => wp_json_encode( $payload ),
                 'timeout' => 15,
             ]
         );
@@ -619,16 +625,6 @@ src="https://www.facebook.com/tr?id=<?php echo esc_attr( $this->pixel_id ); ?>&e
      * Ottiene IP utente
      */
     private function get_user_ip() {
-        $ip = '';
-        
-        if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
-            $ip = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } else {
-            $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-        }
-        
-        return sanitize_text_field( $ip );
+        return \FPForms\Helpers\Helper::get_user_ip();
     }
 }

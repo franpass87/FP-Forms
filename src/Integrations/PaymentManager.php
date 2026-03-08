@@ -8,6 +8,11 @@ namespace FPForms\Integrations;
 class PaymentManager {
     
     /**
+     * Flag in memoria: tabella transazioni già verificata in questa request
+     */
+    private static $table_checked = false;
+    
+    /**
      * Costruttore
      */
     public function __construct() {
@@ -35,7 +40,17 @@ class PaymentManager {
         if ( ! $this->form_requires_payment( $form_id ) ) {
             return;
         }
-        
+
+        // Verifica che la submission appartenga effettivamente al form indicato
+        $submission = \FPForms\Plugin::instance()->database->get_submission( $submission_id );
+        if ( ! $submission || (int) $submission->form_id !== (int) $form_id ) {
+            \FPForms\Core\Logger::warning( 'Payment aborted: submission/form mismatch', [
+                'submission_id' => $submission_id,
+                'form_id'       => $form_id,
+            ] );
+            return;
+        }
+
         $form = \FPForms\Plugin::instance()->forms->get_form( $form_id );
         $payment_provider = $form['settings']['payment_provider'] ?? '';
         $amount = $this->calculate_amount( $form_id, $data );
@@ -70,10 +85,15 @@ class PaymentManager {
             return floatval( $form['settings']['payment_amount'] ?? 0 );
         }
         
-        // Estrai valore da campo
-        $field_name = 'fp_field_' . $amount_field;
-        $amount = isset( $data[ $field_name ] ) ? floatval( $data[ $field_name ] ) : 0;
-        
+        // I dati arrivano già senza il prefisso fp_field_ (rimosso in Submissions\Manager)
+        $amount = isset( $data[ $amount_field ] ) ? floatval( $data[ $amount_field ] ) : 0;
+
+        // Validazione range: importo deve essere positivo e ragionevole
+        if ( $amount < 0.01 ) {
+            return 0;
+        }
+        $amount = min( $amount, 999999.99 );
+
         return $amount;
     }
     
@@ -88,28 +108,43 @@ class PaymentManager {
         // Crea tabella se non esiste
         $this->maybe_create_transactions_table();
         
-        $wpdb->insert(
+        $result = $wpdb->insert(
             $table,
             [
-                'submission_id' => $submission_id,
-                'form_id' => $form_id,
-                'provider' => $provider,
-                'amount' => $amount,
-                'status' => $status,
+                'submission_id'  => $submission_id,
+                'form_id'        => $form_id,
+                'provider'       => $provider,
+                'amount'         => $amount,
+                'status'         => $status,
                 'transaction_id' => $transaction_id,
-                'metadata' => wp_json_encode( $metadata ),
-                'created_at' => current_time( 'mysql' ),
+                'metadata'       => wp_json_encode( $metadata ),
+                'created_at'     => current_time( 'mysql' ),
             ],
             [ '%d', '%d', '%s', '%f', '%s', '%s', '%s', '%s' ]
         );
-        
+
+        if ( $result === false ) {
+            \FPForms\Core\Logger::error( 'log_transaction insert failed', [
+                'submission_id' => $submission_id,
+                'form_id'       => $form_id,
+                'db_error'      => $wpdb->last_error,
+            ] );
+            return false;
+        }
+
         return $wpdb->insert_id;
     }
     
     /**
-     * Crea tabella transazioni se non esiste
+     * Crea tabella transazioni se non esiste.
+     * Usa un flag statico per evitare chiamate ripetute a dbDelta nella stessa request.
      */
     private function maybe_create_transactions_table() {
+        if ( self::$table_checked ) {
+            return;
+        }
+        self::$table_checked = true;
+        
         global $wpdb;
         
         $table = $wpdb->prefix . 'fp_forms_transactions';

@@ -57,7 +57,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                     </td>
                     <td>
                         <?php if ( $fd['last_submission'] ) : ?>
-                            <?php echo date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $fd['last_submission'] ) ); ?>
+                            <?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $fd['last_submission'] ) ) ); ?>
                         <?php else : ?>
                             <span style="color: var(--fp-color-muted);">&mdash;</span>
                         <?php endif; ?>

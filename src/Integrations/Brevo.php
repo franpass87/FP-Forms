@@ -91,7 +91,7 @@ class Brevo {
         
         // Check se Brevo è abilitato per questo form
         // Se non specificato nel form, usa la configurazione globale
-        $brevo_enabled = $form['settings']['brevo_enabled'] ?? true; // Default: sync sempre se Brevo configurato
+        $brevo_enabled = $form['settings']['brevo_enabled'] ?? false;
         
         if ( ! $brevo_enabled ) {
             return;
@@ -128,15 +128,15 @@ class Brevo {
         if ( ! $contact_result['success'] ) {
             \FPForms\Core\Logger::error( 'Brevo sync failed', [
                 'form_id' => $form_id,
-                'email' => $email,
-                'error' => $contact_result['error'],
+                'email'   => self::mask_email( $email ),
+                'error'   => $contact_result['error'],
             ] );
             return;
         }
         
         \FPForms\Core\Logger::info( 'Brevo contact synced', [
             'form_id' => $form_id,
-            'email' => $email,
+            'email'   => self::mask_email( $email ),
             'list_id' => $list_id,
         ] );
         
@@ -212,12 +212,15 @@ class Brevo {
      * @return array ['success' => bool, 'error' => string|null]
      */
     public function track_event( $email, $event_name, $event_data = [] ) {
-        $endpoint = '/contacts/' . urlencode( $email ) . '/events';
-        
+        // Endpoint corretto per Brevo API v3: POST /events con email nel body
+        $endpoint = '/events';
+
         $data = [
-            'event' => $event_name,
+            'event'      => $event_name,
+            'email'      => $email,
+            'eventdate'  => gmdate( 'Y-m-d\TH:i:s\Z' ),
         ];
-        
+
         // Aggiungi event data se presente
         if ( ! empty( $event_data ) ) {
             $data['properties'] = $event_data;
@@ -227,7 +230,7 @@ class Brevo {
         
         if ( ! $response['success'] ) {
             \FPForms\Core\Logger::error( 'Brevo event tracking failed', [
-                'email' => $email,
+                'email' => self::mask_email( $email ),
                 'event' => $event_name,
                 'error' => $response['error'],
             ] );
@@ -239,7 +242,7 @@ class Brevo {
         }
         
         \FPForms\Core\Logger::info( 'Brevo event tracked', [
-            'email' => $email,
+            'email' => self::mask_email( $email ),
             'event' => $event_name,
         ] );
         
@@ -395,7 +398,10 @@ class Brevo {
             $clean_key = str_replace( 'fp_field_', '', $key );
             
             if ( stripos( $clean_key, 'email' ) !== false ) {
-                return sanitize_email( $value );
+                $email = sanitize_email( $value );
+                if ( is_email( $email ) ) {
+                    return $email;
+                }
             }
         }
         
@@ -454,5 +460,19 @@ class Brevo {
         $attributes['FP_SUBMISSION_DATE'] = current_time( 'Y-m-d H:i:s' );
         
         return $attributes;
+    }
+
+    /**
+     * Maschera un indirizzo email per i log (es. jo***@example.com).
+     */
+    private static function mask_email( string $email ): string {
+        $parts = explode( '@', $email, 2 );
+        if ( count( $parts ) !== 2 ) {
+            return '***';
+        }
+        $local   = $parts[0];
+        $domain  = $parts[1];
+        $visible = min( 2, strlen( $local ) );
+        return substr( $local, 0, $visible ) . str_repeat( '*', max( 1, strlen( $local ) - $visible ) ) . '@' . $domain;
     }
 }

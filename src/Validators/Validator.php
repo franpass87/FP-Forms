@@ -109,37 +109,41 @@ class Validator {
             return true;
         }
         
-        $timestamp = strtotime( $value );
-        
-        if ( ! $timestamp ) {
+        // Valida formato esatto Y-m-d per evitare stringhe ambigue tipo "next friday"
+        $dt = \DateTime::createFromFormat( 'Y-m-d', $value );
+        if ( ! $dt || $dt->format( 'Y-m-d' ) !== $value ) {
             $this->add_error( $field_name, sprintf(
-                __( 'Inserisci una data valida per "%s".', 'fp-forms' ),
+                __( 'Inserisci una data valida per "%s" (formato: AAAA-MM-GG).', 'fp-forms' ),
                 $field_label
             ) );
             return false;
         }
         
+        // Confronta le date come stringhe Y-m-d per evitare disallineamenti di timezone
+        // (le date senza orario non hanno un timezone significativo)
+        $date_str = $dt->format( 'Y-m-d' );
+        
         // Valida data minima
-        if ( isset( $options['min_date'] ) ) {
-            $min_timestamp = strtotime( $options['min_date'] );
-            if ( $timestamp < $min_timestamp ) {
+        if ( ! empty( $options['min_date'] ) ) {
+            $min_dt = \DateTime::createFromFormat( 'Y-m-d', $options['min_date'] );
+            if ( $min_dt && $date_str < $min_dt->format( 'Y-m-d' ) ) {
                 $this->add_error( $field_name, sprintf(
                     __( 'La data di "%s" non può essere precedente al %s.', 'fp-forms' ),
                     $field_label,
-                    date_i18n( get_option( 'date_format' ), $min_timestamp )
+                    date_i18n( get_option( 'date_format' ), $min_dt->getTimestamp() )
                 ) );
                 return false;
             }
         }
         
         // Valida data massima
-        if ( isset( $options['max_date'] ) ) {
-            $max_timestamp = strtotime( $options['max_date'] );
-            if ( $timestamp > $max_timestamp ) {
+        if ( ! empty( $options['max_date'] ) ) {
+            $max_dt = \DateTime::createFromFormat( 'Y-m-d', $options['max_date'] );
+            if ( $max_dt && $date_str > $max_dt->format( 'Y-m-d' ) ) {
                 $this->add_error( $field_name, sprintf(
                     __( 'La data di "%s" non può essere successiva al %s.', 'fp-forms' ),
                     $field_label,
-                    date_i18n( get_option( 'date_format' ), $max_timestamp )
+                    date_i18n( get_option( 'date_format' ), $max_dt->getTimestamp() )
                 ) );
                 return false;
             }
@@ -190,6 +194,39 @@ class Validator {
                 $max_length
             ) );
             return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Valida che il valore di un campo select/radio sia tra le opzioni consentite (whitelist).
+     * Previene l'invio di valori arbitrari per campi a scelta fissa.
+     */
+    public function validate_choices( $value, $choices, $field_name, $field_label ) {
+        if ( $this->is_empty( $value ) || ! is_array( $choices ) || empty( $choices ) ) {
+            return true;
+        }
+        
+        if ( is_array( $value ) ) {
+            // Checkbox multipli: ogni valore deve essere nella whitelist
+            foreach ( $value as $v ) {
+                if ( ! in_array( (string) $v, array_map( 'strval', $choices ), true ) ) {
+                    $this->add_error( $field_name, sprintf(
+                        __( 'Il valore selezionato per "%s" non è valido.', 'fp-forms' ),
+                        $field_label
+                    ) );
+                    return false;
+                }
+            }
+        } else {
+            if ( ! in_array( (string) $value, array_map( 'strval', $choices ), true ) ) {
+                $this->add_error( $field_name, sprintf(
+                    __( 'Il valore selezionato per "%s" non è valido.', 'fp-forms' ),
+                    $field_label
+                ) );
+                return false;
+            }
         }
         
         return true;

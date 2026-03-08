@@ -38,14 +38,81 @@ class WebhookManager {
     }
     
     /**
-     * Invia webhook
+     * Valida struttura e schema dell'URL (senza risoluzione DNS).
+     * Usato ad ogni submission per evitare blocchi sincroni.
      */
+    private function is_safe_webhook_url( $url ) {
+        if ( ! wp_http_validate_url( $url ) ) {
+            return false;
+        }
+
+        $parsed = wp_parse_url( $url );
+        if ( ! in_array( $parsed['scheme'] ?? '', [ 'http', 'https' ], true ) ) {
+            return false;
+        }
+
+        $host = $parsed['host'] ?? '';
+        if ( empty( $host ) ) {
+            return false;
+        }
+
+        // Blocca IP letterali privati/riservati (nessuna risoluzione DNS qui)
+        if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
+            if ( filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) === false ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Valida URL con risoluzione DNS (per uso al salvataggio, non ad ogni submission).
+     * Previene SSRF tramite hostname che risolvono a IP interni.
+     * @param string $url
+     * @return bool
+     */
+    public function is_safe_url_for_save( $url ) {
+        if ( ! $this->is_safe_webhook_url( $url ) ) {
+            return false;
+        }
+
+        $parsed = wp_parse_url( $url );
+        $host   = $parsed['host'] ?? '';
+
+        // Se è già un IP letterale, il check è già stato fatto in is_safe_webhook_url
+        if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
+            return true;
+        }
+
+        // Risolve il hostname: se la risoluzione fallisce, gethostbyname restituisce l'input invariato
+        $resolved_ip = gethostbyname( $host );
+        if ( $resolved_ip === $host ) {
+            return false;
+        }
+
+        if ( filter_var( $resolved_ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) === false ) {
+            return false;
+        }
+
+        return true;
+    }
+    
     private function send_webhook( $webhook, $form_id, $submission_id, $data ) {
+        // Prevenzione SSRF: valida URL prima di inviare
+        if ( ! $this->is_safe_webhook_url( $webhook['url'] ) ) {
+            \FPForms\Core\Logger::warning( 'Webhook URL non sicuro, invio bloccato', [
+                'url' => $webhook['url'],
+                'form_id' => $form_id,
+            ] );
+            return false;
+        }
+        
         $payload = [
             'form_id' => $form_id,
             'submission_id' => $submission_id,
             'data' => $data,
-            'timestamp' => current_time( 'timestamp' ),
+            'timestamp' => time(),
             'site_url' => home_url(),
             'form_title' => get_the_title( $form_id ),
         ];
@@ -67,7 +134,8 @@ class WebhookManager {
             'blocking' => false, // Non bloccare la risposta al form
         ] );
         
-        // Log risultato
+        // Con blocking:false wp_remote_post restituisce true, non la risposta HTTP.
+        // Il log del response code non è disponibile in modalità non-bloccante.
         if ( is_wp_error( $response ) ) {
             \FPForms\Core\Logger::warning( 'Webhook error', [
                 'url' => $webhook['url'],
@@ -76,10 +144,8 @@ class WebhookManager {
                 'submission_id' => $submission_id,
             ] );
         } else {
-            $status_code = wp_remote_retrieve_response_code( $response );
-            \FPForms\Core\Logger::info( 'Webhook sent', [
+            \FPForms\Core\Logger::info( 'Webhook inviato (non-blocking)', [
                 'url' => $webhook['url'],
-                'status' => $status_code,
                 'form_id' => $form_id,
                 'submission_id' => $submission_id,
             ] );
@@ -108,6 +174,15 @@ class WebhookManager {
      * Test webhook
      */
     public function test_webhook( $url, $secret = '' ) {
+        // Il test è un'azione esplicita dell'admin: usa la validazione completa con risoluzione DNS
+        // per prevenire SSRF tramite hostname che risolvono a IP interni.
+        if ( ! $this->is_safe_url_for_save( $url ) ) {
+            return [
+                'success' => false,
+                'message' => __( 'URL non valido o non sicuro.', 'fp-forms' ),
+            ];
+        }
+        
         $test_payload = [
             'form_id' => 0,
             'submission_id' => 0,
@@ -115,7 +190,7 @@ class WebhookManager {
                 'test' => true,
                 'message' => 'This is a test webhook from FP Forms',
             ],
-            'timestamp' => current_time( 'timestamp' ),
+            'timestamp' => time(),
             'site_url' => home_url(),
             'form_title' => 'Test Form',
         ];

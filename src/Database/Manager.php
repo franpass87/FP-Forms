@@ -151,18 +151,24 @@ class Manager {
         
         global $wpdb;
         
-        $where = $wpdb->prepare( 'WHERE form_id = %d', $form_id );
+        $where_parts  = [ 'form_id = %d' ];
+        $where_values = [ $form_id ];
         
         if ( ! empty( $status ) ) {
-            $where .= $wpdb->prepare( ' AND status = %s', $status );
+            $where_parts[]  = 'status = %s';
+            $where_values[] = $status;
         }
         
-        // Aggiungi search se presente
         if ( ! empty( $search ) ) {
-            $where .= $wpdb->prepare( ' AND data LIKE %s', '%' . $wpdb->esc_like( $search ) . '%' );
+            $where_parts[]  = 'data LIKE %s';
+            $where_values[] = '%' . $wpdb->esc_like( $search ) . '%';
         }
         
-        $query = "SELECT COUNT(*) FROM {$this->table_submissions} {$where}";
+        $where = 'WHERE ' . implode( ' AND ', $where_parts );
+        $query = $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$this->table_submissions} {$where}",
+            $where_values
+        );
         
         $count = (int) $wpdb->get_var( $query );
         
@@ -266,10 +272,29 @@ class Manager {
             $submission_id
         ) );
         
-        // Elimina file fisici
+        // Elimina file fisici — verifica che il path sia dentro la directory upload di WP
+        $upload_basedir = realpath( wp_upload_dir()['basedir'] );
         foreach ( $files as $file ) {
-            if ( file_exists( $file->file_path ) ) {
-                @unlink( $file->file_path );
+            if ( empty( $file->file_path ) ) {
+                continue;
+            }
+            $real_path = realpath( $file->file_path );
+            // Separare i check per evitare TypeError in PHP 8 con strpos(false, ...)
+            if ( $real_path === false || $upload_basedir === false ) {
+                \FPForms\Core\Logger::warning( 'File allegato: path non risolvibile, eliminazione bloccata', [
+                    'path' => $file->file_path,
+                ] );
+                continue;
+            }
+            // Blocca path traversal: il file deve essere dentro la directory upload
+            if ( strpos( $real_path, $upload_basedir ) !== 0 ) {
+                \FPForms\Core\Logger::warning( 'File allegato fuori dalla directory upload, eliminazione bloccata', [
+                    'path' => $file->file_path,
+                ] );
+                continue;
+            }
+            if ( ! unlink( $real_path ) ) {
+                \FPForms\Core\Logger::warning( 'Impossibile eliminare file allegato', [ 'path' => $real_path ] );
             }
         }
         
@@ -293,25 +318,40 @@ class Manager {
 
         global $wpdb;
         
-        // Elimina i campi esistenti
+        // Operazione atomica: delete + insert in transazione
+        $wpdb->query( 'START TRANSACTION' );
+        
         $wpdb->delete( $this->table_fields, [ 'form_id' => $form_id ], [ '%d' ] );
         
-        // Salva i nuovi campi
+        $error = false;
         foreach ( $fields as $order => $field ) {
-            $wpdb->insert(
+            $result = $wpdb->insert(
                 $this->table_fields,
                 [
-                    'form_id' => $form_id,
-                    'field_type' => $field['type'],
-                    'field_label' => $field['label'],
-                    'field_name' => $field['name'],
+                    'form_id'      => $form_id,
+                    'field_type'   => $field['type'],
+                    'field_label'  => $field['label'],
+                    'field_name'   => $field['name'],
                     'field_options' => isset( $field['options'] ) ? wp_json_encode( $field['options'] ) : null,
-                    'field_order' => $order,
-                    'is_required' => isset( $field['required'] ) ? (int) $field['required'] : 0,
+                    'field_order'  => $order,
+                    'is_required'  => isset( $field['required'] ) ? (int) $field['required'] : 0,
                 ],
                 [ '%d', '%s', '%s', '%s', '%s', '%d', '%d' ]
             );
+            
+            if ( $result === false ) {
+                $error = true;
+                break;
+            }
         }
+        
+        if ( $error ) {
+            $wpdb->query( 'ROLLBACK' );
+            \FPForms\Core\Logger::error( 'save_form_fields: errore DB, rollback eseguito', [ 'form_id' => $form_id ] );
+            return false;
+        }
+        
+        $wpdb->query( 'COMMIT' );
         
         // Invalida cache
         \FPForms\Core\Cache::invalidate_form( $form_id );

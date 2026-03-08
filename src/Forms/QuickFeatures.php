@@ -51,12 +51,17 @@ class QuickFeatures {
      */
     public function add_custom_class( $html, $form_id, $form ) {
         if ( isset( $form['settings']['custom_css_class'] ) && ! empty( $form['settings']['custom_css_class'] ) ) {
-            $custom_class = sanitize_html_class( $form['settings']['custom_css_class'] );
-            $html = str_replace( 
-                'class="fp-forms-container"', 
-                'class="fp-forms-container ' . $custom_class . '"', 
-                $html 
-            );
+            // Sanitizza ogni classe separatamente per supportare classi multiple
+            $raw_classes = preg_split( '/\s+/', trim( $form['settings']['custom_css_class'] ) );
+            $safe_classes = array_filter( array_map( 'sanitize_html_class', $raw_classes ) );
+            $custom_class = implode( ' ', $safe_classes );
+            if ( ! empty( $custom_class ) ) {
+                $html = str_replace(
+                    'class="fp-forms-container"',
+                    'class="fp-forms-container ' . esc_attr( $custom_class ) . '"',
+                    $html
+                );
+            }
         }
         
         return $html;
@@ -66,17 +71,17 @@ class QuickFeatures {
      * Sostituisce tag dinamici
      */
     private function replace_tags( $text, $data, $form ) {
-        // Tag per i campi del form
+        // Tag per i campi del form — i valori sono URL-encoded per uso sicuro in URL
         foreach ( $data as $key => $value ) {
             if ( is_array( $value ) ) {
                 $value = implode( ', ', $value );
             }
-            $text = str_replace( '{' . $key . '}', $value, $text );
+            $text = str_replace( '{' . $key . '}', rawurlencode( (string) $value ), $text );
         }
         
-        // Tag generali
-        $text = str_replace( '{form_id}', $form['id'], $text );
-        $text = str_replace( '{form_title}', $form['title'], $text );
+        // Tag generali — anche questi vengono encoded per uso sicuro in URL
+        $text = str_replace( '{form_id}', rawurlencode( (string) $form['id'] ), $text );
+        $text = str_replace( '{form_title}', rawurlencode( (string) $form['title'] ), $text );
         
         return $text;
     }

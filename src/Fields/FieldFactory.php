@@ -52,7 +52,7 @@ class FieldFactory {
      * Renderizza field
      */
     public static function render( $field, $form_id ) {
-        $type = $field['type'];
+        $type = $field['type'] ?? '';
         
         if ( ! isset( self::$renderers[ $type ] ) ) {
             return '';
@@ -67,7 +67,7 @@ class FieldFactory {
     private static function get_common_attrs( $field, $form_id ) {
         $field_name = 'fp_field_' . $field['name'];
         $field_id = 'fp_field_' . $form_id . '_' . $field['name'];
-        $required = $field['required'] ? 'required' : '';
+        $required = ( $field['required'] ?? false ) ? 'required' : '';
         $placeholder = isset( $field['options']['placeholder'] ) ? $field['options']['placeholder'] : '';
         
         return [
@@ -81,8 +81,8 @@ class FieldFactory {
     /**
      * Renderizza wrapper
      */
-    private static function wrap_field( $field, $content ) {
-        $required_mark = $field['required'] ? ' <span class="fp-forms-required">*</span>' : '';
+    public static function wrap_field( $field, $content ) {
+        $required_mark = ! empty( $field['required'] ) ? ' <span class="fp-forms-required">*</span>' : '';
         $description = isset( $field['options']['description'] ) ? $field['options']['description'] : '';
         
         // Field icon support
@@ -154,7 +154,7 @@ class FieldFactory {
             ? $field['options']['placeholder_cognome']
             : __( 'Cognome', 'fp-forms' );
 
-        $required_mark = $field['required'] ? ' <span class="fp-forms-required">*</span>' : '';
+        $required_mark = ! empty( $field['required'] ) ? ' <span class="fp-forms-required">*</span>' : '';
         $description   = isset( $field['options']['description'] ) ? $field['options']['description'] : '';
 
         $html  = '<div class="fp-forms-field fp-forms-field-fullname">';
@@ -370,7 +370,7 @@ class FieldFactory {
         // Ottieni URL privacy policy
         $privacy_url = self::get_privacy_policy_url();
         $privacy_text = isset( $field['options']['privacy_text'] ) 
-            ? __( trim( $field['options']['privacy_text'] ), 'fp-forms' )
+            ? trim( $field['options']['privacy_text'] )
             : __( 'Ho letto e accetto la', 'fp-forms' );
         $privacy_link_text = __( 'Privacy Policy', 'fp-forms' );
         
@@ -541,7 +541,7 @@ class FieldFactory {
         $attrs = self::get_common_attrs( $field, $form_id );
         
         $marketing_text = isset( $field['options']['marketing_text'] ) 
-            ? __( $field['options']['marketing_text'], 'fp-forms' ) 
+            ? $field['options']['marketing_text']
             : __( 'Acconsento a ricevere comunicazioni marketing e newsletter', 'fp-forms' );
         
         // Marketing checkbox è sempre opzionale (a differenza del privacy)

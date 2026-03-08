@@ -187,6 +187,19 @@ class Manager {
         );
         
         // JS
+        wp_register_script(
+            'chartjs',
+            'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+            [],
+            '4.4.0',
+            true
+        );
+        
+        // Carica Chart.js solo nella pagina analytics
+        if ( strpos( $hook, 'fp-forms-analytics' ) !== false ) {
+            wp_enqueue_script( 'chartjs' );
+        }
+        
         wp_enqueue_script(
             'fp-forms-toast',
             FP_FORMS_PLUGIN_URL . 'assets/js/toast.js',
@@ -356,7 +369,7 @@ class Manager {
      * Renderizza pagina analytics
      */
     public function render_analytics_page() {
-        if ( ! Capabilities::can_manage_forms() ) {
+        if ( ! Capabilities::can_view_submissions() ) {
             wp_die( __( 'Non hai i permessi per accedere a questa pagina.', 'fp-forms' ) );
         }
 
@@ -403,7 +416,7 @@ class Manager {
                 'encryption' => sanitize_text_field( $_POST['smtp_encryption'] ?? 'tls' ),
                 'auth'       => isset( $_POST['smtp_auth'] ),
                 'username'   => sanitize_text_field( $_POST['smtp_username'] ?? '' ),
-                'password'   => $_POST['smtp_password'] ?? '',
+                'password'   => sanitize_text_field( $_POST['smtp_password'] ?? '' ),
             ];
             // Validazione encryption
             if ( ! in_array( $smtp_settings['encryption'], [ 'tls', 'ssl', 'none' ], true ) ) {
@@ -412,6 +425,22 @@ class Manager {
             // Validazione porta
             if ( $smtp_settings['port'] < 1 || $smtp_settings['port'] > 65535 ) {
                 $smtp_settings['port'] = 587;
+            }
+            // Prevenzione SSRF: blocca host SMTP che risolvono a IP privati/riservati
+            $smtp_host = $smtp_settings['host'];
+            if ( ! empty( $smtp_host ) ) {
+                if ( filter_var( $smtp_host, FILTER_VALIDATE_IP ) ) {
+                    // IP letterale: blocca se privato/riservato
+                    if ( filter_var( $smtp_host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) === false ) {
+                        $smtp_settings['host'] = '';
+                    }
+                } else {
+                    // Hostname: risolvi e verifica
+                    $resolved = gethostbyname( $smtp_host );
+                    if ( $resolved !== $smtp_host && filter_var( $resolved, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) === false ) {
+                        $smtp_settings['host'] = '';
+                    }
+                }
             }
             update_option( 'fp_forms_smtp_settings', $smtp_settings );
             
@@ -451,7 +480,7 @@ class Manager {
             ];
             update_option( 'fp_forms_meta_settings', $meta_settings );
             
-            echo '<div class="notice notice-success"><p>' . __( 'Impostazioni salvate!', 'fp-forms' ) . '</p></div>';
+            echo '<div class="notice notice-success"><p>' . esc_html__( 'Impostazioni salvate!', 'fp-forms' ) . '</p></div>';
         }
         
         include FP_FORMS_PLUGIN_DIR . 'templates/admin/settings.php';
@@ -463,18 +492,20 @@ class Manager {
     public function ajax_save_form() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
         
         $form_id = isset( $_POST['form_id'] ) ? intval( $_POST['form_id'] ) : 0;
         $title = isset( $_POST['title'] ) ? sanitize_text_field( $_POST['title'] ) : '';
         $description = isset( $_POST['description'] ) ? wp_kses_post( $_POST['description'] ) : '';
-        $fields = isset( $_POST['fields'] ) ? json_decode( stripslashes( $_POST['fields'] ), true ) : [];
-        $fields = is_array( $fields ) ? $fields : [];
-        $settings_raw = isset( $_POST['settings'] ) ? json_decode( stripslashes( $_POST['settings'] ), true ) : [];
+        $fields_raw = isset( $_POST['fields'] ) ? json_decode( stripslashes( $_POST['fields'] ), true, 20 ) : [];
+        $fields_raw = is_array( $fields_raw ) ? $fields_raw : [];
+        // Sanitizza i campi con la stessa funzione usata per l'import
+        $fields     = $this->sanitize_imported_fields( $fields_raw );
+        $settings_raw = isset( $_POST['settings'] ) ? json_decode( stripslashes( $_POST['settings'] ), true, 20 ) : [];
         
-        // BUGFIX #25: Sanitize and validate settings before save
+        // Sanitize and validate settings before save
         $settings = $this->sanitize_form_settings( $settings_raw );
         
         $forms_manager = \FPForms\Plugin::instance()->forms;
@@ -519,7 +550,7 @@ class Manager {
     public function ajax_delete_form() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
         
@@ -544,7 +575,7 @@ class Manager {
     public function ajax_duplicate_form() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
         
@@ -557,6 +588,15 @@ class Manager {
         $new_form_id = \FPForms\Plugin::instance()->forms->duplicate_form( $form_id );
         
         if ( $new_form_id ) {
+            // Rimuovi webhook (con i loro secret) dal form duplicato per evitare invii duplicati
+            // e per non propagare credenziali sensibili a contesti diversi.
+            $new_form = \FPForms\Plugin::instance()->forms->get_form( $new_form_id );
+            if ( $new_form ) {
+                $new_settings             = $new_form['settings'] ?? [];
+                $new_settings['webhooks'] = [];
+                \FPForms\Plugin::instance()->forms->update_form( $new_form_id, [ 'settings' => $new_settings ] );
+            }
+
             wp_send_json_success( [
                 'message' => __( 'Form duplicato!', 'fp-forms' ),
                 'form_id' => $new_form_id,
@@ -572,7 +612,7 @@ class Manager {
     public function ajax_delete_submission() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
         
@@ -597,7 +637,7 @@ class Manager {
     public function ajax_export_submissions() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
         
@@ -619,17 +659,23 @@ class Manager {
         switch ( $format ) {
             case 'csv':
                 $exporter = new \FPForms\Export\CsvExporter();
-                $exporter->export( $form_id, $options );
+                $result   = $exporter->export( $form_id, $options );
                 break;
                 
             case 'xlsx':
             case 'excel':
                 $exporter = new \FPForms\Export\ExcelExporter();
-                $exporter->export( $form_id, $options );
+                $result   = $exporter->export( $form_id, $options );
                 break;
                 
             default:
                 wp_send_json_error( [ 'message' => __( 'Formato export non supportato.', 'fp-forms' ) ] );
+                return;
+        }
+        
+        // Se l'export ha restituito WP_Error (es. nessun dato), invia l'errore al client
+        if ( isset( $result ) && is_wp_error( $result ) ) {
+            wp_send_json_error( [ 'message' => $result->get_error_message() ] );
         }
         
         // Il metodo export fa exit, quindi questo non verrÃ  mai eseguito
@@ -641,7 +687,7 @@ class Manager {
     public function ajax_import_template() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
         
@@ -676,7 +722,7 @@ class Manager {
     public function ajax_get_templates() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
         
@@ -694,7 +740,7 @@ class Manager {
     public function ajax_get_submission_details() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
         
@@ -725,9 +771,9 @@ class Manager {
         
         // Info submission
         $html .= '<div class="fp-submission-meta">';
-        $html .= '<p><strong>' . __( 'Data:', 'fp-forms' ) . '</strong> ' . \FPForms\Helpers\Helper::format_date( $submission->created_at ) . '</p>';
-        $html .= '<p><strong>' . __( 'Stato:', 'fp-forms' ) . '</strong> ' . ( $submission->status === 'read' ? 'Letta' : 'Non letta' ) . '</p>';
-        $html .= '<p><strong>' . __( 'IP:', 'fp-forms' ) . '</strong> ' . esc_html( $submission->user_ip ) . '</p>';
+        $html .= '<p><strong>' . esc_html__( 'Data:', 'fp-forms' ) . '</strong> ' . esc_html( \FPForms\Helpers\Helper::format_date( $submission->created_at ) ) . '</p>';
+        $html .= '<p><strong>' . esc_html__( 'Stato:', 'fp-forms' ) . '</strong> ' . ( $submission->status === 'read' ? esc_html__( 'Letta', 'fp-forms' ) : esc_html__( 'Non letta', 'fp-forms' ) ) . '</p>';
+        $html .= '<p><strong>' . esc_html__( 'IP:', 'fp-forms' ) . '</strong> ' . esc_html( $submission->user_ip ) . '</p>';
         $html .= '</div>';
         
         $html .= '<hr style="margin: 20px 0;">';
@@ -778,7 +824,7 @@ class Manager {
         // File allegati
         if ( ! empty( $files ) ) {
             $html .= '<hr style="margin: 20px 0;">';
-            $html .= '<h4>' . __( 'File Allegati', 'fp-forms' ) . '</h4>';
+            $html .= '<h4>' . esc_html__( 'File Allegati', 'fp-forms' ) . '</h4>';
             $html .= '<div class="fp-submission-files">';
             
             foreach ( $files as $file ) {
@@ -803,7 +849,7 @@ class Manager {
     public function ajax_test_recaptcha() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_settings() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti', 'fp-forms' ) ] );
         }
         
@@ -823,7 +869,7 @@ class Manager {
     public function ajax_test_brevo() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_settings() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti', 'fp-forms' ) ] );
         }
         
@@ -843,7 +889,7 @@ class Manager {
     public function ajax_load_brevo_lists() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_settings() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti', 'fp-forms' ) ] );
         }
         
@@ -863,7 +909,7 @@ class Manager {
     public function ajax_test_meta() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_settings() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti', 'fp-forms' ) ] );
         }
         
@@ -883,7 +929,7 @@ class Manager {
     public function ajax_test_smtp() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_settings() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti', 'fp-forms' ) ] );
         }
         
@@ -948,7 +994,8 @@ class Manager {
         // Boolean fields
         $boolean_fields = [
             'confirmation_enabled', 'staff_notifications_enabled', 'brevo_enabled',
-            'disable_wordpress_emails', 'success_redirect_enabled'
+            'disable_wordpress_emails', 'success_redirect_enabled',
+            'enable_multistep', 'enable_progressive_save',
         ];
         
         foreach ( $boolean_fields as $field ) {
@@ -1048,8 +1095,9 @@ class Manager {
                     'id' => isset( $webhook['id'] ) ? sanitize_text_field( $webhook['id'] ) : 'webhook_' . uniqid(),
                 ];
                 
-                // Solo aggiungi se ha URL valido
-                if ( ! empty( $sanitized_webhook['url'] ) ) {
+                // Solo aggiungi se ha URL valido e supera il check SSRF (inclusa risoluzione DNS)
+                // La risoluzione DNS viene fatta qui (al salvataggio) e non ad ogni submission.
+                if ( ! empty( $sanitized_webhook['url'] ) && \FPForms\Plugin::instance()->webhooks->is_safe_url_for_save( $sanitized_webhook['url'] ) ) {
                     $sanitized['webhooks'][] = $sanitized_webhook;
                 }
             }
@@ -1061,12 +1109,60 @@ class Manager {
     }
     
     /**
+     * Sanitizza i campi importati da JSON esterno.
+     * Applica whitelist dei tipi ammessi e sanitizzazione su ogni attributo.
+     */
+    private function sanitize_imported_fields( $fields ) {
+        if ( ! is_array( $fields ) ) {
+            return [];
+        }
+        
+        $allowed_types = [
+            'text', 'fullname', 'email', 'phone', 'number', 'date', 'textarea',
+            'select', 'radio', 'checkbox', 'privacy-checkbox', 'marketing-checkbox',
+            'recaptcha', 'file', 'calculated', 'step_break',
+        ];
+        
+        $sanitized = [];
+        foreach ( $fields as $field ) {
+            if ( ! is_array( $field ) ) {
+                continue;
+            }
+            
+            $type = sanitize_key( $field['type'] ?? '' );
+            if ( ! in_array( $type, $allowed_types, true ) ) {
+                continue;
+            }
+            
+            $clean = [
+                'type'     => $type,
+                'label'    => sanitize_text_field( $field['label'] ?? '' ),
+                'name'     => sanitize_key( $field['name'] ?? '' ),
+                'required' => ! empty( $field['required'] ),
+            ];
+            
+            // Sanitizza le opzioni ricorsivamente (solo scalari)
+            if ( isset( $field['options'] ) && is_array( $field['options'] ) ) {
+                $clean['options'] = array_map( function( $v ) {
+                    return is_array( $v )
+                        ? array_map( 'sanitize_text_field', $v )
+                        : sanitize_text_field( (string) $v );
+                }, $field['options'] );
+            }
+            
+            $sanitized[] = $clean;
+        }
+        
+        return $sanitized;
+    }
+    
+    /**
      * AJAX: Test webhook
      */
     public function ajax_test_webhook() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_settings() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
         
@@ -1098,7 +1194,7 @@ class Manager {
     public function ajax_restore_snapshot() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
         
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
         
@@ -1108,7 +1204,16 @@ class Manager {
         if ( ! $form_id || ! $snapshot_id ) {
             wp_send_json_error( [ 'message' => __( 'Parametri non validi.', 'fp-forms' ) ] );
         }
-        
+
+        // Verifica che il form esista e che l'utente abbia il diritto di modificarlo
+        $form_post = get_post( $form_id );
+        if ( ! $form_post ) {
+            wp_send_json_error( [ 'message' => __( 'Form non trovato.', 'fp-forms' ) ] );
+        }
+        if ( ! current_user_can( 'manage_options' ) && (int) $form_post->post_author !== get_current_user_id() ) {
+            wp_send_json_error( [ 'message' => __( 'Permessi insufficienti per questo form.', 'fp-forms' ) ] );
+        }
+
         $versioning = \FPForms\Plugin::instance()->versioning;
         $result = $versioning->restore_snapshot( $form_id, $snapshot_id );
         
@@ -1128,7 +1233,7 @@ class Manager {
     public function ajax_bulk_action_submissions() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
 
@@ -1175,10 +1280,11 @@ class Manager {
                 break;
 
             case 'export':
-                $rows = [];
-                $header_set = false;
-                $headers = [];
+                $rows        = [];
+                $all_keys    = [];
+                $parsed_subs = [];
 
+                // Prima passata: raccoglie tutte le chiavi uniche da tutti i record
                 foreach ( $submission_ids as $id ) {
                     $sub = $db->get_submission( $id );
                     if ( ! $sub ) {
@@ -1188,16 +1294,29 @@ class Manager {
                     if ( ! is_array( $data ) ) {
                         $data = [];
                     }
-
-                    if ( ! $header_set ) {
-                        $headers   = array_merge( [ 'ID', 'Data', 'Stato' ], array_keys( $data ) );
-                        $header_set = true;
-                    }
-
-                    $row = [ $sub->id, $sub->created_at, $sub->status ];
                     foreach ( array_keys( $data ) as $key ) {
-                        $val = isset( $data[ $key ] ) ? $data[ $key ] : '';
-                        $row[] = is_array( $val ) ? implode( ', ', $val ) : $val;
+                        if ( ! in_array( $key, $all_keys, true ) ) {
+                            $all_keys[] = $key;
+                        }
+                    }
+                    $parsed_subs[] = [ 'sub' => $sub, 'data' => $data ];
+                }
+
+                $headers = array_merge( [ 'ID', 'Data', 'Stato' ], $all_keys );
+
+                // Seconda passata: costruisce le righe con colonne allineate agli header
+                foreach ( $parsed_subs as $item ) {
+                    $sub  = $item['sub'];
+                    $data = $item['data'];
+                    $row  = [
+                        $this->escape_csv_formula( (string) $sub->id ),
+                        $this->escape_csv_formula( (string) $sub->created_at ),
+                        $this->escape_csv_formula( (string) $sub->status ),
+                    ];
+                    foreach ( $all_keys as $key ) {
+                        $val   = isset( $data[ $key ] ) ? $data[ $key ] : '';
+                        $raw   = is_array( $val ) ? implode( ', ', $val ) : (string) $val;
+                        $row[] = $this->escape_csv_formula( $raw );
                     }
                     $rows[] = $row;
                 }
@@ -1214,9 +1333,9 @@ class Manager {
                 wp_send_json_success( [
                     'message'  => sprintf( __( '%d submissions esportate.', 'fp-forms' ), count( $rows ) ),
                     'csv'      => base64_encode( $csv_content ),
-                    'filename' => 'fp-forms-export-' . date( 'Y-m-d' ) . '.csv',
+                    'filename' => 'fp-forms-export-' . wp_date( 'Y-m-d' ) . '.csv',
                 ] );
-                break;
+                return;
         }
 
         wp_send_json_success( [
@@ -1230,7 +1349,7 @@ class Manager {
     public function ajax_export_form_config() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
 
@@ -1246,12 +1365,23 @@ class Manager {
             wp_send_json_error( [ 'message' => __( 'Form non trovato.', 'fp-forms' ) ] );
         }
 
+        // Rimuovi dati sensibili dall'export (webhook secret, credenziali integrazione)
+        $safe_settings = $form['settings'];
+        if ( isset( $safe_settings['webhooks'] ) && is_array( $safe_settings['webhooks'] ) ) {
+            foreach ( $safe_settings['webhooks'] as &$wh ) {
+                unset( $wh['secret'] );
+            }
+            unset( $wh );
+        }
+        unset( $safe_settings['brevo_api_key'] );
+        unset( $safe_settings['meta_pixel_token'] );
+
         $export = [
             'fp_forms_version' => FP_FORMS_VERSION,
             'title'            => $form['title'],
             'description'      => $form['description'],
             'fields'           => $form['fields'],
-            'settings'         => $form['settings'],
+            'settings'         => $safe_settings,
         ];
 
         wp_send_json_success( [
@@ -1266,7 +1396,7 @@ class Manager {
     public function ajax_import_form_config() {
         check_ajax_referer( 'fp_forms_admin', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
 
@@ -1287,7 +1417,7 @@ class Manager {
             sanitize_text_field( $config['title'] ) . ' (' . __( 'Importato', 'fp-forms' ) . ')',
             [
                 'description' => isset( $config['description'] ) ? sanitize_textarea_field( $config['description'] ) : '',
-                'fields'      => $config['fields'],
+                'fields'      => $this->sanitize_imported_fields( $config['fields'] ),
                 'settings'    => isset( $config['settings'] ) ? $this->sanitize_form_settings( $config['settings'] ) : [],
             ]
         );
@@ -1301,5 +1431,16 @@ class Manager {
         }
 
         wp_send_json_error( [ 'message' => __( 'Errore durante l\'importazione.', 'fp-forms' ) ] );
+    }
+
+    /**
+     * Previene CSV/Formula Injection nelle celle.
+     * Prefissa con apostrofo le celle che iniziano con =, +, -, @, TAB, CR.
+     */
+    private function escape_csv_formula( string $value ): string {
+        if ( preg_match( '/^[=+\-@\t\r]/', $value ) ) {
+            return "'" . $value;
+        }
+        return $value;
     }
 }

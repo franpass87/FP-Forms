@@ -18,6 +18,10 @@
                 var $calc = $(this);
                 var formula = $calc.data('formula');
                 
+                // Evita doppia inizializzazione sullo stesso campo (previene memory leak)
+                if ($calc.data('fp-calc-init')) { return; }
+                $calc.data('fp-calc-init', true);
+                
                 if (!formula) {
                     return;
                 }
@@ -91,13 +95,14 @@
                 expression = expression.replace(regex, values[key]);
             }
             
-            // Calcola risultato con validazione sicurezza migliorata
+            // Calcola risultato con parser matematico ricorsivo sicuro (no eval/Function)
             try {
                 var result;
                 
-                // Validazione sicurezza: solo numeri, operatori matematici e parentesi
-                // Rimuovi spazi per validazione più precisa
-                var cleanExpression = expression.replace(/\s/g, '');
+                // Normalizza segni doppi prima del parsing
+                var cleanExpression = expression.replace(/\s/g, '')
+                    .replace(/--/g, '+').replace(/-\+/g, '-')
+                    .replace(/\+-/g, '-').replace(/\+\+/g, '+');
                 
                 // Whitelist: solo caratteri matematici sicuri
                 if (!/^[0-9+\-*/().]+$/.test(cleanExpression)) {
@@ -105,30 +110,13 @@
                     return;
                 }
                 
-                // Verifica parentesi bilanciate
-                var openParens = (cleanExpression.match(/\(/g) || []).length;
-                var closeParens = (cleanExpression.match(/\)/g) || []).length;
-                if (openParens !== closeParens) {
-                    $calc.val('Error');
-                    return;
-                }
-                
-                // Verifica che non ci siano operatori consecutivi (eccetto +- per numeri negativi)
-                if (/[+\-*/]{2,}/.test(cleanExpression.replace(/[+\-][0-9]/g, ''))) {
-                    $calc.val('Error');
-                    return;
-                }
-                
-                // Usa Function constructor con validazione aggiuntiva
-                // Rimuovi qualsiasi carattere non valido prima di eseguire
-                var safeExpression = cleanExpression.replace(/[^0-9+\-*/().]/g, '');
-                
-                if (safeExpression.length === 0) {
+                if (cleanExpression.length === 0) {
                     $calc.val('0');
                     return;
                 }
                 
-                result = Function('"use strict"; return (' + safeExpression + ')')();
+                // Parser matematico ricorsivo: addizione/sottrazione → moltiplicazione/divisione → primario
+                result = mathEval(cleanExpression);
                 
                 // Verifica che il risultato sia un numero valido
                 if (!isFinite(result) || isNaN(result)) {
@@ -162,6 +150,63 @@
     $(document).on('fp_forms_form_loaded', function(e, $form) {
         fpFormsCalculator.init($form);
     });
-    
+
+    /**
+     * Parser matematico ricorsivo sicuro — sostituisce eval/Function().
+     * Supporta: +, -, *, /, parentesi, numeri decimali e negativi.
+     * Non usa eval né Function constructor.
+     */
+    function mathEval(expr) {
+        var pos = 0;
+
+        function parseAdditive() {
+            var left = parseMultiplicative();
+            while (pos < expr.length && (expr[pos] === '+' || expr[pos] === '-')) {
+                var op = expr[pos++];
+                var right = parseMultiplicative();
+                left = op === '+' ? left + right : left - right;
+            }
+            return left;
+        }
+
+        function parseMultiplicative() {
+            var left = parsePrimary();
+            while (pos < expr.length && (expr[pos] === '*' || expr[pos] === '/')) {
+                var op = expr[pos++];
+                var right = parsePrimary();
+                if (op === '/') {
+                    if (right === 0) { return NaN; }
+                    left = left / right;
+                } else {
+                    left = left * right;
+                }
+            }
+            return left;
+        }
+
+        function parsePrimary() {
+            // Numero negativo unario
+            if (expr[pos] === '-') {
+                pos++;
+                return -parsePrimary();
+            }
+            // Parentesi
+            if (expr[pos] === '(') {
+                pos++; // consuma '('
+                var val = parseAdditive();
+                if (expr[pos] === ')') { pos++; } // consuma ')'
+                return val;
+            }
+            // Numero
+            var start = pos;
+            while (pos < expr.length && /[0-9.]/.test(expr[pos])) { pos++; }
+            var numStr = expr.slice(start, pos);
+            return numStr.length > 0 ? parseFloat(numStr) : NaN;
+        }
+
+        var result = parseAdditive();
+        return (pos === expr.length) ? result : NaN;
+    }
+
 })(jQuery);
 

@@ -437,10 +437,16 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                             nonce: '<?php echo wp_create_nonce( 'fp_forms_admin' ); ?>',
                             email: email
                         }, function(response) {
+                            var msg = (response && response.data && response.data.message) ? String(response.data.message) : '';
+                            var $p = $('<p>');
                             if (response.success) {
-                                $result.html('<div class="notice notice-success inline"><p>✅ ' + response.data.message + '</p></div>');
+                                var $div = $('<div>').addClass('notice notice-success inline');
+                                $p.append(document.createTextNode('✅ ' + msg));
+                                $result.empty().append($div.append($p));
                             } else {
-                                $result.html('<div class="notice notice-error inline"><p>❌ ' + response.data.message + '</p></div>');
+                                var $div = $('<div>').addClass('notice notice-error inline');
+                                $p.append(document.createTextNode('❌ ' + msg));
+                                $result.empty().append($div.append($p));
                             }
                         }).fail(function() {
                             $result.html('<div class="notice notice-error inline"><p>❌ <?php echo esc_js( __( 'Errore di connessione.', 'fp-forms' ) ); ?></p></div>');
@@ -954,7 +960,7 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
             <input type="submit" 
                    name="fp_forms_settings_submit" 
                    class="button button-primary" 
-                   value="<?php _e( 'Salva Impostazioni', 'fp-forms' ); ?>">
+                   value="<?php esc_attr_e( 'Salva Impostazioni', 'fp-forms' ); ?>">
         </p>
     </form>
 </div>

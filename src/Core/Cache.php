@@ -25,13 +25,9 @@ class Cache {
      * Ottiene valore dalla cache
      */
     public static function get( $key, $default = null ) {
-        $value = wp_cache_get( self::PREFIX . $key, self::GROUP );
-        
-        if ( $value === false ) {
-            return $default;
-        }
-        
-        return $value;
+        $found = false;
+        $value = wp_cache_get( self::PREFIX . $key, self::GROUP, false, $found );
+        return $found ? $value : $default;
     }
     
     /**
@@ -122,17 +118,17 @@ class Cache {
             self::delete( $key );
         }
         
-        // Invalida anche la chiave generica (per compatibilità)
-        self::delete( 'submissions_count_' . $form_id . '_' );
+        // La chiave con status '' è già inclusa nel loop sopra
     }
     
     /**
      * Remember - Ottiene o genera valore
      */
     public static function remember( $key, $callback, $expiration = self::DEFAULT_EXPIRATION ) {
-        $value = self::get( $key );
+        $found = false;
+        $value = wp_cache_get( self::PREFIX . $key, self::GROUP, false, $found );
         
-        if ( $value !== null ) {
+        if ( $found ) {
             return $value;
         }
         

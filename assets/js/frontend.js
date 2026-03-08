@@ -66,8 +66,11 @@
                 var $field = $(this);
                 var name = $field.attr('name');
                 
-                // Salta campi di sistema
+                // Salta campi di sistema e campi honeypot anti-spam
                 if (!name || name === 'action' || name === 'form_id' || name === 'nonce') {
+                    return;
+                }
+                if (name === 'fp_ts' || name === 'fp_ts_token' || /^fp_hp_/.test(name)) {
                     return;
                 }
                 
@@ -82,24 +85,27 @@
                     return;
                 }
                 
+                // Normalizza il nome: rimuove il suffisso [] usato dai checkbox multipli
+                var cleanName = name.replace(/\[\]$/, '');
+                
                 // Gestisci checkbox multipli
                 if ($field.is(':checkbox')) {
-                    if (!fieldValues[name]) {
-                        fieldValues[name] = [];
+                    if (!fieldValues[cleanName]) {
+                        fieldValues[cleanName] = [];
                     }
                     if ($field.is(':checked')) {
-                        fieldValues[name].push($field.val());
+                        fieldValues[cleanName].push($field.val());
                     }
                 } 
                 // Gestisci radio
                 else if ($field.is(':radio')) {
                     if ($field.is(':checked')) {
-                        fieldValues[name] = $field.val();
+                        fieldValues[cleanName] = $field.val();
                     }
                 }
                 // Altri campi
                 else {
-                    fieldValues[name] = $field.val();
+                    fieldValues[cleanName] = $field.val();
                 }
             });
             
@@ -121,7 +127,7 @@
             // Loading state
             $form.addClass('is-loading');
             var $btn = $form.find('.fp-forms-submit-btn');
-            var originalText = $btn.text();
+            var originalHtml = $btn.html();
             $btn.prop('disabled', true).text(fpForms.strings.submitting);
             
             // AJAX submit
@@ -133,7 +139,7 @@
                 contentType: false,  // Non impostare content-type (per file upload)
                 success: function(response) {
                     $form.removeClass('is-loading');
-                    $btn.prop('disabled', false).text(originalText);
+                    $btn.prop('disabled', false).html(originalHtml);
                     
                     if (response.success) {
                         // Trigger tracking event: SUCCESS
@@ -146,9 +152,12 @@
                             }
                         }));
                         
-                        // Check per redirect
+                        // Check per redirect — valida che sia stesso dominio o path relativo
                         if (response.data.redirect) {
-                            window.location.href = response.data.redirect;
+                            var redir = String(response.data.redirect);
+                            if (redir.charAt(0) === '/' || redir.indexOf(window.location.origin) === 0) {
+                                window.location.href = redir;
+                            }
                             return;
                         }
                         
@@ -241,7 +250,7 @@
                     // BUGFIX #18: Remove submitting flag on AJAX error
                     $form.removeClass('is-submitting');
                     $form.removeClass('is-loading');
-                    $btn.prop('disabled', false).text(originalText);
+                    $btn.prop('disabled', false).html(originalHtml);
                     
                     // Trigger tracking event: AJAX ERROR (rete/timeout/abort)
                     $form[0].dispatchEvent(new CustomEvent('fpFormSubmitError', {
@@ -323,7 +332,7 @@
                 if (value && !FPFormsFrontend.isValidEmail(value)) {
                     $container.addClass('has-error');
                     $container.find('.fp-forms-error')
-                        .text('Inserisci un indirizzo email valido.')
+                        .text(fpForms.strings.invalid_email || 'Inserisci un indirizzo email valido.')
                         .show();
                     isValid = false;
                 }

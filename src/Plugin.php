@@ -97,6 +97,16 @@ class Plugin {
     public $anti_spam;
     
     /**
+     * Multi-step forms
+     */
+    public $multistep;
+    
+    /**
+     * Dashboard widget
+     */
+    public $dashboard_widget;
+    
+    /**
      * Ottiene l'istanza singleton
      */
     public static function instance() {
@@ -160,7 +170,7 @@ class Plugin {
         $this->conditional_logic = new Logic\ConditionalLogic();
         
         // Multi-step forms
-        new Forms\MultiStep();
+        $this->multistep = new Forms\MultiStep();
         
         // Form versioning
         $this->versioning = new Versioning\FormHistory();
@@ -194,7 +204,7 @@ class Plugin {
             $this->admin = new Admin\Manager();
             
             // Dashboard widget
-            new Admin\DashboardWidget();
+            $this->dashboard_widget = new Admin\DashboardWidget();
         }
         
         // Frontend (solo se non siamo in admin)

@@ -161,7 +161,7 @@ $btn_hover_hex = sprintf( '#%02x%02x%02x', $btn_hover_r, $btn_hover_g, $btn_hove
                     class="fp-forms-submit-btn fp-btn-<?php echo esc_attr( $btn_size ); ?> fp-btn-<?php echo esc_attr( $btn_style ); ?> fp-btn-<?php echo esc_attr( $btn_width ); ?>"
                     data-color="<?php echo esc_attr( $btn_color ); ?>">
                 <?php echo esc_html( $submit_text ); ?>
-                <?php echo $icon_html; ?>
+                <?php echo wp_kses( $icon_html, [ 'span' => [ 'class' => [] ] ] ); ?>
             </button>
         </div>
         

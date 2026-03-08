@@ -10,15 +10,9 @@ class Helper {
      * Ottiene l'IP dell'utente
      */
     public static function get_user_ip() {
-        $ip = '';
-        
-        if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
-            $ip = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } elseif ( ! empty( $_SERVER['REMOTE_ADDR'] ) ) {
-            $ip = $_SERVER['REMOTE_ADDR'];
-        }
+        // Usa solo REMOTE_ADDR come fonte affidabile per prevenire IP spoofing.
+        // HTTP_CLIENT_IP e HTTP_X_FORWARDED_FOR sono header impostabili da qualsiasi client.
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
         
         return sanitize_text_field( $ip );
     }
@@ -47,7 +41,8 @@ class Helper {
             $format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
         }
         
-        return date_i18n( $format, strtotime( $date ) );
+        $timestamp = strtotime( $date );
+        return $timestamp !== false ? date_i18n( $format, $timestamp ) : '';
     }
     
     /**
@@ -170,9 +165,10 @@ class Helper {
      * Converte bytes in formato leggibile
      */
     public static function format_bytes( $bytes, $precision = 2 ) {
-        $units = [ 'B', 'KB', 'MB', 'GB', 'TB' ];
+        $units      = [ 'B', 'KB', 'MB', 'GB', 'TB' ];
+        $units_max  = count( $units ) - 1;
         
-        for ( $i = 0; $bytes > 1024 && $i < count( $units ) - 1; $i++ ) {
+        for ( $i = 0; $bytes > 1024 && $i < $units_max; $i++ ) {
             $bytes /= 1024;
         }
         

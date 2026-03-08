@@ -7,6 +7,11 @@ namespace FPForms\Security;
 class AntiSpam {
     
     /**
+     * Cache in memoria della blacklist IP (evita query ripetute nella stessa request)
+     */
+    private $_blacklist_cache = null;
+    
+    /**
      * Costruttore
      */
     public function __construct() {
@@ -56,9 +61,17 @@ class AntiSpam {
             return new \WP_Error( 'spam_honeypot', 'Spam detected via honeypot' );
         }
         
-        // Check timestamp (minimo 3 secondi per compilare)
-        if ( isset( $_POST['fp_ts'] ) ) {
-            $elapsed = time() - intval( $_POST['fp_ts'] );
+        // Check timestamp firmato (minimo 3 secondi per compilare)
+        if ( isset( $_POST['fp_ts'], $_POST['fp_ts_token'] ) ) {
+            $ts    = intval( $_POST['fp_ts'] );
+            $token = sanitize_text_field( $_POST['fp_ts_token'] );
+            $expected = hash_hmac( 'sha256', $ts, wp_salt( 'auth' ) );
+            
+            if ( ! hash_equals( $expected, $token ) ) {
+                return new \WP_Error( 'spam_invalid_token', 'Invalid timestamp token' );
+            }
+            
+            $elapsed = time() - $ts;
             
             if ( $elapsed < 3 ) {
                 return new \WP_Error( 'spam_too_fast', 'Form submitted too fast' );
@@ -128,8 +141,11 @@ class AntiSpam {
         $html .= '<input type="text" id="' . $hp_field . '" name="' . $hp_field . '" value="" tabindex="-1" autocomplete="off" />';
         $html .= '</div>';
         
-        // Timestamp field
-        $html .= '<input type="hidden" name="fp_ts" value="' . time() . '" />';
+        // Timestamp field firmato con HMAC per prevenire spoofing
+        $ts    = time();
+        $token = hash_hmac( 'sha256', $ts, wp_salt( 'auth' ) );
+        $html .= '<input type="hidden" name="fp_ts" value="' . esc_attr( $ts ) . '" />';
+        $html .= '<input type="hidden" name="fp_ts_token" value="' . esc_attr( $token ) . '" />';
         
         return $html;
     }
@@ -138,29 +154,41 @@ class AntiSpam {
      * Blacklist IP
      */
     public function blacklist_ip( $ip, $reason = '' ) {
-        $blacklist = get_option( 'fp_forms_ip_blacklist', [] );
+        $blacklist = $this->get_blacklist();
         
-        if ( ! in_array( $ip, $blacklist ) ) {
+        $already_listed = array_filter( $blacklist, fn( $e ) => isset( $e['ip'] ) && $e['ip'] === $ip );
+        if ( empty( $already_listed ) ) {
             $blacklist[] = [
-                'ip' => $ip,
+                'ip'     => $ip,
                 'reason' => $reason,
-                'date' => current_time( 'mysql' ),
+                'date'   => current_time( 'mysql' ),
             ];
             
             update_option( 'fp_forms_ip_blacklist', $blacklist );
             
+            // Invalida la cache statica dopo l'aggiornamento
+            $this->invalidate_blacklist_cache();
+            
             \FPForms\Core\Logger::info( 'IP blacklisted', [
-                'ip' => $ip,
+                'ip'     => $ip,
                 'reason' => $reason,
             ] );
         }
     }
     
     /**
-     * Check se IP è in blacklist
+     * Invalida la cache della blacklist (chiamata dopo aggiornamento).
+     */
+    private function invalidate_blacklist_cache() {
+        $this->_blacklist_cache = null;
+    }
+    
+    /**
+     * Check se IP è in blacklist.
+     * La blacklist viene caricata una sola volta per request tramite cache in memoria.
      */
     public function is_blacklisted( $ip ) {
-        $blacklist = get_option( 'fp_forms_ip_blacklist', [] );
+        $blacklist = $this->get_blacklist();
         
         foreach ( $blacklist as $entry ) {
             if ( isset( $entry['ip'] ) && $entry['ip'] === $ip ) {
@@ -169,6 +197,20 @@ class AntiSpam {
         }
         
         return false;
+    }
+    
+    /**
+     * Carica la blacklist IP con cache in memoria (una sola query per request).
+     */
+    private function get_blacklist() {
+        if ( $this->_blacklist_cache === null ) {
+            $this->_blacklist_cache = get_option( 'fp_forms_ip_blacklist', [] );
+            if ( ! is_array( $this->_blacklist_cache ) ) {
+                $this->_blacklist_cache = [];
+            }
+        }
+        
+        return $this->_blacklist_cache;
     }
 }
 

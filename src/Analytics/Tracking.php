@@ -613,17 +613,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
      * Ottiene IP utente
      */
     private function get_user_ip() {
-        $ip = '';
-        
-        if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
-            $ip = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } else {
-            $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-        }
-        
-        return sanitize_text_field( $ip );
+        return \FPForms\Helpers\Helper::get_user_ip();
     }
     
     /**

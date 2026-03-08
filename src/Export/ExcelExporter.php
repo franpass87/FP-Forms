@@ -25,14 +25,17 @@ class ExcelExporter {
         $submissions = $this->get_filtered_submissions( $form_id, $options );
         
         if ( ! $form || empty( $submissions ) ) {
-            wp_die( __( 'Nessun dato da esportare.', 'fp-forms' ) );
+            return new \WP_Error(
+                'no_data',
+                __( 'Nessun dato da esportare.', 'fp-forms' )
+            );
         }
         
-        // Prepara filename
-        $filename = $this->get_filename( $form, 'xlsx' );
+        // Prepara filename — usa .tsv perché il formato è TSV, non XLSX vero
+        $filename = $this->get_filename( $form, 'tsv' );
         
-        // Headers per download Excel
-        header( 'Content-Type: application/vnd.ms-excel; charset=utf-8' );
+        // Content-Type corretto per TSV (tab-separated values)
+        header( 'Content-Type: text/tab-separated-values; charset=utf-8' );
         header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
         header( 'Pragma: no-cache' );
         header( 'Expires: 0' );
@@ -148,18 +151,24 @@ class ExcelExporter {
                 $value = implode( ', ', $value );
             }
             
-            // Escape per Excel (previene formule malicious)
-            if ( in_array( substr( $value, 0, 1 ), [ '=', '+', '-', '@' ] ) ) {
-                $value = "'" . $value;
-            }
-            
-            $row[] = $value;
+            $row[] = $this->escape_excel_formula( (string) $value );
         }
         
-        $row[] = $submission->user_ip;
-        $row[] = $submission->user_agent;
+        $row[] = $this->escape_excel_formula( $submission->user_ip ?? '' );
+        $row[] = $this->escape_excel_formula( $submission->user_agent ?? '' );
         
         return $row;
+    }
+    
+    /**
+     * Escape valori per prevenire formula injection in Excel/TSV.
+     */
+    private function escape_excel_formula( $value ) {
+        $value = (string) $value;
+        if ( preg_match( '/^[=+\-@\t\r]/', $value ) ) {
+            return "'" . $value;
+        }
+        return $value;
     }
     
     /**
@@ -167,7 +176,7 @@ class ExcelExporter {
      */
     private function get_filename( $form, $extension ) {
         $slug = sanitize_title( $form['title'] );
-        $date = date( 'Y-m-d-His' );
+        $date = wp_date( 'Y-m-d-His' );
         
         return "fp-forms-{$slug}-{$date}.{$extension}";
     }

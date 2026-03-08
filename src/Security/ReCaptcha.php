@@ -236,7 +236,7 @@ class ReCaptcha {
         }
         
         $body = wp_remote_retrieve_body( $api_response );
-        $result = json_decode( $body, true );
+        $result = json_decode( $body, true, 8 );
         
         if ( ! $result || ! isset( $result['success'] ) ) {
             return [
@@ -284,20 +284,10 @@ class ReCaptcha {
     }
     
     /**
-     * Ottiene IP dell'utente
+     * Ottiene IP dell'utente tramite Helper centralizzato (usa solo REMOTE_ADDR).
      */
     private function get_user_ip() {
-        $ip = '';
-        
-        if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
-            $ip = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } else {
-            $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-        }
-        
-        return sanitize_text_field( $ip );
+        return \FPForms\Helpers\Helper::get_user_ip();
     }
     
     /**
@@ -350,7 +340,7 @@ class ReCaptcha {
         }
         
         $body = wp_remote_retrieve_body( $response );
-        $result = json_decode( $body, true );
+        $result = json_decode( $body, true, 8 );
         
         if ( ! $result ) {
             return [
@@ -359,7 +349,17 @@ class ReCaptcha {
             ];
         }
         
-        // Se riceviamo una risposta valida (anche se fallita), la connessione funziona
+        // Verifica che non ci siano errori relativi alla secret key
+        $error_codes = $result['error-codes'] ?? [];
+        $key_errors  = [ 'invalid-input-secret', 'missing-input-secret' ];
+        
+        if ( ! empty( array_intersect( $error_codes, $key_errors ) ) ) {
+            return [
+                'success' => false,
+                'message' => __( 'La Secret Key reCAPTCHA non è valida. Verificala nelle impostazioni.', 'fp-forms' ),
+            ];
+        }
+        
         return [
             'success' => true,
             'message' => __( 'Connessione reCAPTCHA attiva! Le chiavi sembrano valide.', 'fp-forms' ),

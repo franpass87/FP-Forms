@@ -103,7 +103,7 @@ class CsvExporter {
         }
         
         foreach ( $fields as $field ) {
-            $headers[] = $field['label'];
+            $headers[] = $this->escape_csv_formula( $field['label'] );
         }
         
         $headers[] = 'IP Utente';
@@ -148,10 +148,10 @@ class CsvExporter {
                 $value = implode( ', ', $value );
             }
             
-            $row[] = $value;
+            $row[] = $this->escape_csv_formula( (string) $value );
         }
         
-        $row[] = $submission->user_ip;
+        $row[] = $this->escape_csv_formula( (string) $submission->user_ip );
         
         return $row;
     }
@@ -161,9 +161,21 @@ class CsvExporter {
      */
     private function get_filename( $form, $extension ) {
         $slug = sanitize_title( $form['title'] );
-        $date = date( 'Y-m-d' );
+        $date = wp_date( 'Y-m-d' );
         
         return "fp-forms-{$slug}-{$date}.{$extension}";
+    }
+    
+    /**
+     * Previene CSV Injection (Formula Injection) nelle celle
+     * Prefissa con apostrofo le celle che iniziano con =, +, -, @, TAB, CR
+     */
+    private function escape_csv_formula( $value ) {
+        $value = (string) $value;
+        if ( preg_match( '/^[=+\-@\t\r]/', $value ) ) {
+            return "'" . $value;
+        }
+        return $value;
     }
 }
 

@@ -72,12 +72,17 @@ class Library {
             'settings' => $template['settings'],
         ] );
         
-        if ( $form_id ) {
-            \FPForms\Core\Logger::info( 'Template imported successfully', [
-                'template_id' => $template_id,
-                'form_id' => $form_id,
-            ] );
+        if ( ! $form_id || is_wp_error( $form_id ) ) {
+            return new \WP_Error(
+                'template_import_failed',
+                __( 'Impossibile creare il form dal template. Riprova.', 'fp-forms' )
+            );
         }
+        
+        \FPForms\Core\Logger::info( 'Template imported successfully', [
+            'template_id' => $template_id,
+            'form_id'     => $form_id,
+        ] );
         
         return $form_id;
     }

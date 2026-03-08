@@ -20,6 +20,11 @@
                 return;
             }
             
+            // Evita doppia inizializzazione sullo stesso form (previene setInterval leak)
+            if ($form.data('fp-save-timer')) {
+                return;
+            }
+            
             var self = this;
             var storageKey = 'fp_forms_autosave_' + formId;
             var saveInterval = 30000; // 30 secondi
@@ -33,12 +38,12 @@
                 self.saveFormData($form, storageKey);
             }, saveInterval);
             
-            // Auto-save su change
+            // Auto-save su change — debounceTimer per-form (evita conflitti con form multipli)
             $form.on('change input', 'input, textarea, select', function() {
-                clearTimeout(self.debounceTimer);
-                self.debounceTimer = setTimeout(function() {
+                clearTimeout($form.data('fp-debounce-timer'));
+                $form.data('fp-debounce-timer', setTimeout(function() {
                     self.saveFormData($form, storageKey);
-                }, 2000); // Debounce 2 secondi
+                }, 2000)); // Debounce 2 secondi
             });
             
             // Salva prima di submit
@@ -53,6 +58,12 @@
             
             // Salva timer per cleanup
             $form.data('fp-save-timer', saveTimer);
+            
+            // Cleanup setInterval quando la pagina viene abbandonata
+            $(window).on('beforeunload.fpPS_' + formId, function() {
+                clearInterval($form.data('fp-save-timer'));
+                clearTimeout($form.data('fp-debounce-timer'));
+            });
         },
         
         /**
@@ -135,11 +146,19 @@
                     return;
                 }
                 
-                // Mostra notifica di ripristino
-                var $notice = $('<div class="fp-autosave-notice">' +
-                    '<span class="dashicons dashicons-info"></span> ' +
-                    'Abbiamo trovato dati salvati. <a href="#" class="fp-restore-data">Ripristina</a> o <a href="#" class="fp-dismiss-restore">Ignora</a>' +
-                '</div>');
+                // Mostra notifica di ripristino (testo da fpForms.strings per i18n)
+                var s = (typeof fpForms !== 'undefined' && fpForms.strings) ? fpForms.strings : {};
+                var $notice = $('<div class="fp-autosave-notice">');
+                var $icon = $('<span>').addClass('dashicons dashicons-info');
+                var $restoreLink = $('<a>').attr('href', '#').addClass('fp-restore-data')
+                    .text(s.autosave_restore || 'Ripristina');
+                var $dismissLink = $('<a>').attr('href', '#').addClass('fp-dismiss-restore')
+                    .text(s.autosave_dismiss || 'Ignora');
+                $notice.append($icon)
+                    .append(document.createTextNode(' ' + (s.autosave_found || 'Abbiamo trovato dati salvati.') + ' '))
+                    .append($restoreLink)
+                    .append(document.createTextNode(' o '))
+                    .append($dismissLink);
                 
                 $form.prepend($notice);
                 
@@ -175,7 +194,7 @@
                     });
                     
                     if (typeof window.fpToast !== 'undefined') {
-                        window.fpToast.success('Dati ripristinati con successo!');
+                        window.fpToast.success(s.autosave_restored || 'Dati ripristinati con successo!');
                     }
                 });
                 

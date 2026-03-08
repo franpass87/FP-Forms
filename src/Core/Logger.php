@@ -27,32 +27,36 @@ class Logger {
         
         if ( ! file_exists( self::$log_dir ) ) {
             wp_mkdir_p( self::$log_dir );
-            
-            // FIX #3: Protezione directory universale (Apache + Nginx + IIS)
-            // Protezione Apache (.htaccess)
-            file_put_contents( 
-                self::$log_dir . '.htaccess', 
-                "deny from all\n" 
-            );
-            
-            // Protezione universale (index.php)
-            file_put_contents( 
-                self::$log_dir . 'index.php', 
-                '<?php // Silence is golden' 
-            );
-            
-            // Imposta permessi sicuri (se possibile)
-            if ( function_exists( 'chmod' ) ) {
-                @chmod( self::$log_dir, 0750 );
+        }
+        
+        // Ricrea i file di protezione se mancanti (anche dopo aggiornamenti)
+        $htaccess = self::$log_dir . '.htaccess';
+        if ( ! file_exists( $htaccess ) ) {
+            $result = file_put_contents( $htaccess, "deny from all\n" );
+            if ( $result === false ) {
+                error_log( 'FP Forms: impossibile creare .htaccess nella directory dei log. I log potrebbero essere accessibili pubblicamente.' );
             }
+        }
+        
+        $index = self::$log_dir . 'index.php';
+        if ( ! file_exists( $index ) ) {
+            file_put_contents( $index, '<?php // Silence is golden' );
+        }
+        
+        // Imposta permessi sicuri (se possibile)
+        if ( function_exists( 'chmod' ) ) {
+            @chmod( self::$log_dir, 0750 );
         }
     }
     
     /**
-     * Log generico
+     * Log generico.
+     * ERROR e WARNING vengono sempre scritti (anche in produzione).
+     * INFO e DEBUG vengono scritti solo se WP_DEBUG è attivo.
      */
     public static function log( $message, $level = self::INFO, $context = [] ) {
-        if ( ! self::should_log() ) {
+        $is_critical = in_array( $level, [ self::ERROR, self::WARNING ], true );
+        if ( ! $is_critical && ! self::should_log() ) {
             return;
         }
         
@@ -126,17 +130,32 @@ class Logger {
      * Log email
      */
     public static function log_email( $to, $subject, $success = true ) {
+        $masked = self::mask_email( (string) $to );
         $message = sprintf(
             'Email %s to %s',
             $success ? 'sent successfully' : 'failed',
-            $to
+            $masked
         );
-        
+
         self::info( $message, [
-            'to' => $to,
-            'subject' => $subject,
+            'to'      => $masked,
+            'subject' => mb_substr( (string) $subject, 0, 80 ),
             'success' => $success,
         ] );
+    }
+
+    /**
+     * Maschera un indirizzo email per i log (es. jo***@example.com).
+     */
+    private static function mask_email( string $email ): string {
+        $parts = explode( '@', $email, 2 );
+        if ( count( $parts ) !== 2 ) {
+            return '***';
+        }
+        $local   = $parts[0];
+        $domain  = $parts[1];
+        $visible = min( 2, strlen( $local ) );
+        return substr( $local, 0, $visible ) . str_repeat( '*', max( 1, strlen( $local ) - $visible ) ) . '@' . $domain;
     }
     
     /**
@@ -155,6 +174,12 @@ class Logger {
         }
         
         $date = $date ? $date : current_time( 'Y-m-d' );
+        
+        // Prevenzione path traversal: accetta solo date nel formato YYYY-MM-DD
+        if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+            return '';
+        }
+        
         $log_file = self::$log_dir . 'fp-forms-' . $date . '.log';
         
         if ( ! file_exists( $log_file ) ) {

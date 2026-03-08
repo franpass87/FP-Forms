@@ -35,30 +35,42 @@ class MultiStep {
     }
     
     /**
-     * Raggruppa campi per step
+     * Raggruppa campi per step.
+     * Il titolo di ogni step viene letto dal campo step_break che lo precede,
+     * non dal primo campo dello step (che non ha la proprietà step_title).
      */
     private function group_fields_by_step( $fields ) {
-        $steps = [];
-        $current_step = 0;
+        $steps           = [];
+        $current_step    = 0;
+        $next_step_title = null;
+        $has_fields      = false; // Traccia se abbiamo già incontrato almeno un campo
         
         foreach ( $fields as $field ) {
-            // "step_break" è un campo speciale che indica nuovo step
+            // step_break segna l'inizio di un nuovo step e porta il titolo
             if ( isset( $field['type'] ) && $field['type'] === 'step_break' ) {
-                $current_step++;
+                // Ignora step_break iniziali (prima di qualsiasi campo)
+                if ( $has_fields ) {
+                    $current_step++;
+                }
+                $next_step_title = isset( $field['label'] ) && $field['label'] !== '' ? $field['label'] : null;
                 continue;
             }
             
+            $has_fields = true;
+            
             if ( ! isset( $steps[ $current_step ] ) ) {
                 $steps[ $current_step ] = [
-                    'title' => $field['step_title'] ?? sprintf( __( 'Step %d', 'fp-forms' ), $current_step + 1 ),
+                    'title'  => $next_step_title ?? sprintf( __( 'Step %d', 'fp-forms' ), count( $steps ) + 1 ),
                     'fields' => [],
                 ];
+                $next_step_title = null;
             }
             
             $steps[ $current_step ]['fields'][] = $field;
         }
         
-        return $steps;
+        // Riordina gli step come array indicizzato da 0 per il template
+        return array_values( $steps );
     }
     
     /**

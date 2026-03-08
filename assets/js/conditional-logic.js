@@ -12,6 +12,7 @@
             this.form = formElement;
             this.formId = $(formElement).data('form-id');
             this.rules = rules || [];
+            this._originalRequired = new Map(); // Stato required originale per campo
             
             if ( this.rules.length > 0 ) {
                 this.init();
@@ -19,12 +20,24 @@
         }
         
         init() {
-            // Debug: Conditional logic initialized with rules
             if (window.fpFormsDebug) {
                 console.log('[FP Forms] Initializing conditional logic with', this.rules.length, 'rules');
             }
             
-            // Bind events per ogni regola
+            // Salva lo stato required originale di ogni campo target
+            this.rules.forEach( rule => {
+                (rule.target_fields || []).forEach( fieldName => {
+                    if ( ! this._originalRequired.has( fieldName ) ) {
+                        const fieldContainer = this.getFieldContainer( fieldName );
+                        if ( fieldContainer ) {
+                            const field = fieldContainer.querySelector( 'input, select, textarea' );
+                            this._originalRequired.set( fieldName, field ? field.hasAttribute('required') : false );
+                        }
+                    }
+                });
+            });
+            
+            // Bind events per ogni regola con namespace .fpCL per cleanup
             this.rules.forEach( rule => {
                 this.bindRule( rule );
             });
@@ -41,9 +54,21 @@
                 return;
             }
             
-            // Event listener
-            $(triggerField).on('change keyup', () => {
+            // Namespace .fpCL per permettere rimozione con destroy()
+            $(triggerField).on('change.fpCL keyup.fpCL', () => {
                 this.evaluateRule( rule );
+            });
+        }
+        
+        /**
+         * Rimuove tutti i listener registrati da questa istanza
+         */
+        destroy() {
+            this.rules.forEach( rule => {
+                const triggerField = this.getFieldElement( rule.trigger_field );
+                if ( triggerField ) {
+                    $(triggerField).off('.fpCL');
+                }
             });
         }
         
@@ -51,7 +76,6 @@
             const value = this.getFieldValue( rule.trigger_field );
             const shouldApply = this.checkCondition( value, rule.condition, rule.value );
             
-            // Debug: Rule evaluation
             if (window.fpFormsDebug) {
                 console.log('[FP Forms] Evaluating rule:', rule, 'Result:', shouldApply);
             }
@@ -70,7 +94,6 @@
         }
         
         checkCondition( value, condition, expected ) {
-            // Converti in stringa per confronto
             value = String( value ).trim();
             expected = String( expected ).trim();
             
@@ -119,7 +142,6 @@
                         
                     case 'hide':
                         $(fieldContainer).slideUp( 200 ).removeClass('fp-conditional-visible');
-                        // Clear value quando nascosto
                         this.clearFieldValue( fieldName );
                         break;
                         
@@ -135,18 +157,36 @@
         }
         
         reverseAction( action, targetFields ) {
-            const reverseActions = {
-                'show': 'hide',
-                'hide': 'show',
-                'require': 'unrequire',
-                'unrequire': 'require'
-            };
-            
-            const reversedAction = reverseActions[ action ];
-            
-            if ( reversedAction ) {
-                this.applyAction( reversedAction, targetFields );
-            }
+            targetFields.forEach( fieldName => {
+                const fieldContainer = this.getFieldContainer( fieldName );
+                if ( ! fieldContainer ) return;
+                
+                switch ( action ) {
+                    case 'show':
+                        // Inverso di show → nascondi
+                        $(fieldContainer).slideUp( 200 ).removeClass('fp-conditional-visible');
+                        this.clearFieldValue( fieldName );
+                        break;
+                        
+                    case 'hide':
+                        // Inverso di hide → mostra
+                        $(fieldContainer).slideDown( 200 ).addClass('fp-conditional-visible');
+                        break;
+                        
+                    case 'require': {
+                        // Inverso di require → ripristina lo stato required originale
+                        const wasRequired = this._originalRequired.get( fieldName ) || false;
+                        this.setRequired( fieldContainer, wasRequired );
+                        break;
+                    }
+                    case 'unrequire': {
+                        // Inverso di unrequire → ripristina lo stato required originale
+                        const wasReq = this._originalRequired.get( fieldName ) || false;
+                        this.setRequired( fieldContainer, wasReq );
+                        break;
+                    }
+                }
+            });
         }
         
         getFieldElement( fieldName ) {
@@ -165,19 +205,16 @@
                 return '';
             }
             
-            // Checkbox multipli
             if ( field.type === 'checkbox' && field.name.includes('[]') ) {
                 const checked = this.form.querySelectorAll( `[name="fp_field_${fieldName}[]"]:checked` );
                 return Array.from( checked ).map( cb => cb.value ).join( ',' );
             }
             
-            // Radio
             if ( field.type === 'radio' ) {
                 const checked = this.form.querySelector( `[name="fp_field_${fieldName}"]:checked` );
                 return checked ? checked.value : '';
             }
             
-            // Altri campi
             return field.value;
         }
         
@@ -228,7 +265,6 @@
             const formElement = this;
             const formId = $(this).data('form-id');
             
-            // Cerca regole nel data attribute o global var
             const rules = $(this).data('conditional-rules') || window['fpFormsRules_' + formId] || [];
             
             if ( rules.length > 0 ) {
@@ -241,4 +277,3 @@
     window.FPConditionalLogic = FPConditionalLogic;
     
 })(jQuery);
-

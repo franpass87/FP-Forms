@@ -70,27 +70,43 @@
                 var size = FPFileUpload.formatFileSize(file.size);
                 
                 var $item = $('<div class="fp-forms-file-preview-item">');
-                $item.append('<span class="fp-forms-file-preview-icon">' + icon + '</span>');
-                $item.append('<span class="fp-forms-file-preview-name">' + file.name + '</span>');
-                $item.append('<span class="fp-forms-file-preview-size">' + size + '</span>');
-                $item.append('<button type="button" class="fp-forms-file-remove" data-index="' + i + '">×</button>');
+                $item.append($('<span>').addClass('fp-forms-file-preview-icon').text(icon));
+                $item.append($('<span>').addClass('fp-forms-file-preview-name').text(file.name));
+                $item.append($('<span>').addClass('fp-forms-file-preview-size').text(size));
+                $item.append($('<button>').attr({ type: 'button', 'data-index': i }).addClass('fp-forms-file-remove').text('×'));
                 
                 $preview.append($item);
             }
         },
         
         /**
-         * Gestisce rimozione file
+         * Gestisce rimozione file.
+         * Per input multipli usa DataTransfer per ricostruire la lista senza il file rimosso.
          */
         handleFileRemove: function(e) {
             e.preventDefault();
-            var $container = $(this).closest('.fp-forms-field-file');
+            var $btn = $(this);
+            var $container = $btn.closest('.fp-forms-field-file');
             var $input = $container.find('.fp-forms-file-input');
             var $preview = $container.find('.fp-forms-file-preview');
+            var index = parseInt($btn.data('index'), 10);
+            var inputEl = $input[0];
             
-            // Reset input
-            $input.val('');
-            $preview.empty().hide();
+            if ($input.attr('multiple') && inputEl.files && inputEl.files.length > 1 && typeof DataTransfer !== 'undefined') {
+                // Input multiplo: ricostruisce la FileList senza il file rimosso
+                var dt = new DataTransfer();
+                for (var i = 0; i < inputEl.files.length; i++) {
+                    if (i !== index) {
+                        dt.items.add(inputEl.files[i]);
+                    }
+                }
+                inputEl.files = dt.files;
+                FPFileUpload.showPreview($preview, inputEl.files);
+            } else {
+                // Input singolo o ultimo file: reset completo
+                $input.val('');
+                $preview.empty().hide();
+            }
         },
         
         /**

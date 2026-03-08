@@ -53,23 +53,23 @@ class DashboardWidget {
         <div class="fp-dashboard-widget">
             <div class="fp-widget-stats">
                 <div class="fp-widget-stat">
-                    <div class="fp-widget-stat-value"><?php echo $total_forms; ?></div>
-                    <div class="fp-widget-stat-label"><?php _e( 'Form Attivi', 'fp-forms' ); ?></div>
+                    <div class="fp-widget-stat-value"><?php echo intval( $total_forms ); ?></div>
+                    <div class="fp-widget-stat-label"><?php esc_html_e( 'Form Attivi', 'fp-forms' ); ?></div>
                 </div>
                 
                 <div class="fp-widget-stat">
-                    <div class="fp-widget-stat-value"><?php echo $total_submissions; ?></div>
-                    <div class="fp-widget-stat-label"><?php _e( 'Submissions Totali', 'fp-forms' ); ?></div>
+                    <div class="fp-widget-stat-value"><?php echo intval( $total_submissions ); ?></div>
+                    <div class="fp-widget-stat-label"><?php esc_html_e( 'Submissions Totali', 'fp-forms' ); ?></div>
                 </div>
                 
                 <div class="fp-widget-stat">
-                    <div class="fp-widget-stat-value"><?php echo $total_views; ?></div>
-                    <div class="fp-widget-stat-label"><?php _e( 'Visualizzazioni', 'fp-forms' ); ?></div>
+                    <div class="fp-widget-stat-value"><?php echo intval( $total_views ); ?></div>
+                    <div class="fp-widget-stat-label"><?php esc_html_e( 'Visualizzazioni', 'fp-forms' ); ?></div>
                 </div>
                 
                 <div class="fp-widget-stat highlight">
-                    <div class="fp-widget-stat-value"><?php echo $unread_submissions; ?></div>
-                    <div class="fp-widget-stat-label"><?php _e( 'Non Lette', 'fp-forms' ); ?></div>
+                    <div class="fp-widget-stat-value"><?php echo intval( $unread_submissions ); ?></div>
+                    <div class="fp-widget-stat-label"><?php esc_html_e( 'Non Lette', 'fp-forms' ); ?></div>
                 </div>
             </div>
             
@@ -78,7 +78,7 @@ class DashboardWidget {
                 <div class="fp-conversion-bar">
                     <div class="fp-conversion-label">
                         <span><?php _e( 'Tasso Conversione Globale', 'fp-forms' ); ?></span>
-                        <strong><?php echo $overall_conversion; ?>%</strong>
+                        <strong><?php echo esc_html( $overall_conversion ); ?>%</strong>
                     </div>
                     <div class="fp-conversion-progress">
                         <div class="fp-conversion-fill" style="width: <?php echo min( 100, $overall_conversion ); ?>%"></div>
@@ -93,28 +93,32 @@ class DashboardWidget {
                 <h4><?php _e( 'Form più attivi', 'fp-forms' ); ?></h4>
                 <ul>
                     <?php
-                    // Ordina per submissions
-                    usort( $forms, function( $a, $b ) {
-                        $count_a = \FPForms\Plugin::instance()->database->count_submissions( $a['id'] );
-                        $count_b = \FPForms\Plugin::instance()->database->count_submissions( $b['id'] );
-                        return $count_b - $count_a;
+                    // Pre-calcola i conteggi per evitare query N+1 nell'usort
+                    $db = \FPForms\Plugin::instance()->database;
+                    $counts_map = [];
+                    foreach ( $forms as $f ) {
+                        $counts_map[ $f['id'] ] = $db->count_submissions( $f['id'] );
+                    }
+                    
+                    usort( $forms, function( $a, $b ) use ( $counts_map ) {
+                        return ( $counts_map[ $b['id'] ] ?? 0 ) - ( $counts_map[ $a['id'] ] ?? 0 );
                     } );
                     
                     $top_forms = array_slice( $forms, 0, 3 );
                     
                     foreach ( $top_forms as $form ) :
-                        $count = \FPForms\Plugin::instance()->database->count_submissions( $form['id'] );
+                        $count = $counts_map[ $form['id'] ] ?? 0;
                         $form_views = $tracker->get_total_views( $form['id'] );
                         $form_conversion = $tracker->get_conversion_rate( $form['id'] );
                     ?>
                     <li>
-                        <a href="<?php echo admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] ); ?>">
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . intval( $form['id'] ) ) ); ?>">
                             <strong><?php echo esc_html( $form['title'] ); ?></strong>
                             <div class="fp-widget-form-stats">
-                                <span class="fp-widget-count"><?php echo $count; ?> submissions</span>
+                                <span class="fp-widget-count"><?php echo intval( $count ); ?> submissions</span>
                                 <?php if ( $form_views > 0 ) : ?>
-                                <span class="fp-widget-views"><?php echo $form_views; ?> views</span>
-                                <span class="fp-widget-conversion-mini <?php echo $form_conversion > 5 ? 'good' : 'low'; ?>"><?php echo $form_conversion; ?>%</span>
+                                <span class="fp-widget-views"><?php echo intval( $form_views ); ?> views</span>
+                                <span class="fp-widget-conversion-mini <?php echo $form_conversion > 5 ? 'good' : 'low'; ?>"><?php echo esc_html( $form_conversion ); ?>%</span>
                                 <?php endif; ?>
                             </div>
                         </a>
@@ -125,10 +129,10 @@ class DashboardWidget {
             <?php endif; ?>
             
             <div class="fp-widget-actions">
-                <a href="<?php echo admin_url( 'admin.php?page=fp-forms-add' ); ?>" class="button button-primary">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-new' ) ); ?>" class="button button-primary">
                     <?php _e( '+ Nuovo Form', 'fp-forms' ); ?>
                 </a>
-                <a href="<?php echo admin_url( 'admin.php?page=fp-forms' ); ?>" class="button">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">
                     <?php _e( 'Tutti i Form', 'fp-forms' ); ?>
                 </a>
             </div>

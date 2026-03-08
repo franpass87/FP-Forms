@@ -29,6 +29,8 @@ $total_steps = count( $steps );
     </div>
     
     <form class="fp-forms-form fp-multistep-form" 
+          method="POST"
+          action=""
           id="fp-form-<?php echo esc_attr( $form['id'] ); ?>" 
           data-form-id="<?php echo esc_attr( $form['id'] ); ?>"
           data-total-steps="<?php echo esc_attr( $total_steps ); ?>">
@@ -181,19 +183,17 @@ jQuery(document).ready(function($) {
     var currentStep = 0;
     var totalSteps = parseInt($form.data('total-steps'));
     
-    // Aggiorna UI
+    // Aggiorna UI — tutti i selettori sono scoped al $form corrente
     function updateUI() {
-        // Nascondi tutti gli step
-        $('.fp-step-content').hide();
-        $('.fp-step-content[data-step="' + currentStep + '"]').show();
+        $form.find('.fp-step-content').hide();
+        $form.find('.fp-step-content[data-step="' + currentStep + '"]').show();
         
-        // Aggiorna progress bar
         var progress = ((currentStep + 1) / totalSteps) * 100;
-        $('.fp-progress-fill').css('width', progress + '%');
+        $form.closest('.fp-multistep-container').find('.fp-progress-fill').css('width', progress + '%');
         
-        // Aggiorna indicator steps
-        $('.fp-progress-step').removeClass('active completed');
-        $('.fp-progress-step').each(function(idx) {
+        var $container = $form.closest('.fp-multistep-container');
+        $container.find('.fp-progress-step').removeClass('active completed');
+        $container.find('.fp-progress-step').each(function(idx) {
             if (idx < currentStep) {
                 $(this).addClass('completed');
             } else if (idx === currentStep) {
@@ -201,24 +201,43 @@ jQuery(document).ready(function($) {
             }
         });
         
-        // Mostra/Nascondi bottoni
-        $('.fp-btn-prev').toggle(currentStep > 0);
-        $('.fp-btn-next').toggle(currentStep < totalSteps - 1);
-        $('.fp-btn-submit').toggle(currentStep === totalSteps - 1);
-        
-        $('#fp-current-step').val(currentStep);
+        $form.find('.fp-btn-prev').toggle(currentStep > 0);
+        $form.find('.fp-btn-next').toggle(currentStep < totalSteps - 1);
+        $form.find('.fp-btn-submit').toggle(currentStep === totalSteps - 1);
+    }
+    
+    // Valida i campi required visibili dello step corrente prima di avanzare
+    function validateCurrentStep() {
+        var isValid = true;
+        $form.find('.fp-step-content[data-step="' + currentStep + '"]').find('[required]').each(function() {
+            var $field = $(this);
+            var val = $field.val();
+            var isEmpty = (val === null || val === '' || (Array.isArray(val) && val.length === 0));
+            if (isEmpty) {
+                isValid = false;
+                $field.addClass('fp-field-error');
+                if (!$field.next('.fp-step-error-msg').length) {
+                    $field.after('<span class="fp-step-error-msg" style="color:#dc2626;font-size:12px;display:block;"><?php echo esc_js( __( 'Questo campo è obbligatorio.', 'fp-forms' ) ); ?></span>');
+                }
+            } else {
+                $field.removeClass('fp-field-error');
+                $field.next('.fp-step-error-msg').remove();
+            }
+        });
+        return isValid;
     }
     
     // Next
-    $('.fp-btn-next').on('click', function() {
-        if (currentStep < totalSteps - 1) {
+    $form.find('.fp-btn-next').on('click', function() {
+        if (currentStep < totalSteps - 1 && validateCurrentStep()) {
             currentStep++;
             updateUI();
+            $form.find('.fp-forms-error').hide();
         }
     });
     
     // Prev
-    $('.fp-btn-prev').on('click', function() {
+    $form.find('.fp-btn-prev').on('click', function() {
         if (currentStep > 0) {
             currentStep--;
             updateUI();

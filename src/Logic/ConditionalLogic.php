@@ -10,7 +10,7 @@ class ConditionalLogic {
      * Costruttore
      */
     public function __construct() {
-        add_action( 'wp_footer', [ $this, 'output_logic_script' ] );
+        // output_logic_script è uno stub: lo script è già incluso in frontend.js
     }
     
     /**
@@ -95,6 +95,11 @@ class ConditionalLogic {
         }
         
         $form = \FPForms\Plugin::instance()->forms->get_form( $form_id );
+        
+        if ( ! $form ) {
+            return false;
+        }
+        
         $rules = isset( $form['settings']['conditional_rules'] ) ? $form['settings']['conditional_rules'] : [];
         
         $rule['id'] = 'rule_' . uniqid();

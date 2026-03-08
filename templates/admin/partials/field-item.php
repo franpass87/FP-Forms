@@ -165,7 +165,7 @@ if ( isset( $field['options']['choices'] ) && is_array( $field['options']['choic
         <?php elseif ( $field['type'] === 'marketing-checkbox' ) : ?>
         <div class="fp-field-row">
             <label>
-                <input type="checkbox" class="fp-field-input-required" <?php checked( $field['required'], true ); ?>>
+                <input type="checkbox" class="fp-field-input-required" <?php checked( $field['required'] ?? false, true ); ?>>
                 <?php _e( 'Campo obbligatorio', 'fp-forms' ); ?>
             </label>
             <small class="fp-field-help"><?php _e( 'Il consenso marketing è generalmente opzionale', 'fp-forms' ); ?></small>
@@ -185,7 +185,7 @@ if ( isset( $field['options']['choices'] ) && is_array( $field['options']['choic
         <?php elseif ( in_array( $field['type'], [ 'text', 'email', 'phone', 'textarea' ], true ) ) : ?>
         <div class="fp-field-row">
             <label>
-                <input type="checkbox" class="fp-field-input-required" <?php checked( $field['required'], true ); ?>>
+                <input type="checkbox" class="fp-field-input-required" <?php checked( $field['required'] ?? false, true ); ?>>
                 <?php _e( 'Campo obbligatorio', 'fp-forms' ); ?>
             </label>
         </div>

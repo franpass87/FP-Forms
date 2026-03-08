@@ -107,8 +107,15 @@ class Capabilities {
     
     /**
      * Garantisce che gli utenti con privilegi elevati ereditino le capability personalizzate.
+     * Usa un flag statico per garantire idempotenza: il filtro viene registrato una sola volta.
      */
     public static function register_capability_bridge(): void {
+        static $registered = false;
+        if ( $registered ) {
+            return;
+        }
+        $registered = true;
+        
         add_filter(
             'user_has_cap',
             static function ( $allcaps, $caps ) {

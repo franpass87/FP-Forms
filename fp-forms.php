@@ -62,23 +62,15 @@ if ( is_readable( $fp_forms_autoload ) ) {
  * Inizializza il plugin
  */
 function fp_forms_init() {
-    load_plugin_textdomain(
-        'fp-forms',
-        false,
-        dirname(FP_FORMS_PLUGIN_BASENAME) . '/languages'
-    );
-
     if ( function_exists( 'get_role' ) ) {
         \FPForms\Core\Capabilities::ensure_default_capabilities();
     }
 
+    \FPForms\Core\Capabilities::register_capability_bridge();
+
     \FPForms\Plugin::instance();
 }
-add_action( 'init', 'fp_forms_init', 0 );
-
-if ( function_exists( 'add_filter' ) ) {
-    \FPForms\Core\Capabilities::register_capability_bridge();
-}
+add_action( 'init', 'fp_forms_init' );
 
 /**
  * Gestisce la dismissione dell'avviso di fallback autoloader.

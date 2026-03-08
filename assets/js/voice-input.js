@@ -46,13 +46,11 @@
                     '<span class="dashicons dashicons-microphone"></span>' +
                 '</button>');
                 
-                // Posiziona dopo il campo
-                $field.after($btn);
-                
-                // Wrapper per styling
+                // Prima wrappa il campo, poi inserisce il btn dentro il wrapper
                 if (!$field.parent().hasClass('fp-voice-input-wrapper')) {
                     $field.wrap('<div class="fp-voice-input-wrapper"></div>');
                 }
+                $field.parent('.fp-voice-input-wrapper').append($btn);
                 
                 // Bind click
                 $btn.on('click', function(e) {
@@ -67,6 +65,11 @@
          */
         startRecognition: function($field, $btn) {
             var self = this;
+            
+            // Guardia: non avviare se già in registrazione
+            if ($btn.data('fp-is-recording')) {
+                return;
+            }
             
             // Verifica supporto
             var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -88,7 +91,7 @@
             // Start
             recognition.onstart = function() {
                 isRecording = true;
-                $btn.addClass('fp-voice-recording');
+                $btn.data('fp-is-recording', true).addClass('fp-voice-recording');
                 $field.addClass('fp-voice-active');
                 
                 if (typeof window.fpToast !== 'undefined') {
@@ -112,14 +115,14 @@
             // Fine
             recognition.onend = function() {
                 isRecording = false;
-                $btn.removeClass('fp-voice-recording');
+                $btn.data('fp-is-recording', false).removeClass('fp-voice-recording');
                 $field.removeClass('fp-voice-active');
             };
             
             // Errore
             recognition.onerror = function(event) {
                 isRecording = false;
-                $btn.removeClass('fp-voice-recording');
+                $btn.data('fp-is-recording', false).removeClass('fp-voice-recording');
                 $field.removeClass('fp-voice-active');
                 
                 var errorMsg = 'Errore riconoscimento vocale';

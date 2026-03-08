@@ -36,11 +36,14 @@
         // Determina aria-live priority in base al tipo
         var ariaLive = (type === 'error') ? 'assertive' : 'polite';
         
-        var $toast = $('<div class="fp-toast fp-toast-' + type + '" role="alert" aria-live="' + ariaLive + '" aria-atomic="true">' +
-            '<span class="fp-toast-icon" aria-hidden="true">' + icons[type] + '</span>' +
-            '<span class="fp-toast-message">' + message + '</span>' +
-            '<button class="fp-toast-close" aria-label="Chiudi notifica">×</button>' +
-        '</div>');
+        // Costruzione sicura con jQuery per prevenire XSS nel messaggio
+        var $toast = $('<div>')
+            .addClass('fp-toast fp-toast-' + type)
+            .attr({ role: 'alert', 'aria-live': ariaLive, 'aria-atomic': 'true' });
+        
+        $('<span>').addClass('fp-toast-icon').attr('aria-hidden', 'true').text(icons[type] || '').appendTo($toast);
+        $('<span>').addClass('fp-toast-message').text(message).appendTo($toast);
+        $('<button>').addClass('fp-toast-close').attr('aria-label', 'Chiudi notifica').text('×').appendTo($toast);
         
         $('#fp-toast-container').append($toast);
         

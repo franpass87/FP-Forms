@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wrap fp-forms-admin">
     <div class="fp-forms-admin__header">
         <h1><?php _e( 'Template Library', 'fp-forms' ); ?></h1>
-        <a href="<?php echo admin_url( 'admin.php?page=fp-forms' ); ?>" class="button">
+        <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">
             &larr; <?php _e( 'Torna ai Form', 'fp-forms' ); ?>
         </a>
     </div>
@@ -25,13 +25,13 @@ if ( ! defined( 'ABSPATH' ) ) {
             <?php foreach ( $templates as $template ) : ?>
                 <div class="fp-template-card" data-template-id="<?php echo esc_attr( $template['id'] ); ?>">
                     <div class="fp-template-icon">
-                        <?php echo $template['icon']; ?>
+                        <?php echo esc_html( $template['icon'] ); ?>
                     </div>
                     <h3 class="fp-template-title"><?php echo esc_html( $template['name'] ); ?></h3>
                     <p class="fp-template-description"><?php echo esc_html( $template['description'] ); ?></p>
                     <div class="fp-template-meta">
                         <span class="fp-template-category"><?php echo esc_html( ucfirst( $template['category'] ) ); ?></span>
-                        <span class="fp-template-fields"><?php echo count( $template['fields'] ); ?> campi</span>
+                        <span class="fp-template-fields"><?php echo intval( count( $template['fields'] ) ); ?> campi</span>
                     </div>
                     <button class="button button-primary fp-import-template-btn">
                         <?php _e( 'Usa Template', 'fp-forms' ); ?>

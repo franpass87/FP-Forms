@@ -113,8 +113,8 @@ class FileField {
             
             if ( ! is_wp_error( $upload ) ) {
                 $uploaded_files[] = [
-                    'name' => $file['name'],
-                    'url' => $upload['url'],
+                    'name' => sanitize_file_name( $file['name'] ),
+                    'url'  => set_url_scheme( $upload['url'] ),
                     'path' => $upload['file'],
                     'type' => $file['type'],
                     'size' => $file['size'],
@@ -193,8 +193,20 @@ class FileField {
             }
         }
         
-        // Se finfo è disponibile, verifica che il MIME type corrisponda
-        if ( $detected_mime && $detected_mime !== $wp_filetype['type'] ) {
+        // I formati Office Open XML (DOCX, XLSX, PPTX) sono archivi ZIP: finfo li rileva come
+        // application/zip, ma il MIME type atteso da WordPress è quello specifico OOXML.
+        // In questo caso il mismatch è atteso e non indica un file malevolo.
+        $ooxml_types = [
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
+        ];
+        $is_ooxml_zip_mismatch = ( $detected_mime === 'application/zip' && in_array( $wp_filetype['type'], $ooxml_types, true ) );
+
+        // Se finfo è disponibile, verifica che il MIME type corrisponda (con eccezione OOXML)
+        if ( $detected_mime && ! $is_ooxml_zip_mismatch && $detected_mime !== $wp_filetype['type'] ) {
             return new \WP_Error( 
                 'invalid_mime', 
                 __( 'Il tipo MIME rilevato non corrisponde al tipo di file dichiarato.', 'fp-forms' ) 
@@ -212,20 +224,28 @@ class FileField {
         $upload_dir = wp_upload_dir();
         $fp_forms_dir = $upload_dir['basedir'] . '/' . $this->upload_dir;
         
-        if ( ! file_exists( $fp_forms_dir ) ) {
-            wp_mkdir_p( $fp_forms_dir );
-            
-            // FIX #3: Protezione directory universale (Apache + Nginx + IIS)
-            // Protezione Apache (.htaccess)
-            file_put_contents( $fp_forms_dir . '/.htaccess', 'deny from all' );
-            
-            // Protezione universale (index.php)
-            file_put_contents( $fp_forms_dir . '/index.php', '<?php // Silence is golden' );
-            
-            // Imposta permessi sicuri (se possibile)
-            if ( function_exists( 'chmod' ) ) {
-                @chmod( $fp_forms_dir, 0750 );
+        // Crea la directory se non esiste
+        wp_mkdir_p( $fp_forms_dir );
+        
+        // Ricrea i file di protezione se mancanti (anche se la directory preesisteva)
+        $htaccess = $fp_forms_dir . '/.htaccess';
+        if ( ! file_exists( $htaccess ) ) {
+            $result = file_put_contents( $htaccess, "deny from all\n" );
+            if ( $result === false ) {
+                \FPForms\Core\Logger::warning( 'FileField: impossibile creare .htaccess nella directory upload', [
+                    'dir' => $fp_forms_dir,
+                ] );
             }
+        }
+        
+        $index = $fp_forms_dir . '/index.php';
+        if ( ! file_exists( $index ) ) {
+            file_put_contents( $index, '<?php // Silence is golden' );
+        }
+        
+        // Imposta permessi sicuri (se possibile)
+        if ( function_exists( 'chmod' ) ) {
+            @chmod( $fp_forms_dir, 0750 );
         }
         
         // Sanitize filename
@@ -238,56 +258,12 @@ class FileField {
         if ( move_uploaded_file( $file['tmp_name'], $destination ) ) {
             return [
                 'file' => $destination,
-                'url' => $upload_dir['baseurl'] . '/' . $this->upload_dir . '/' . $filename,
+                'url' => set_url_scheme( $upload_dir['baseurl'] . '/' . $this->upload_dir . '/' . $filename ),
                 'type' => $file['type'],
             ];
         }
         
         return new \WP_Error( 'upload_failed', __( 'Impossibile caricare il file.', 'fp-forms' ) );
-    }
-    
-    /**
-     * Ottiene MIME types permessi (compatibilità legacy)
-     * @deprecated Usa get_allowed_mime_types_for_wp() per wp_check_filetype()
-     */
-    private function get_allowed_mime_types( $extensions ) {
-        $wp_mime_types = get_allowed_mime_types();
-        $allowed = [];
-        
-        foreach ( $extensions as $ext ) {
-            // Cerca nell'array WordPress MIME types
-            foreach ( $wp_mime_types as $mime_ext => $mime_type ) {
-                // Supporta formati come "jpg|jpeg|jpe"
-                $mime_ext_array = explode( '|', $mime_ext );
-                if ( in_array( $ext, $mime_ext_array, true ) ) {
-                    $allowed[] = $mime_type;
-                    break;
-                }
-            }
-        }
-        
-        // Se non trovato in WordPress, usa fallback
-        if ( empty( $allowed ) ) {
-            $fallback_mimes = [
-                'pdf' => 'application/pdf',
-                'doc' => 'application/msword',
-                'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'jpg' => 'image/jpeg',
-                'jpeg' => 'image/jpeg',
-                'png' => 'image/png',
-                'gif' => 'image/gif',
-                'zip' => 'application/zip',
-                'txt' => 'text/plain',
-            ];
-            
-            foreach ( $extensions as $ext ) {
-                if ( isset( $fallback_mimes[ $ext ] ) ) {
-                    $allowed[] = $fallback_mimes[ $ext ];
-                }
-            }
-        }
-        
-        return array_unique( $allowed );
     }
     
     /**

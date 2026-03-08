@@ -30,8 +30,9 @@ class Manager {
             ? $form['settings']['notification_subject']
             : sprintf( __( 'Nuova submission dal form: %s', 'fp-forms' ), $form['title'] );
         
-        // Sostituisci tag dinamici e applica filtro
+        // Sostituisci tag dinamici, rimuovi newline (prevenzione header injection) e applica filtro
         $subject = $this->replace_tags( $subject, $data, $form );
+        $subject = str_replace( [ "\r", "\n" ], '', $subject );
         $subject = \FPForms\Core\Hooks::filter_email_subject( $subject, $form_id, $data );
         
         // Messaggio (usa template custom se specificato, altrimenti auto-generato)
@@ -49,6 +50,7 @@ class Manager {
         // Hook before send
         do_action( 'fp_forms_before_send_notification', $form_id, $data, $to );
 
+        $success = false;
         $this->apply_fp_forms_mail_from();
         try {
             $success = wp_mail( $to, $subject, $message, $headers );
@@ -221,13 +223,18 @@ class Manager {
             foreach ( $form['fields'] as $field ) {
                 if ( isset( $field['type'] ) && $field['type'] === 'email' ) {
                     $field_name = $field['name'];
-                    if ( isset( $data[ $field_name ] ) && is_email( $data[ $field_name ] ) ) {
-                        $reply_to = $data[ $field_name ];
-                        break;
+                    if ( isset( $data[ $field_name ] ) ) {
+                        $reply_to = sanitize_email( $data[ $field_name ] );
+                        if ( is_email( $reply_to ) ) {
+                            break;
+                        }
+                        $reply_to = '';
                     }
                 }
             }
             if ( $reply_to ) {
+                // Rimuove newline per prevenire header injection
+                $reply_to = str_replace( [ "\r", "\n" ], '', $reply_to );
                 $headers[] = 'Reply-To: ' . $reply_to;
             }
         }
@@ -255,22 +262,32 @@ class Manager {
     /**
      * Sostituisce i tag dinamici
      */
-    private function replace_tags( $text, $data, $form ) {
+    /**
+     * Sostituisce i tag {field_name} nel testo con i valori del form.
+     *
+     * @param string $text      Testo con tag da sostituire.
+     * @param array  $data      Dati del form.
+     * @param array  $form      Dati del form (con fields e settings).
+     * @param bool   $html_mode Se true, i valori vengono escaped con esc_html() per uso in HTML.
+     */
+    private function replace_tags( $text, $data, $form, $html_mode = false ) {
         // Tag per i campi del form
         foreach ( $form['fields'] as $field ) {
-            $field_name = $field['name'];
+            $field_name  = $field['name'];
             $field_value = $this->get_field_display_value( $field, $data );
             
             if ( is_array( $field_value ) ) {
                 $field_value = implode( ', ', $field_value );
             }
             
-            $text = str_replace( '{' . $field_name . '}', $field_value, $text );
+            // In modalità HTML, escapa il valore per prevenire XSS
+            $safe_value = $html_mode ? esc_html( (string) $field_value ) : (string) $field_value;
+            $text = str_replace( '{' . $field_name . '}', $safe_value, $text );
         }
         
         // Tag generali
-        $text = str_replace( '{form_title}', $form['title'], $text );
-        $text = str_replace( '{site_name}', get_bloginfo( 'name' ), $text );
+        $text = str_replace( '{form_title}', $html_mode ? esc_html( $form['title'] ) : $form['title'], $text );
+        $text = str_replace( '{site_name}', $html_mode ? esc_html( get_bloginfo( 'name' ) ) : get_bloginfo( 'name' ), $text );
         $text = str_replace( '{site_url}', get_bloginfo( 'url' ), $text );
         $text = str_replace( '{date}', date_i18n( get_option( 'date_format' ) ), $text );
         $text = str_replace( '{time}', date_i18n( get_option( 'time_format' ) ), $text );
@@ -355,6 +372,7 @@ class Manager {
 
         do_action( 'fp_forms_before_send_confirmation', $form_id, $data, $user_email );
 
+        $success = false;
         $this->apply_fp_forms_mail_from();
         try {
             $success = wp_mail( $user_email, $subject, $message, $headers );
@@ -414,6 +432,7 @@ class Manager {
         // Hook before send
         do_action( 'fp_forms_before_send_staff_notification', $form_id, $data, $staff_email );
 
+        $success = false;
         $this->apply_fp_forms_mail_from();
         try {
             $success = wp_mail( $staff_email, $subject, $message, $headers );
@@ -437,7 +456,7 @@ class Manager {
      * Garantisce From coerente (es. no-reply@stefanosansevero.it) per tutti i transport (mail/SMTP).
      */
     private function apply_fp_forms_mail_from() {
-        $from_email = get_option( 'fp_forms_email_from_address', get_bloginfo( 'admin_email' ) );
+        $from_email = get_option( 'fp_forms_email_from_address', get_option( 'admin_email' ) );
         if ( $from_email && is_email( $from_email ) ) {
             add_filter( 'wp_mail_from', [ $this, 'filter_wp_mail_from' ], 20 );
             add_filter( 'wp_mail_from_name', [ $this, 'filter_wp_mail_from_name' ], 20 );
@@ -454,7 +473,7 @@ class Manager {
 
     /** Callable per wp_mail_from (usato da apply/remove_fp_forms_mail_from). */
     public function filter_wp_mail_from( $from ) {
-        $fp_from = get_option( 'fp_forms_email_from_address', get_bloginfo( 'admin_email' ) );
+        $fp_from = get_option( 'fp_forms_email_from_address', get_option( 'admin_email' ) );
         return ( $fp_from && is_email( $fp_from ) ) ? $fp_from : $from;
     }
 
@@ -474,22 +493,54 @@ class Manager {
             wp_mkdir_p( $dir );
         }
 
+        // Proteggi la directory da accesso web diretto
+        $htaccess = $dir . '.htaccess';
+        if ( ! file_exists( $htaccess ) ) {
+            @file_put_contents( $htaccess, "Deny from all\n<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n" );
+        }
+        $index = $dir . 'index.php';
+        if ( ! file_exists( $index ) ) {
+            @file_put_contents( $index, '<?php // Silence is golden.' );
+        }
+
         $file = $dir . 'email-diagnostic.log';
 
         if ( file_exists( $file ) && filesize( $file ) > 512000 ) {
-            @rename( $file, $dir . 'email-diagnostic-prev.log' );
+            $prev = $dir . 'email-diagnostic-prev.log';
+            if ( ! rename( $file, $prev ) ) {
+                \FPForms\Core\Logger::warning( 'Email diagnostic: impossibile ruotare il file di log', [
+                    'file' => $file,
+                ] );
+            }
         }
+
+        // Maschera l'email per conformità GDPR (es. j***@example.com)
+        $masked_to = self::mask_email( $to );
 
         $line = sprintf(
             "[%s] %s | to=%s | subject=%s | result=%s%s\n",
             current_time( 'Y-m-d H:i:s' ),
             strtoupper( $type ),
-            $to,
+            $masked_to,
             mb_substr( $subject, 0, 80 ),
             $success ? 'OK' : 'FAIL',
             $error ? ' | error=' . $error : ''
         );
 
         @file_put_contents( $file, $line, FILE_APPEND | LOCK_EX );
+    }
+
+    /**
+     * Maschera un indirizzo email per i log (es. jo***@example.com).
+     */
+    private static function mask_email( string $email ): string {
+        $parts = explode( '@', $email, 2 );
+        if ( count( $parts ) !== 2 ) {
+            return '***';
+        }
+        $local  = $parts[0];
+        $domain = $parts[1];
+        $visible = min( 2, strlen( $local ) );
+        return substr( $local, 0, $visible ) . str_repeat( '*', max( 1, strlen( $local ) - $visible ) ) . '@' . $domain;
     }
 }

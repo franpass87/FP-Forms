@@ -27,7 +27,7 @@ class Manager {
             'post_type' => 'fp_form',
         ] );
         
-        if ( $post_id ) {
+        if ( $post_id && ! is_wp_error( $post_id ) ) {
             // Salva settings
             update_post_meta( $post_id, '_fp_form_settings', $args['settings'] );
             
@@ -71,7 +71,7 @@ class Manager {
         
         $result = wp_update_post( $update_data );
         
-        if ( $result ) {
+        if ( $result && ! is_wp_error( $result ) ) {
             // Aggiorna settings
             if ( isset( $data['settings'] ) ) {
                 update_post_meta( $form_id, '_fp_form_settings', $data['settings'] );
@@ -250,12 +250,17 @@ class Manager {
             return false;
         }
         
+        // Rimuovi dati sensibili dalle settings del form duplicato
+        $new_settings = $form['settings'];
+        $new_settings['webhooks'] = [];
+        unset( $new_settings['brevo_api_key'], $new_settings['meta_pixel_token'] );
+
         return $this->create_form(
             $form['title'] . ' (Copia)',
             [
                 'description' => $form['description'],
-                'settings' => $form['settings'],
-                'fields' => $form['fields'],
+                'settings'    => $new_settings,
+                'fields'      => $form['fields'],
             ]
         );
     }

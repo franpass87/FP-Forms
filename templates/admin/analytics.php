@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Template: Analytics Dashboard
  */
@@ -10,13 +10,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 <div class="wrap fp-forms-admin">
     <div class="fp-forms-admin__header">
-        <h1><?php printf( __( 'Analytics: %s', 'fp-forms' ), $form['title'] ); ?></h1>
+        <h1><?php printf( esc_html__( 'Analytics: %s', 'fp-forms' ), esc_html( $form['title'] ) ); ?></h1>
         <div class="fp-header-actions">
-            <a href="<?php echo admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] ); ?>" class="button">
-                <?php _e( 'Vedi Submissions', 'fp-forms' ); ?>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . intval( $form['id'] ) ) ); ?>" class="button">
+                <?php esc_html_e( 'Vedi Submissions', 'fp-forms' ); ?>
             </a>
-            <a href="<?php echo admin_url( 'admin.php?page=fp-forms' ); ?>" class="button">
-                &larr; <?php _e( 'Torna ai Form', 'fp-forms' ); ?>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">
+                &larr; <?php esc_html_e( 'Torna ai Form', 'fp-forms' ); ?>
             </a>
         </div>
     </div>
@@ -26,28 +26,28 @@ if ( ! defined( 'ABSPATH' ) ) {
         <div class="fp-stat-card">
             <div class="fp-stat-icon">👁️</div>
             <div class="fp-stat-content">
-                <div class="fp-stat-value"><?php echo number_format( $stats['total_views'] ); ?></div>
-                <div class="fp-stat-label"><?php _e( 'Visualizzazioni Totali', 'fp-forms' ); ?></div>
+                <div class="fp-stat-value"><?php echo esc_html( number_format( $stats['total_views'] ) ); ?></div>
+                <div class="fp-stat-label"><?php esc_html_e( 'Visualizzazioni Totali', 'fp-forms' ); ?></div>
             </div>
         </div>
         
         <div class="fp-stat-card">
             <div class="fp-stat-icon">📝</div>
             <div class="fp-stat-content">
-                <div class="fp-stat-value"><?php echo number_format( $stats['total_submissions'] ); ?></div>
-                <div class="fp-stat-label"><?php _e( 'Submissions Totali', 'fp-forms' ); ?></div>
+                <div class="fp-stat-value"><?php echo esc_html( number_format( $stats['total_submissions'] ) ); ?></div>
+                <div class="fp-stat-label"><?php esc_html_e( 'Submissions Totali', 'fp-forms' ); ?></div>
             </div>
         </div>
         
         <div class="fp-stat-card <?php echo $stats['conversion_rate'] > 5 ? 'good' : 'needs-improvement'; ?>">
             <div class="fp-stat-icon">📊</div>
             <div class="fp-stat-content">
-                <div class="fp-stat-value"><?php echo $stats['conversion_rate']; ?>%</div>
-                <div class="fp-stat-label"><?php _e( 'Tasso di Conversione', 'fp-forms' ); ?></div>
+                <div class="fp-stat-value"><?php echo esc_html( $stats['conversion_rate'] ); ?>%</div>
+                <div class="fp-stat-label"><?php esc_html_e( 'Tasso di Conversione', 'fp-forms' ); ?></div>
                 <?php if ( $stats['conversion_rate'] < 5 ) : ?>
-                <small class="fp-stat-tip"><?php _e( 'Sotto la media (5-10%)', 'fp-forms' ); ?></small>
+                <small class="fp-stat-tip"><?php esc_html_e( 'Sotto la media (5-10%)', 'fp-forms' ); ?></small>
                 <?php elseif ( $stats['conversion_rate'] > 10 ) : ?>
-                <small class="fp-stat-tip"><?php _e( 'Ottimo! Sopra la media', 'fp-forms' ); ?></small>
+                <small class="fp-stat-tip"><?php esc_html_e( 'Ottimo! Sopra la media', 'fp-forms' ); ?></small>
                 <?php endif; ?>
             </div>
         </div>
@@ -55,15 +55,15 @@ if ( ! defined( 'ABSPATH' ) ) {
         <div class="fp-stat-card">
             <div class="fp-stat-icon">📬</div>
             <div class="fp-stat-content">
-                <div class="fp-stat-value"><?php echo \FPForms\Plugin::instance()->database->count_submissions( $form['id'], 'unread' ); ?></div>
-                <div class="fp-stat-label"><?php _e( 'Non Lette', 'fp-forms' ); ?></div>
+                <div class="fp-stat-value"><?php echo intval( \FPForms\Plugin::instance()->database->count_submissions( $form['id'], 'unread' ) ); ?></div>
+                <div class="fp-stat-label"><?php esc_html_e( 'Non Lette', 'fp-forms' ); ?></div>
             </div>
         </div>
     </div>
     
     <!-- Chart -->
     <div class="fp-chart-container">
-        <h3><?php _e( 'Trend Ultimi 7 Giorni', 'fp-forms' ); ?></h3>
+        <h3><?php esc_html_e( 'Trend Ultimi 7 Giorni', 'fp-forms' ); ?></h3>
         <canvas id="fp-analytics-chart" width="400" height="150"></canvas>
     </div>
 </div>
@@ -144,7 +144,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 jQuery(document).ready(function($) {
     var ctx = document.getElementById('fp-analytics-chart');
