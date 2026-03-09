@@ -200,4 +200,11 @@ Vedi [CHANGELOG-v1.1.md](CHANGELOG-v1.1.md) per dettagli completi.
 - 🆕 Performance migliorate del 60-70%
 
 **Per dettagli completi sulle ottimizzazioni:** Vedi [OTTIMIZZAZIONI.md](OTTIMIZZAZIONI.md)
+---
 
+## Autore
+
+**Francesco Passeri**
+- Sito: [francescopasseri.com](https://francescopasseri.com)
+- Email: [info@francescopasseri.com](mailto:info@francescopasseri.com)
+- GitHub: [github.com/franpass87](https://github.com/franpass87)
