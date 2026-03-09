@@ -1,6 +1,49 @@
 # CHANGELOG - FP Forms
 
-## [1.3.1] - 5 Novembre 2025
+## [1.4.1] - 2026-03-08
+### Added
+- TrackingBridge centralizzato su `fp_tracking_event`, rimossi `dataLayer.push` diretti da frontend.js
+- Tracking delegato a FP Marketing Tracking Layer tramite `fp_tracking_event`
+
+### Fixed
+- Registrazione shortcode immediata (non re-hook su `init`, causava shortcode non renderizzato)
+- Rimosso UTF-8 BOM da `MetaPixel.php`, `analytics.php`, `form-builder.php` che causava `E_COMPILE_ERROR`
+- Incluso `vendor/` nel repo per server di produzione senza Composer
+
+### Security
+- Fix XSS, open redirect, SSRF, race conditions e escaping (rounds 5-6)
+
+## [1.4.0] - 2026-03-02
+### Added
+- Sistema template email HTML con 4 template selezionabili (elegant, professional, modern, minimal)
+- Impostazioni email globali: logo, accent color, footer, response time
+- Selettore template per form nel form builder
+
+## [1.3.5] - 2026-03-02
+### Fixed
+- Rimosso raw `From` header da `get_email_headers` per evitare conflitto con WP Mail SMTP
+- Rimossi header duplicati (MIME-Version, Message-ID, X-Mailer) che causavano IONOS SMTP a scartare email silenziosamente
+
+## [1.3.4] - 2026-03-02
+### Fixed
+- Prevenzione doppia configurazione SMTP quando WP Mail SMTP è attivo
+- Log diagnostico email sempre attivo, catch `Throwable` per PHP 8+
+
+## [1.3.2] - 2026-02-23
+### Security
+- Fix sicurezza: `substr null`, `fields null guard`, DOM XSS, `absint` validation, submissions overview
+
+### Fixed
+- Email: header anti-spam (Message-ID, X-Mailer), From coerente con filtri `wp_mail`
+- Fix permessi Submissions: usa `MANAGE_FORMS`, voce menu visibile
+- GTM tracking: handler beacon AJAX, `data-form-title` multistep, formId normalizzato
+- Guard: ensure form settings is always an array in `get_form()`
+- Fix email di conferma: rilevamento email robusto + cache invalidation su form update
+- Fix i18n: traduci privacy e marketing checkbox dal database tramite gettext
+- SMTP test: usa PHPMailer direttamente con eccezioni per errori dettagliati
+- Fix salvataggio form: creava sempre un nuovo form invece di aggiornare
+
+## [1.3.1] - 2025-11-05
 
 ### 🚀 NEW FEATURES - Quick Wins Implementation
 
