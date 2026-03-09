@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.4.2] - 2026-03-09
+### Changed
+- TrackingBridge e CHANGELOG sync
+
 ## [1.4.1] - 2026-03-08
 ### Added
 - TrackingBridge centralizzato su `fp_tracking_event`, rimossi `dataLayer.push` diretti da frontend.js
