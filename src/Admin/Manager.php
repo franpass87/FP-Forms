@@ -496,11 +496,15 @@ class Manager {
             wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
         }
         
-        $form_id = isset( $_POST['form_id'] ) ? intval( $_POST['form_id'] ) : 0;
-        $title = isset( $_POST['title'] ) ? sanitize_text_field( $_POST['title'] ) : '';
+        $form_id   = isset( $_POST['form_id'] ) ? absint( $_POST['form_id'] ) : 0;
+        $title     = isset( $_POST['title'] ) ? sanitize_text_field( $_POST['title'] ) : '';
         $description = isset( $_POST['description'] ) ? wp_kses_post( $_POST['description'] ) : '';
-        $fields_raw = isset( $_POST['fields'] ) ? json_decode( stripslashes( $_POST['fields'] ), true, 20 ) : [];
-        $fields_raw = is_array( $fields_raw ) ? $fields_raw : [];
+        $fields_json = isset( $_POST['fields'] ) ? wp_unslash( $_POST['fields'] ) : '[]';
+        $fields_raw  = json_decode( $fields_json, true, 20 );
+        if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $fields_raw ) ) {
+            \FPForms\Core\Logger::error( 'ajax_save_form: fields JSON non valido', [ 'json_error' => json_last_error_msg() ] );
+            wp_send_json_error( [ 'message' => __( 'Dati campi non validi. Ricarica la pagina e riprova.', 'fp-forms' ) ] );
+        }
         // Sanitizza i campi con la stessa funzione usata per l'import
         $fields     = $this->sanitize_imported_fields( $fields_raw );
         $settings_raw = isset( $_POST['settings'] ) ? json_decode( stripslashes( $_POST['settings'] ), true, 20 ) : [];
@@ -524,6 +528,10 @@ class Manager {
                     'message' => __( 'Form aggiornato!', 'fp-forms' ),
                     'form_id' => $form_id,
                 ] );
+            }
+            global $wpdb;
+            if ( $wpdb->last_error ) {
+                \FPForms\Core\Logger::error( 'ajax_save_form: DB error', [ 'error' => $wpdb->last_error ] );
             }
         } else {
             // Crea nuovo form

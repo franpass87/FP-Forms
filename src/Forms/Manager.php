@@ -79,7 +79,10 @@ class Manager {
             
             // Aggiorna campi
             if ( isset( $data['fields'] ) ) {
-                $this->update_fields( $form_id, $data['fields'] );
+                $fields_ok = $this->update_fields( $form_id, $data['fields'] );
+                if ( ! $fields_ok ) {
+                    return false;
+                }
             }
             
             // Invalida cache per riflettere le modifiche immediatamente

@@ -1,5 +1,11 @@
 # CHANGELOG - FP Forms
 
+## [1.4.5] - 2026-03-12
+### Fixed
+- Salvataggio campi: update_form verifica esito update_fields, errore DB propagato
+- Validazione JSON fields lato server, messaggio chiaro se dati non validi
+- saveForm: scope $form per campi e settings, getWebhooks/getConditionalRules con contesto
+
 ## [1.4.4] - 2026-03-12
 ### Fixed
 - Salvataggio campi: options sempre presente, fallback nome vuoto, step_title in options per step_break

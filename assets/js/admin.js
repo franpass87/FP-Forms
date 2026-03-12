@@ -511,18 +511,21 @@
         saveForm: function(e) {
             e.preventDefault();
             
+            var $form = $('#fp-form-builder');
+            if (!$form.length) return;
+            
             // Valida prima
             if (!FPFormsAdmin.validateForm()) {
                 return;
             }
             
-            var formId = $('#form_id').val();
-            var title = $('#form_title').val();
-            var description = $('#form_description').val();
+            var formId = $form.find('#form_id').val();
+            var title = $form.find('#form_title').val();
+            var description = $form.find('#form_description').val();
             
-            // Raccogli campi
+            // Raccogli campi (sempre dal form builder)
             var fields = [];
-            $('#fp-fields-container .fp-field-item').each(function(index) {
+            $form.find('#fp-fields-container .fp-field-item').each(function(index) {
                 var $field = $(this);
                 var type = $field.find('.fp-field-type').val();
                 
@@ -575,60 +578,60 @@
                 fields.push(fieldData);
             });
             
-            // Raccogli settings
+            // Raccogli settings (dal form builder)
             var settings = {
                 // Trust badges
-                trust_badges: $('input[name="trust_badges[]"]:checked').map(function() {
+                trust_badges: $form.find('input[name="trust_badges[]"]:checked').map(function() {
                     return $(this).val();
                 }).get(),
-                submit_button_text: $('input[name="submit_button_text"]').val(),
-                submit_button_color: $('input[name="submit_button_color"]').val(),
-                submit_button_size: $('select[name="submit_button_size"]').val(),
-                submit_button_style: $('select[name="submit_button_style"]').val(),
-                submit_button_align: $('select[name="submit_button_align"]').val(),
-                submit_button_width: $('select[name="submit_button_width"]').val(),
-                submit_button_icon: $('select[name="submit_button_icon"]').val(),
-                success_message: $('textarea[name="success_message"]').val(),
-                success_message_type: $('select[name="success_message_type"]').val(),
-                success_message_duration: $('select[name="success_message_duration"]').val(),
-                custom_css_class: $('input[name="custom_css_class"]').val(),
-                custom_border_color: $('input[name="custom_border_color"]').val(),
-                custom_focus_color: $('input[name="custom_focus_color"]').val(),
-                custom_text_color: $('input[name="custom_text_color"]').val(),
-                custom_background_color: $('input[name="custom_background_color"]').val(),
-                success_redirect_enabled: $('input[name="success_redirect_enabled"]').is(':checked'),
-                success_redirect_url: $('input[name="success_redirect_url"]').val(),
+                submit_button_text: $form.find('input[name="submit_button_text"]').val(),
+                submit_button_color: $form.find('input[name="submit_button_color"]').val(),
+                submit_button_size: $form.find('select[name="submit_button_size"]').val(),
+                submit_button_style: $form.find('select[name="submit_button_style"]').val(),
+                submit_button_align: $form.find('select[name="submit_button_align"]').val(),
+                submit_button_width: $form.find('select[name="submit_button_width"]').val(),
+                submit_button_icon: $form.find('select[name="submit_button_icon"]').val(),
+                success_message: $form.find('textarea[name="success_message"]').val(),
+                success_message_type: $form.find('select[name="success_message_type"]').val(),
+                success_message_duration: $form.find('select[name="success_message_duration"]').val(),
+                custom_css_class: $form.find('input[name="custom_css_class"]').val(),
+                custom_border_color: $form.find('input[name="custom_border_color"]').val(),
+                custom_focus_color: $form.find('input[name="custom_focus_color"]').val(),
+                custom_text_color: $form.find('input[name="custom_text_color"]').val(),
+                custom_background_color: $form.find('input[name="custom_background_color"]').val(),
+                success_redirect_enabled: $form.find('input[name="success_redirect_enabled"]').is(':checked'),
+                success_redirect_url: $form.find('input[name="success_redirect_url"]').val(),
                 // Email settings
-                disable_wordpress_emails: $('input[name="disable_wordpress_emails"]').is(':checked'),
-                notification_email: $('input[name="notification_email"]').val(),
-                notification_subject: $('input[name="notification_subject"]').val(),
-                notification_message: $('textarea[name="notification_message"]').val(),
-                confirmation_enabled: $('input[name="confirmation_enabled"]').is(':checked'),
-                confirmation_template: $('input[name="confirmation_template"]:checked').val() || '',
-                confirmation_accent_color: $('input[name="confirmation_accent_color"]').val() || '',
-                confirmation_footer_info: $('textarea[name="confirmation_footer_info"]').val() || '',
-                confirmation_subject: $('input[name="confirmation_subject"]').val(),
-                confirmation_message: $('textarea[name="confirmation_message"]').val(),
+                disable_wordpress_emails: $form.find('input[name="disable_wordpress_emails"]').is(':checked'),
+                notification_email: $form.find('input[name="notification_email"]').val(),
+                notification_subject: $form.find('input[name="notification_subject"]').val(),
+                notification_message: $form.find('textarea[name="notification_message"]').val(),
+                confirmation_enabled: $form.find('input[name="confirmation_enabled"]').is(':checked'),
+                confirmation_template: $form.find('input[name="confirmation_template"]:checked').val() || '',
+                confirmation_accent_color: $form.find('input[name="confirmation_accent_color"]').val() || '',
+                confirmation_footer_info: $form.find('textarea[name="confirmation_footer_info"]').val() || '',
+                confirmation_subject: $form.find('input[name="confirmation_subject"]').val(),
+                confirmation_message: $form.find('textarea[name="confirmation_message"]').val(),
                 // Staff notifications (v1.2)
-                staff_notifications_enabled: $('input[name="staff_notifications_enabled"]').is(':checked'),
-                staff_emails: $('textarea[name="staff_emails"]').val(),
-                staff_notification_subject: $('input[name="staff_notification_subject"]').val(),
-                staff_notification_message: $('textarea[name="staff_notification_message"]').val(),
+                staff_notifications_enabled: $form.find('input[name="staff_notifications_enabled"]').is(':checked'),
+                staff_emails: $form.find('textarea[name="staff_emails"]').val(),
+                staff_notification_subject: $form.find('input[name="staff_notification_subject"]').val(),
+                staff_notification_message: $form.find('textarea[name="staff_notification_message"]').val(),
                 // Brevo integration (v1.2)
-                brevo_enabled: $('input[name="brevo_enabled"]').is(':checked'),
-                brevo_list_id: $('input[name="brevo_list_id"]').val(),
-                brevo_event_name: $('input[name="brevo_event_name"]').val(),
+                brevo_enabled: $form.find('input[name="brevo_enabled"]').is(':checked'),
+                brevo_list_id: $form.find('input[name="brevo_list_id"]').val(),
+                brevo_event_name: $form.find('input[name="brevo_event_name"]').val(),
                 // Conditional logic
-                conditional_rules: FPFormsAdmin.getConditionalRules(),
+                conditional_rules: FPFormsAdmin.getConditionalRules($form),
                 // Webhooks
-                webhooks: FPFormsAdmin.getWebhooks(),
+                webhooks: FPFormsAdmin.getWebhooks($form),
                 // Multi-step
-                enable_multistep: $('input[name="enable_multistep"]').is(':checked'),
+                enable_multistep: $form.find('input[name="enable_multistep"]').is(':checked'),
                 // Progressive save
-                enable_progressive_save: $('input[name="enable_progressive_save"]').is(':checked')
+                enable_progressive_save: $form.find('input[name="enable_progressive_save"]').is(':checked')
             };
             
-            var $btn = $('#fp-form-builder').find('button[type="submit"]');
+            var $btn = $form.find('button[type="submit"]');
             if (typeof window.fpLoadingButton === 'function') window.fpLoadingButton($btn, 'Salvataggio...');
             if (typeof window.fpProgress !== 'undefined' && window.fpProgress.show) window.fpProgress.show(30);
 
@@ -909,10 +912,10 @@
         /**
          * Ottiene webhooks dal form
          */
-        getWebhooks: function() {
+        getWebhooks: function($ctx) {
             var webhooks = [];
-            
-            $('.fp-webhook-item').each(function() {
+            var $scope = ($ctx && $ctx.length) ? $ctx : $(document);
+            $scope.find('.fp-webhook-item').each(function() {
                 var $webhook = $(this);
                 var url = $webhook.find('.fp-webhook-url').val();
                 
@@ -966,10 +969,10 @@
         /**
          * Ottiene regole condizionali
          */
-        getConditionalRules: function() {
+        getConditionalRules: function($ctx) {
             var rules = [];
-            
-            $('.fp-rule-item').each(function() {
+            var $scope = ($ctx && $ctx.length) ? $ctx : $(document);
+            $scope.find('.fp-rule-item').each(function() {
                 var $rule = $(this);
                 var targetValues = $rule.find('.fp-rule-targets').val();
                 
