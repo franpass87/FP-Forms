@@ -269,6 +269,11 @@
                 'calculated': 'Calcolato',
                 'step_break': 'Nuovo Step'
             };
+            var typeNames = {
+                'text': 'testo', 'email': 'email', 'phone': 'telefono', 'number': 'numero',
+                'date': 'data', 'textarea': 'messaggio', 'select': 'selezione', 'radio': 'opzione',
+                'checkbox': 'checkbox', 'file': 'file', 'calculated': 'calcolato'
+            };
             
             // Default specifici per privacy-checkbox
             if (type === 'privacy-checkbox') {
@@ -341,11 +346,12 @@
                 };
             }
             
+            var baseName = typeNames[type] || 'field';
             return {
                 type: type,
                 typeLabel: typeLabels[type] || type,
                 label: typeLabels[type] || 'Nuovo Campo',
-                name: 'field_' + Date.now(),
+                name: baseName + '_' + Date.now(),
                 placeholder: '',
                 description: '',
                 choices: '',

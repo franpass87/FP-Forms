@@ -1124,7 +1124,7 @@ class Manager {
         ];
         
         $sanitized = [];
-        foreach ( $fields as $field ) {
+        foreach ( $fields as $order => $field ) {
             if ( ! is_array( $field ) ) {
                 continue;
             }
@@ -1134,23 +1134,35 @@ class Manager {
                 continue;
             }
             
+            $name = sanitize_key( $field['name'] ?? '' );
+            if ( $name === '' ) {
+                $name = 'field_' . $order;
+            }
+            
             $clean = [
                 'type'     => $type,
                 'label'    => sanitize_text_field( $field['label'] ?? '' ),
-                'name'     => sanitize_key( $field['name'] ?? '' ),
+                'name'     => $name,
                 'required' => ! empty( $field['required'] ),
             ];
             
             // Sanitizza le opzioni ricorsivamente (solo scalari)
+            $options = [];
             if ( isset( $field['options'] ) && is_array( $field['options'] ) ) {
-                $clean['options'] = array_map( function( $v ) {
+                $options = array_map( function( $v ) {
                     return is_array( $v )
                         ? array_map( 'sanitize_text_field', $v )
                         : sanitize_text_field( (string) $v );
                 }, $field['options'] );
             }
             
-            $sanitized[] = $clean;
+            // step_title va in options per step_break (usato da field-item e MultiStep)
+            if ( $type === 'step_break' && isset( $field['step_title'] ) ) {
+                $options['step_title'] = sanitize_text_field( (string) $field['step_title'] );
+            }
+            
+            $clean['options'] = $options;
+            $sanitized[]      = $clean;
         }
         
         return $sanitized;

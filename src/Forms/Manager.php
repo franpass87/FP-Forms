@@ -226,15 +226,21 @@ class Manager {
         
         $fields = [];
         foreach ( $fields_data as $field ) {
-            $fields[] = [
-                'id' => $field->id,
-                'type' => $field->field_type,
-                'label' => $field->field_label,
-                'name' => $field->field_name,
-                'options' => $field->field_options ? json_decode( $field->field_options, true ) : [],
+            $options = $field->field_options ? json_decode( $field->field_options, true ) : [];
+            $options = is_array( $options ) ? $options : [];
+            $row    = [
+                'id'       => $field->id,
+                'type'     => $field->field_type,
+                'label'    => $field->field_label,
+                'name'     => $field->field_name,
+                'options'  => $options,
                 'required' => (bool) $field->is_required,
-                'order' => $field->field_order,
+                'order'    => $field->field_order,
             ];
+            if ( $field->field_type === 'step_break' && isset( $options['step_title'] ) ) {
+                $row['step_title'] = $options['step_title'];
+            }
+            $fields[] = $row;
         }
         
         return $fields;

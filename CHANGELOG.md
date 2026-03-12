@@ -1,5 +1,11 @@
 # CHANGELOG - FP Forms
 
+## [1.4.4] - 2026-03-12
+### Fixed
+- Salvataggio campi: options sempre presente, fallback nome vuoto, step_title in options per step_break
+- get_fields: estrazione step_title da options per rendering field-item
+- Nomi campi default semantici (email_, telefono_, data_, ecc.) compatibili con sanitize_key
+
 ## [1.4.3] - 2026-03-12
 ### Fixed
 - Editor form: label default campi usa nome tipo (Email, Telefono, Data, ecc.) invece di "Nuovo Campo"
