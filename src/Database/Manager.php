@@ -347,7 +347,11 @@ class Manager {
         
         if ( $error ) {
             $wpdb->query( 'ROLLBACK' );
-            \FPForms\Core\Logger::error( 'save_form_fields: errore DB, rollback eseguito', [ 'form_id' => $form_id ] );
+            \FPForms\Core\Logger::error( 'save_form_fields: errore DB, rollback eseguito', [
+                'form_id'    => $form_id,
+                'db_error'   => $wpdb->last_error,
+                'last_field' => isset( $field ) ? $field : null,
+            ] );
             return false;
         }
         

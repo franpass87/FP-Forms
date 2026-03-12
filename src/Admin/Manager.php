@@ -507,7 +507,11 @@ class Manager {
         }
         // Sanitizza i campi con la stessa funzione usata per l'import
         $fields     = $this->sanitize_imported_fields( $fields_raw );
-        $settings_raw = isset( $_POST['settings'] ) ? json_decode( stripslashes( $_POST['settings'] ), true, 20 ) : [];
+        $settings_json = isset( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : '{}';
+        $settings_raw  = json_decode( $settings_json, true, 20 );
+        if ( ! is_array( $settings_raw ) ) {
+            $settings_raw = [];
+        }
         
         // Sanitize and validate settings before save
         $settings = $this->sanitize_form_settings( $settings_raw );
@@ -530,9 +534,15 @@ class Manager {
                 ] );
             }
             global $wpdb;
-            if ( $wpdb->last_error ) {
-                \FPForms\Core\Logger::error( 'ajax_save_form: DB error', [ 'error' => $wpdb->last_error ] );
+            $db_error = $wpdb->last_error ?: '';
+            if ( $db_error ) {
+                \FPForms\Core\Logger::error( 'ajax_save_form: DB error', [ 'error' => $db_error, 'form_id' => $form_id ] );
             }
+            $err_msg = $db_error
+                ? sprintf( __( 'Errore DB: %s', 'fp-forms' ), esc_html( $db_error ) )
+                : __( 'Errore nel salvare il form.', 'fp-forms' );
+            wp_send_json_error( [ 'message' => $err_msg ] );
+            return;
         } else {
             // Crea nuovo form
             $new_form_id = $forms_manager->create_form( $title, [

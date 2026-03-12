@@ -1,5 +1,11 @@
 # CHANGELOG - FP Forms
 
+## [1.4.6] - 2026-03-12
+### Fixed
+- Errore DB sempre mostrato a utente (senza WP_DEBUG)
+- Settings JSON: wp_unslash coerente con fields
+- save_form_fields: log con db_error e last_field per debug
+
 ## [1.4.5] - 2026-03-12
 ### Fixed
 - Salvataggio campi: update_form verifica esito update_fields, errore DB propagato
