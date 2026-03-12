@@ -1,5 +1,10 @@
 # CHANGELOG - FP Forms
 
+## [1.4.8] - 2026-03-12
+### Fixed
+- save_form_fields: rimosse transazioni (compatibilità hosting)
+- Manager::$last_save_error per mostrare errore DB reale all'utente
+
 ## [1.4.7] - 2026-03-12
 ### Fixed
 - saveForm: selettori document-level per campi/settings (compatibilità layout)

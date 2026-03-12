@@ -5,7 +5,12 @@ namespace FPForms\Database;
  * Gestisce le operazioni sul database
  */
 class Manager {
-    
+
+    /**
+     * Ultimo errore DB da save_form_fields (per debug)
+     */
+    public static $last_save_error = '';
+
     /**
      * Nome tabella submissions
      */
@@ -312,50 +317,41 @@ class Manager {
      * Salva i campi di un form
      */
     public function save_form_fields( $form_id, $fields ) {
+        self::$last_save_error = '';
         if ( ! is_array( $fields ) ) {
             $fields = [];
         }
 
         global $wpdb;
-        
-        // Operazione atomica: delete + insert in transazione
-        $wpdb->query( 'START TRANSACTION' );
-        
+
         $wpdb->delete( $this->table_fields, [ 'form_id' => $form_id ], [ '%d' ] );
-        
-        $error = false;
+
         foreach ( $fields as $order => $field ) {
+            $field_options = isset( $field['options'] ) ? wp_json_encode( $field['options'] ) : null;
             $result = $wpdb->insert(
                 $this->table_fields,
                 [
-                    'form_id'      => $form_id,
-                    'field_type'   => $field['type'],
-                    'field_label'  => $field['label'],
-                    'field_name'   => $field['name'],
-                    'field_options' => isset( $field['options'] ) ? wp_json_encode( $field['options'] ) : null,
-                    'field_order'  => $order,
-                    'is_required'  => isset( $field['required'] ) ? (int) $field['required'] : 0,
+                    'form_id'       => $form_id,
+                    'field_type'    => $field['type'],
+                    'field_label'   => $field['label'],
+                    'field_name'    => $field['name'],
+                    'field_options' => $field_options,
+                    'field_order'   => $order,
+                    'is_required'   => isset( $field['required'] ) ? (int) $field['required'] : 0,
                 ],
                 [ '%d', '%s', '%s', '%s', '%s', '%d', '%d' ]
             );
-            
+
             if ( $result === false ) {
-                $error = true;
-                break;
+                self::$last_save_error = $wpdb->last_error ?: 'Unknown DB error';
+                \FPForms\Core\Logger::error( 'save_form_fields: insert fallito', [
+                    'form_id'    => $form_id,
+                    'db_error'   => self::$last_save_error,
+                    'last_field' => $field,
+                ] );
+                return false;
             }
         }
-        
-        if ( $error ) {
-            $wpdb->query( 'ROLLBACK' );
-            \FPForms\Core\Logger::error( 'save_form_fields: errore DB, rollback eseguito', [
-                'form_id'    => $form_id,
-                'db_error'   => $wpdb->last_error,
-                'last_field' => isset( $field ) ? $field : null,
-            ] );
-            return false;
-        }
-        
-        $wpdb->query( 'COMMIT' );
         
         // Invalida cache
         \FPForms\Core\Cache::invalidate_form( $form_id );

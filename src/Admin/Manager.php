@@ -543,13 +543,13 @@ class Manager {
                 ] );
             }
             global $wpdb;
-            $db_error = $wpdb->last_error ?: '';
+            $db_error = $wpdb->last_error ?: \FPForms\Database\Manager::$last_save_error;
             if ( $db_error ) {
-                \FPForms\Core\Logger::error( 'ajax_save_form: DB error', [ 'error' => $db_error, 'form_id' => $form_id ] );
+                \FPForms\Core\Logger::error( 'ajax_save_form: update fallito', [ 'error' => $db_error, 'form_id' => $form_id ] );
             }
             $err_msg = $db_error
                 ? sprintf( __( 'Errore DB: %s', 'fp-forms' ), esc_html( $db_error ) )
-                : __( 'Errore nel salvare il form.', 'fp-forms' );
+                : __( 'Errore nel salvare il form. Verifica che il form esista.', 'fp-forms' );
             wp_send_json_error( [ 'message' => $err_msg ] );
             return;
         } else {
