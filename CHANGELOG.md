@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.4.9] - 2026-03-12
+### Fixed
+- Creazione automatica tabelle se mancanti (maybe_create_tables prima di save_form_fields)
+
 ## [1.4.8] - 2026-03-12
 ### Fixed
 - save_form_fields: rimosse transazioni (compatibilità hosting)

@@ -324,6 +324,8 @@ class Manager {
 
         global $wpdb;
 
+        \FPForms\Activator::maybe_create_tables();
+
         $wpdb->delete( $this->table_fields, [ 'form_id' => $form_id ], [ '%d' ] );
 
         foreach ( $fields as $order => $field ) {

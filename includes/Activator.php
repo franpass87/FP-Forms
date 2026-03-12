@@ -30,6 +30,17 @@ class Activator {
     }
     
     /**
+     * Assicura che le tabelle esistano (chiamabile anche dopo attivazione)
+     */
+    public static function maybe_create_tables() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'fp_forms_fields';
+        if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+            self::create_tables();
+        }
+    }
+
+    /**
      * Crea le tabelle del database
      */
     private static function create_tables() {
