@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.4.3] - 2026-03-12
+### Fixed
+- Editor form: label default campi usa nome tipo (Email, Telefono, Data, ecc.) invece di "Nuovo Campo"
+
 ## [1.4.2] - 2026-03-09
 ### Changed
 - TrackingBridge e CHANGELOG sync

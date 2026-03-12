@@ -344,7 +344,7 @@
             return {
                 type: type,
                 typeLabel: typeLabels[type] || type,
-                label: 'Nuovo Campo',
+                label: typeLabels[type] || 'Nuovo Campo',
                 name: 'field_' + Date.now(),
                 placeholder: '',
                 description: '',
