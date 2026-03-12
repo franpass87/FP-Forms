@@ -1,5 +1,10 @@
 # CHANGELOG - FP Forms
 
+## [1.4.7] - 2026-03-12
+### Fixed
+- saveForm: selettori document-level per campi/settings (compatibilità layout)
+- Blocco salvataggio se campi vuoti su form con campi esistenti + messaggio chiaro
+
 ## [1.4.6] - 2026-03-12
 ### Fixed
 - Errore DB sempre mostrato a utente (senza WP_DEBUG)

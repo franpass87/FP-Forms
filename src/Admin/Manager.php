@@ -506,7 +506,16 @@ class Manager {
             wp_send_json_error( [ 'message' => __( 'Dati campi non validi. Ricarica la pagina e riprova.', 'fp-forms' ) ] );
         }
         // Sanitizza i campi con la stessa funzione usata per l'import
-        $fields     = $this->sanitize_imported_fields( $fields_raw );
+        $fields = $this->sanitize_imported_fields( $fields_raw );
+
+        if ( $form_id > 0 && empty( $fields ) ) {
+            $existing = \FPForms\Plugin::instance()->forms->get_fields( $form_id );
+            if ( ! empty( $existing ) ) {
+                \FPForms\Core\Logger::warning( 'ajax_save_form: campi vuoti su form con campi esistenti', [ 'form_id' => $form_id, 'raw_count' => count( $fields_raw ) ] );
+                wp_send_json_error( [ 'message' => __( 'I campi non sono stati inviati. Ricarica la pagina e riprova.', 'fp-forms' ) ] );
+            }
+        }
+
         $settings_json = isset( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : '{}';
         $settings_raw  = json_decode( $settings_json, true, 20 );
         if ( ! is_array( $settings_raw ) ) {
