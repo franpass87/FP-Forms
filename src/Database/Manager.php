@@ -324,6 +324,10 @@ class Manager {
 
         global $wpdb;
 
+        // Activator vive in includes/ (non PSR-4): carica esplicitamente prima dell'uso runtime.
+        if ( ! class_exists( '\FPForms\Activator' ) ) {
+            require_once FP_FORMS_PLUGIN_DIR . 'includes/Activator.php';
+        }
         \FPForms\Activator::maybe_create_tables();
 
         $wpdb->delete( $this->table_fields, [ 'form_id' => $form_id ], [ '%d' ] );
