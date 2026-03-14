@@ -1,5 +1,13 @@
 # CHANGELOG - FP Forms
 
+## [1.4.11] - 2026-03-13
+### Changed
+- Builder admin riallineato al design system FP con token UI condivisi e gestione notice WordPress più robusta.
+
+### Fixed
+- Risolte sovrapposizioni nel form builder (header e card template email) con layout colonne stabile.
+- `brevo_enabled` non più attivo di default nei nuovi form.
+
 ## [1.4.9] - 2026-03-12
 ### Fixed
 - Creazione automatica tabelle se mancanti (maybe_create_tables prima di save_form_fields)
@@ -1217,7 +1225,6 @@ Nessuno! 100% backward compatible.
 - 10 tipi di campo
 - Email notifiche
 - Database submissions
-
 
 
 

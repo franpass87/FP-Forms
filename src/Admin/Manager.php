@@ -150,12 +150,15 @@ class Manager {
         
         wp_enqueue_media();
 
+        $admin_css_path = FP_FORMS_PLUGIN_DIR . 'assets/css/admin.css';
+        $admin_css_version = file_exists( $admin_css_path ) ? (string) filemtime( $admin_css_path ) : FP_FORMS_VERSION;
+
         // CSS
         wp_enqueue_style(
             'fp-forms-admin',
             FP_FORMS_PLUGIN_URL . 'assets/css/admin.css',
             [],
-            FP_FORMS_VERSION
+            $admin_css_version
         );
         
         wp_enqueue_style(

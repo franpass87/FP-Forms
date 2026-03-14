@@ -41,7 +41,7 @@ $default_settings = [
     'staff_emails' => '',
     'staff_notification_subject' => __( '[STAFF] Nuova submission: {form_title}', 'fp-forms' ),
     'staff_notification_message' => '',
-    'brevo_enabled' => true,
+    'brevo_enabled' => false,
     'brevo_list_id' => '',
     'brevo_event_name' => '',
 ];
@@ -330,6 +330,13 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                     <input type="url" name="success_redirect_url" value="<?php echo esc_url( $form_settings['success_redirect_url'] ?? '' ); ?>" placeholder="https://example.com/thank-you">
                 </div>
                 
+            </div>
+        </div>
+
+        <div class="fp-builder-bottom-settings">
+            <div class="fp-sidebar-section">
+                <h3><?php esc_html_e( 'Impostazioni avanzate', 'fp-forms' ); ?></h3>
+
                 <h4><?php esc_html_e( 'Impostazioni Avanzate', 'fp-forms' ); ?></h4>
                 
                 <div class="fp-setting-field">
@@ -518,7 +525,7 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 
                 <div class="fp-setting-field">
                     <label>
-                        <input type="checkbox" name="brevo_enabled" value="1" <?php checked( $form_settings['brevo_enabled'] ?? true, true ); ?>>
+                        <input type="checkbox" name="brevo_enabled" value="1" <?php checked( $form_settings['brevo_enabled'] ?? false, true ); ?>>
                         <?php esc_html_e( 'Sincronizza con Brevo CRM', 'fp-forms' ); ?>
                     </label>
                     <small><?php esc_html_e( 'Invia contatti ed eventi a Brevo ad ogni submission (se Brevo è configurato globalmente)', 'fp-forms' ); ?></small>

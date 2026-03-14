@@ -8,17 +8,43 @@
    CSS Variables - FP Design System
    ============================================ */
 :root {
+    /* FP Digital Marketing Suite tokens */
+    --fpdms-primary: #667eea;
+    --fpdms-primary-dark: #764ba2;
+    --fpdms-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --fpdms-secondary: #11998e;
+    --fpdms-gradient-secondary: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --fpdms-success: #10b981;
+    --fpdms-success-bg: #d1fae5;
+    --fpdms-success-text: #065f46;
+    --fpdms-warning: #f59e0b;
+    --fpdms-warning-bg: #fef3c7;
+    --fpdms-warning-text: #92400e;
+    --fpdms-danger: #ef4444;
+    --fpdms-danger-bg: #fee2e2;
+    --fpdms-danger-text: #991b1b;
+    --fpdms-info: #3b82f6;
+    --fpdms-info-bg: #dbeafe;
+    --fpdms-info-text: #1e40af;
+    --fpdms-text: #1f2937;
+    --fpdms-text-light: #4b5563;
+    --fpdms-text-muted: #9ca3af;
+    --fpdms-border: #e5e7eb;
+    --fpdms-border-light: #f3f4f6;
+    --fpdms-bg-white: #ffffff;
+    --fpdms-bg-light: #f9fafb;
+
     /* Colors */
-    --fp-color-primary: #2563eb;
-    --fp-color-primary-hover: #1d4ed8;
-    --fp-color-danger: #dc2626;
-    --fp-color-success: #059669;
-    --fp-color-warning: #d97706;
-    --fp-color-text: #1f2937;
-    --fp-color-muted: #6b7280;
-    --fp-color-border: rgba(0, 0, 0, 0.08);
-    --fp-color-surface: #ffffff;
-    --fp-color-background: #f9fafb;
+    --fp-color-primary: var(--fpdms-primary);
+    --fp-color-primary-hover: var(--fpdms-primary-dark);
+    --fp-color-danger: var(--fpdms-danger);
+    --fp-color-success: var(--fpdms-success);
+    --fp-color-warning: var(--fpdms-warning);
+    --fp-color-text: var(--fpdms-text);
+    --fp-color-muted: var(--fpdms-text-light);
+    --fp-color-border: var(--fpdms-border);
+    --fp-color-surface: var(--fpdms-bg-white);
+    --fp-color-background: var(--fpdms-bg-light);
     
     /* Spacing */
     --fp-spacing-xs: 8px;
@@ -36,8 +62,8 @@
     
     /* Shadows */
     --fp-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --fp-shadow-md: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --fp-shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --fp-shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --fp-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
     --fp-shadow-xl: 0 10px 15px rgba(0, 0, 0, 0.1);
     
     /* Focus Ring */
@@ -56,6 +82,28 @@ body.fp-forms-admin-shell #wpbody-content {
     padding: var(--fp-spacing-lg) clamp(16px, 4vw, 32px) 48px;
 }
 
+/* FP rules: avoid overlap with WordPress notices */
+body.toplevel_page_fp-forms #wpbody-content,
+body[class*="fp-forms_page_"] #wpbody-content {
+    display: flex;
+    flex-direction: column;
+}
+
+body.toplevel_page_fp-forms #wpbody-content > .wrap.fp-forms-admin,
+body[class*="fp-forms_page_"] #wpbody-content > .wrap.fp-forms-admin {
+    order: 1;
+}
+
+body.toplevel_page_fp-forms #wpbody-content > .notice,
+body.toplevel_page_fp-forms #wpbody-content > .updated,
+body.toplevel_page_fp-forms #wpbody-content > .settings-error,
+body[class*="fp-forms_page_"] #wpbody-content > .notice,
+body[class*="fp-forms_page_"] #wpbody-content > .updated,
+body[class*="fp-forms_page_"] #wpbody-content > .settings-error {
+    order: 2;
+    margin: 0 20px 20px;
+}
+
 body.fp-forms-admin-shell #wpbody-content > .wrap {
     margin: 0 auto;
     max-width: 1200px;
@@ -69,6 +117,18 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
 .fp-forms-admin {
     margin: 20px 0 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    clear: both;
+    display: flow-root;
+}
+
+/* Prevent third-party admin notices from creating float-based multi-column header layout */
+.fp-forms-admin .notice,
+.fp-forms-admin .updated,
+.fp-forms-admin .settings-error {
+    float: none;
+    clear: both;
+    width: auto;
+    max-width: none;
 }
 
 /* ============================================
@@ -76,10 +136,30 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
    ============================================ */
 .fp-forms-admin__header {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
+    gap: var(--fp-spacing-sm);
     margin-bottom: var(--fp-spacing-lg);
     padding: 0;
+    clear: both;
+    width: 100%;
+    overflow: auto;
+}
+
+.fp-forms-admin__header > h1 {
+    margin-right: auto;
+}
+
+.fp-forms-admin__header > a.button {
+    margin-left: auto;
+}
+
+.fp-forms-admin__header > .notice,
+.fp-forms-admin__header > .updated,
+.fp-forms-admin__header > .settings-error {
+    flex: 1 1 100%;
+    margin: 0;
 }
 
 .fp-forms-admin__header h1 {
@@ -354,14 +434,13 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
 }
 
 .fp-forms-admin .button-primary {
-    background: var(--fp-color-primary);
-    border-color: var(--fp-color-primary);
-    box-shadow: var(--fp-shadow-sm);
+    background: var(--fpdms-gradient-primary);
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(102, 126, 234, 0.3);
 }
 
 .fp-forms-admin .button-primary:hover {
-    background: var(--fp-color-primary-hover);
-    border-color: var(--fp-color-primary-hover);
+    filter: brightness(1.03);
 }
 
 .fp-forms-admin .button-link-delete {
@@ -389,12 +468,15 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
    ============================================ */
 .fp-builder-container {
     display: grid;
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: minmax(0, 1fr) 340px;
     gap: var(--fp-spacing-lg);
     margin-top: var(--fp-spacing-lg);
+    align-items: start;
 }
 
 .fp-builder-main {
+    grid-column: 1 / 2;
+    min-width: 0;
     background: var(--fp-color-surface);
     border: 1px solid var(--fp-color-border);
     border-radius: var(--fp-radius-lg);
@@ -403,6 +485,7 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
 }
 
 .fp-builder-sidebar {
+    grid-column: 2 / 3;
     background: var(--fp-color-surface);
     border: 1px solid var(--fp-color-border);
     border-radius: var(--fp-radius-lg);
@@ -412,6 +495,16 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     overflow-y: auto;
     position: sticky;
     top: 32px;
+}
+
+.fp-builder-bottom-settings {
+    grid-column: 1 / 2;
+    background: var(--fp-color-surface);
+    border: 1px solid var(--fp-color-border);
+    border-radius: var(--fp-radius-lg);
+    padding: var(--fp-spacing-lg);
+    box-shadow: var(--fp-shadow-md);
+    min-width: 0;
 }
 
 .fp-builder-actions {
@@ -1017,8 +1110,15 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     }
     
     .fp-builder-sidebar {
+        grid-column: 1 / -1;
         position: static;
         max-height: none;
+    }
+
+    .fp-builder-main,
+    .fp-builder-bottom-settings {
+        grid-column: 1 / -1;
+        max-width: 100%;
     }
 }
 
@@ -1196,7 +1296,7 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
    ============================================ */
 .fp-template-cards {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     margin-bottom: 10px;
 }
