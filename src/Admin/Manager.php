@@ -449,6 +449,20 @@ class Manager {
                 }
             }
             update_option( 'fp_forms_smtp_settings', $smtp_settings );
+
+            update_option( 'fp_forms_email_queue_enabled', isset( $_POST['email_queue_enabled'] ) ? '1' : '0' );
+            $rate_max = isset( $_POST['email_rate_limit_max'] ) ? absint( $_POST['email_rate_limit_max'] ) : 50;
+            update_option( 'fp_forms_email_rate_limit_max', $rate_max > 0 ? $rate_max : 0 );
+            $spam_threshold = isset( $_POST['spam_score_threshold'] ) ? absint( $_POST['spam_score_threshold'] ) : 80;
+            $spam_threshold = max( 1, min( 100, $spam_threshold ) );
+            update_option( 'fp_forms_spam_score_threshold', $spam_threshold );
+
+            $stripe_settings = [
+                'secret_key'     => isset( $_POST['stripe_secret_key'] ) ? sanitize_text_field( wp_unslash( $_POST['stripe_secret_key'] ) ) : '',
+                'publishable_key' => isset( $_POST['stripe_publishable_key'] ) ? sanitize_text_field( wp_unslash( $_POST['stripe_publishable_key'] ) ) : '',
+                'webhook_secret' => isset( $_POST['stripe_webhook_secret'] ) ? sanitize_text_field( wp_unslash( $_POST['stripe_webhook_secret'] ) ) : '',
+            ];
+            update_option( 'fp_forms_stripe_settings', $stripe_settings );
             
             // Salva impostazioni reCAPTCHA (nuovo formato 2025)
             $recaptcha_settings = [
@@ -1400,6 +1414,48 @@ class Manager {
         } else {
             $sanitized['webhooks'] = [];
         }
+
+        // Conditional logic: operator globale AND/OR
+        if ( isset( $settings['conditional_operator_global'] ) ) {
+            $op = $settings['conditional_operator_global'];
+            $sanitized['conditional_operator_global'] = in_array( $op, [ 'and', 'or' ], true ) ? $op : 'or';
+        } else {
+            $sanitized['conditional_operator_global'] = 'or';
+        }
+
+        // Conditional rules (struttura validata da ConditionalLogic::validate_rules)
+        if ( isset( $settings['conditional_rules'] ) && is_array( $settings['conditional_rules'] ) ) {
+            $valid_conditions = [ 'equals', 'not_equals', 'contains', 'not_contains', 'greater_than', 'less_than', 'is_empty', 'is_not_empty' ];
+            $valid_actions    = [ 'show', 'hide', 'require', 'unrequire' ];
+            $sanitized['conditional_rules'] = [];
+            foreach ( $settings['conditional_rules'] as $rule ) {
+                if ( ! is_array( $rule ) || empty( $rule['trigger_field'] ) || empty( $rule['action'] ) || empty( $rule['target_fields'] ) ) {
+                    continue;
+                }
+                $cond = isset( $rule['condition'] ) && in_array( $rule['condition'], $valid_conditions, true ) ? $rule['condition'] : 'equals';
+                $act  = isset( $rule['action'] ) && in_array( $rule['action'], $valid_actions, true ) ? $rule['action'] : 'show';
+                $targets = is_array( $rule['target_fields'] ) ? array_map( 'sanitize_key', $rule['target_fields'] ) : [];
+                $targets = array_values( array_filter( $targets ) );
+                if ( empty( $targets ) ) {
+                    continue;
+                }
+                $sanitized['conditional_rules'][] = [
+                    'id'            => isset( $rule['id'] ) ? sanitize_text_field( $rule['id'] ) : 'rule_' . uniqid(),
+                    'trigger_field' => sanitize_key( $rule['trigger_field'] ),
+                    'condition'     => $cond,
+                    'value'         => isset( $rule['value'] ) ? sanitize_text_field( $rule['value'] ) : '',
+                    'action'        => $act,
+                    'target_fields' => $targets,
+                ];
+            }
+        } else {
+            $sanitized['conditional_rules'] = [];
+        }
+
+        $sanitized['payment_enabled'] = isset( $settings['payment_enabled'] ) && $settings['payment_enabled'] ? true : false;
+        $sanitized['payment_provider'] = isset( $settings['payment_provider'] ) && $settings['payment_provider'] === 'stripe' ? 'stripe' : '';
+        $sanitized['payment_amount'] = isset( $settings['payment_amount'] ) ? max( 0, floatval( $settings['payment_amount'] ) ) : 0;
+        $sanitized['payment_amount_field'] = isset( $settings['payment_amount_field'] ) ? sanitize_key( $settings['payment_amount_field'] ) : '';
         
         return $sanitized;
     }

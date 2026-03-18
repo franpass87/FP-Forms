@@ -36,6 +36,18 @@ class Manager {
                 'message' => __( 'Form non valido.', 'fp-forms' ),
             ] );
         }
+
+        $submit_token = isset( $_POST['fp_submit_token'] ) ? sanitize_text_field( wp_unslash( $_POST['fp_submit_token'] ) ) : '';
+        if ( $submit_token !== '' ) {
+            $lock_key = 'fp_forms_submit_lock_' . $submit_token;
+            $lock_val = get_transient( $lock_key );
+            if ( $lock_val !== false && $lock_val !== 0 && $lock_val !== '0' ) {
+                \FPForms\Core\Logger::warning( 'Submission rejected: submit token already used', [ 'form_id' => $form_id ] );
+                wp_send_json_error( [
+                    'message' => __( 'Questo modulo è già stato inviato. Non inviare di nuovo.', 'fp-forms' ),
+                ] );
+            }
+        }
         
         // Ottieni i dati del form
         // Limite di profondità esplicito per prevenire stack overflow su payload profondamente annidati
@@ -73,6 +85,23 @@ class Manager {
                 'errors' => [ 'recaptcha' => $recaptcha_validation['error'] ],
             ] );
         }
+
+        $antispam = new \FPForms\Security\AntiSpam();
+        if ( method_exists( $antispam, 'compute_spam_score' ) ) {
+            $spam_context = [ 'recaptcha_score' => $recaptcha_validation['score'] ?? null ];
+            $spam_score = $antispam->compute_spam_score( $form_id, $form_data, $spam_context );
+            $threshold = (int) get_option( 'fp_forms_spam_score_threshold', 80 );
+            if ( $spam_score >= $threshold ) {
+                \FPForms\Core\Logger::warning( 'Submission blocked by spam score', [
+                    'form_id' => $form_id,
+                    'score'   => $spam_score,
+                    'threshold' => $threshold,
+                ] );
+                wp_send_json_error( [
+                    'message' => __( 'Non è possibile inviare il form. Riprova più tardi.', 'fp-forms' ),
+                ] );
+            }
+        }
         
         // Sanitizza prima di validare (i validator ricevono dati già puliti)
         $sanitized_data = $this->sanitize_data( $form_data, $form_id );
@@ -96,14 +125,20 @@ class Manager {
         // Ricalcola i campi di tipo "calculated" server-side per prevenire manipolazioni client
         $sanitized_data = $this->recalculate_calculated_fields( $form_id, $sanitized_data );
         
-        // Salva la submission prima di gestire i file
         $db = \FPForms\Plugin::instance()->database;
-        $submission_id = $db->save_submission( $form_id, $sanitized_data );
+        $payments = \FPForms\Plugin::instance()->payments;
+        $form_requires_payment = $payments && method_exists( $payments, 'form_requires_payment' ) && $payments->form_requires_payment( $form_id );
+        $save_status = $form_requires_payment ? 'pending_payment' : 'unread';
+        $submission_id = $db->save_submission( $form_id, $sanitized_data, [ 'status' => $save_status ] );
         
         if ( ! $submission_id ) {
             wp_send_json_error( [
                 'message' => __( 'Errore nel salvare i dati. Riprova.', 'fp-forms' ),
             ] );
+        }
+
+        if ( $submit_token !== '' ) {
+            set_transient( 'fp_forms_submit_lock_' . $submit_token, $submission_id, 120 );
         }
         
         // Gestisci upload file dopo il salvataggio DB
@@ -134,46 +169,40 @@ class Manager {
                 'submission_id' => $submission_id,
             ] );
         }
+
+        $email_manager = \FPForms\Plugin::instance()->email;
+        $queue_enabled = $email_manager && method_exists( $email_manager, 'is_queue_enabled' ) && $email_manager->is_queue_enabled();
         
-        // 1. Invia email di notifica al webmaster/admin (solo se email attive)
-        if ( ! $emails_disabled ) {
-            try {
-                $this->send_notification( $form_id, $submission_id, $sanitized_data );
-            } catch ( \Throwable $e ) {
-                \FPForms\Core\Logger::error( 'Admin notification failed', [
-                    'submission_id' => $submission_id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ] );
-                error_log( '[FP Forms] Admin notification error: ' . $e->getMessage() );
-            }
-        }
-        
-        // 2. Invia email di conferma al cliente (solo se email attive E abilitata)
-        if ( ! $emails_disabled ) {
-            try {
-                $this->send_confirmation( $form_id, $sanitized_data );
-            } catch ( \Throwable $e ) {
-                \FPForms\Core\Logger::error( 'User confirmation failed', [
-                    'submission_id' => $submission_id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ] );
-                error_log( '[FP Forms] User confirmation error: ' . $e->getMessage() );
-            }
-        }
-        
-        // 3. Invia notifiche allo staff (solo se email attive E configurato)
-        if ( ! $emails_disabled ) {
-            try {
-                $this->send_staff_notifications( $form_id, $submission_id, $sanitized_data );
-            } catch ( \Throwable $e ) {
-                \FPForms\Core\Logger::error( 'Staff notifications failed', [
-                    'submission_id' => $submission_id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ] );
-                error_log( '[FP Forms] Staff notification error: ' . $e->getMessage() );
+        if ( ! $emails_disabled && ! $form_requires_payment ) {
+            if ( $queue_enabled ) {
+                $email_manager->enqueue_email_job( (int) $form_id, (int) $submission_id, 'notification' );
+                $email_manager->enqueue_email_job( (int) $form_id, (int) $submission_id, 'confirmation' );
+                $email_manager->enqueue_email_job( (int) $form_id, (int) $submission_id, 'staff' );
+            } else {
+                try {
+                    $this->send_notification( $form_id, $submission_id, $sanitized_data );
+                } catch ( \Throwable $e ) {
+                    \FPForms\Core\Logger::error( 'Admin notification failed', [
+                        'submission_id' => $submission_id,
+                        'error' => $e->getMessage(),
+                    ] );
+                }
+                try {
+                    $this->send_confirmation( $form_id, $sanitized_data );
+                } catch ( \Throwable $e ) {
+                    \FPForms\Core\Logger::error( 'User confirmation failed', [
+                        'submission_id' => $submission_id,
+                        'error' => $e->getMessage(),
+                    ] );
+                }
+                try {
+                    $this->send_staff_notifications( $form_id, $submission_id, $sanitized_data );
+                } catch ( \Throwable $e ) {
+                    \FPForms\Core\Logger::error( 'Staff notifications failed', [
+                        'submission_id' => $submission_id,
+                        'error' => $e->getMessage(),
+                    ] );
+                }
             }
         }
         
@@ -208,15 +237,27 @@ class Manager {
         // Il tracking è gestito da FP-Marketing-Tracking-Layer via TrackingBridge
         do_action( 'fp_forms_after_save_submission', $submission_id, $form_id, $sanitized_data );
         
-        // Prepara response
         $response = [
             'message' => $success_message,
             'message_type' => $message_type,
             'message_duration' => $message_duration,
             'submission_id' => $submission_id,
         ];
+
+        if ( $form_requires_payment && $payments ) {
+            $checkout = $payments->get_checkout_response( (int) $submission_id, (int) $form_id, $sanitized_data );
+            if ( ! empty( $checkout['error'] ) ) {
+                wp_send_json_error( [ 'message' => $checkout['error'] ] );
+            }
+            if ( ! empty( $checkout['checkout_url'] ) ) {
+                $response['payment_required'] = true;
+                $response['checkout_url'] = $checkout['checkout_url'];
+            } elseif ( ! empty( $checkout['client_secret'] ) ) {
+                $response['payment_required'] = true;
+                $response['client_secret'] = $checkout['client_secret'];
+            }
+        }
         
-        // BUGFIX: Applica filtro per success redirect (QuickFeatures)
         $response = apply_filters( 'fp_forms_ajax_response', $response, $form_id, $sanitized_data );
         
         wp_send_json_success( $response );
@@ -232,6 +273,18 @@ class Manager {
         if ( ! is_array( $fields ) ) {
             $fields = [];
         }
+
+        $visible_fields  = [];
+        $required_fields = [];
+        $form = $forms_manager->get_form( $form_id );
+        if ( $form && ! empty( $form['settings']['conditional_rules'] ) ) {
+            $logic = \FPForms\Plugin::instance()->conditional_logic;
+            if ( $logic && method_exists( $logic, 'evaluate_rules' ) ) {
+                $evaluated = $logic->evaluate_rules( $form_id, $data );
+                $visible_fields  = isset( $evaluated['visible_fields'] ) ? $evaluated['visible_fields'] : [];
+                $required_fields = isset( $evaluated['required_fields'] ) ? $evaluated['required_fields'] : [];
+            }
+        }
         
         $validator = new \FPForms\Validators\Validator();
         
@@ -241,11 +294,21 @@ class Manager {
             $field_type = isset( $field['type'] ) ? $field['type'] : 'text';
             $custom_error = isset( $field['options']['error_message'] ) ? $field['options']['error_message'] : '';
 
+            if ( ! empty( $visible_fields ) && ! in_array( $field_name, $visible_fields, true ) ) {
+                continue;
+            }
+
+            $is_required = ! empty( $field['required'] ) || in_array( $field_name, $required_fields, true );
+
             if ( $field_type === 'fullname' ) {
                 $field_value_nome = isset( $data[ $field_name . '_nome' ] ) ? $data[ $field_name . '_nome' ] : '';
                 $field_value_cognome = isset( $data[ $field_name . '_cognome' ] ) ? $data[ $field_name . '_cognome' ] : '';
-                if ( $field['required'] ) {
+                $nome_visible = empty( $visible_fields ) || in_array( $field_name . '_nome', $visible_fields, true );
+                $cognome_visible = empty( $visible_fields ) || in_array( $field_name . '_cognome', $visible_fields, true );
+                if ( $nome_visible && ( $is_required || in_array( $field_name . '_nome', $required_fields, true ) ) ) {
                     $validator->validate_required( $field_value_nome, $field_name . '_nome', __( 'Nome', 'fp-forms' ), $custom_error );
+                }
+                if ( $cognome_visible && ( $is_required || in_array( $field_name . '_cognome', $required_fields, true ) ) ) {
                     $validator->validate_required( $field_value_cognome, $field_name . '_cognome', __( 'Cognome', 'fp-forms' ), $custom_error );
                 }
                 continue;
@@ -253,12 +316,10 @@ class Manager {
 
             $field_value = isset( $data[ $field_name ] ) ? $data[ $field_name ] : '';
             
-            // Valida campo obbligatorio
-            if ( $field['required'] ) {
+            if ( $is_required ) {
                 $validator->validate_required( $field_value, $field_name, $field_label, $custom_error );
             }
             
-            // Valida in base al tipo
             switch ( $field_type ) {
                 case 'email':
                     $validator->validate_email( $field_value, $field_name, $field_label, $custom_error );
@@ -278,13 +339,11 @@ class Manager {
                 
                 case 'select':
                 case 'radio':
-                    // Whitelist: il valore deve essere tra le scelte configurate
                     $choices = $field['options']['choices'] ?? [];
                     $validator->validate_choices( $field_value, $choices, $field_name, $field_label );
                     break;
                 
                 case 'checkbox':
-                    // Whitelist per checkbox multipli
                     $choices = $field['options']['choices'] ?? [];
                     if ( ! empty( $choices ) ) {
                         $validator->validate_choices( $field_value, $choices, $field_name, $field_label );
@@ -295,7 +354,6 @@ class Manager {
         
         $errors = $validator->get_errors();
         
-        // Applica filtro per permettere validazione custom
         $errors = \FPForms\Core\Hooks::filter_validation_errors( $errors, $form_id, $data );
         
         return [
@@ -845,10 +903,15 @@ class Manager {
             return [
                 'valid' => false,
                 'error' => $result['error'] ?? __( 'Verifica reCAPTCHA fallita', 'fp-forms' ),
+                'score' => null,
             ];
         }
         
-        return [ 'valid' => true, 'error' => null ];
+        return [
+            'valid' => true,
+            'error' => null,
+            'score' => isset( $result['score'] ) ? (float) $result['score'] : null,
+        ];
     }
     
     /**

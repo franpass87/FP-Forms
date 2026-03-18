@@ -544,6 +544,8 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 </div>
                 
                 <?php
+                // Payment settings (Stripe)
+                include FP_FORMS_PLUGIN_DIR . 'templates/admin/partials/payment-settings.php';
                 // Conditional Logic Builder
                 include FP_FORMS_PLUGIN_DIR . 'templates/admin/partials/conditional-logic-builder.php';
                 

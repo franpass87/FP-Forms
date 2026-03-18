@@ -206,5 +206,55 @@ class PaymentManager {
         
         return $wpdb->get_results( $wpdb->prepare( $query, $args['limit'], $args['offset'] ) );
     }
+
+    /**
+     * Ottiene le transazioni per una submission (per webhook e admin).
+     *
+     * @param int $submission_id ID submission.
+     * @return \stdClass[] Lista transazioni.
+     */
+    public function get_transactions_by_submission( $submission_id ) {
+        global $wpdb;
+        $this->maybe_create_transactions_table();
+        $table = $wpdb->prefix . 'fp_forms_transactions';
+        return $wpdb->get_results( $wpdb->prepare(
+            "SELECT * FROM {$table} WHERE submission_id = %d ORDER BY created_at DESC",
+            $submission_id
+        ) );
+    }
+
+    /**
+     * Restituisce checkout_url (o client_secret) per form con pagamento Stripe.
+     * Chiamato da Submissions\Manager dopo save_submission quando il form richiede pagamento.
+     *
+     * @param int   $submission_id ID submission salvata.
+     * @param int   $form_id      ID form.
+     * @param array $data         Dati submission.
+     * @return array{checkout_url?: string, client_secret?: string, error?: string}
+     */
+    public function get_checkout_response( $submission_id, $form_id, array $data ) {
+        if ( ! $this->form_requires_payment( $form_id ) ) {
+            return [];
+        }
+        $form = \FPForms\Plugin::instance()->forms->get_form( $form_id );
+        $provider = $form['settings']['payment_provider'] ?? '';
+        if ( $provider !== 'stripe' ) {
+            return [];
+        }
+        $amount = $this->calculate_amount( $form_id, $data );
+        if ( $amount <= 0 ) {
+            return [ 'error' => __( 'Importo non valido.', 'fp-forms' ) ];
+        }
+        do_action( 'fp_forms_process_payment_stripe', $submission_id, $form_id, $data, $amount );
+        $url = apply_filters( 'fp_forms_checkout_url', '', $submission_id, $form_id, $amount );
+        if ( $url !== '' && is_string( $url ) ) {
+            return [ 'checkout_url' => $url ];
+        }
+        $secret = apply_filters( 'fp_forms_payment_client_secret', '', $submission_id, $form_id, $amount );
+        if ( $secret !== '' && is_string( $secret ) ) {
+            return [ 'client_secret' => $secret ];
+        }
+        return [ 'error' => __( 'Impossibile creare la sessione di pagamento.', 'fp-forms' ) ];
+    }
 }
 

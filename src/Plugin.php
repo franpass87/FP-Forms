@@ -87,6 +87,11 @@ class Plugin {
     public $payments;
     
     /**
+     * Stripe Provider (se Stripe SDK disponibile)
+     */
+    public $stripe;
+    
+    /**
      * Form Versioning
      */
     public $versioning;
@@ -192,6 +197,9 @@ class Plugin {
         
         // Payment Manager (base per future integrazioni)
         $this->payments = new Integrations\PaymentManager();
+        if ( class_exists( \Stripe\Stripe::class ) ) {
+            $this->stripe = new Integrations\Stripe\StripeProvider();
+        }
         
         // Anti-spam
         $this->anti_spam = new Security\AntiSpam();

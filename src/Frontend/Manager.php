@@ -178,9 +178,16 @@ class Manager {
                 true
             );
             
-            // Passa regole al JavaScript
-            wp_localize_script( 'fp-forms-conditional-logic', 'fpFormsRules_' . $form_id, $form['settings']['conditional_rules'] );
+            $operator = isset( $form['settings']['conditional_operator_global'] ) && $form['settings']['conditional_operator_global'] === 'and' ? 'and' : 'or';
+            wp_localize_script( 'fp-forms-conditional-logic', 'fpFormsRules_' . $form_id, [
+                'rules'    => $form['settings']['conditional_rules'],
+                'operator' => $operator,
+            ] );
         }
+        
+        // Token one-time per lock submission (anti double-submit)
+        $submit_token = function_exists( 'wp_generate_uuid4' ) ? wp_generate_uuid4() : ( 'fp_' . uniqid( '', true ) );
+        set_transient( 'fp_forms_submit_lock_' . $submit_token, 0, 120 );
         
         // Track view per analytics
         do_action( 'fp_forms_form_rendered', $form_id );

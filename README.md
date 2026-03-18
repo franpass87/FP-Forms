@@ -12,6 +12,9 @@ Form builder professionale per WordPress, progettato per creare form di prenotaz
 - **Notifiche Webmaster/Staff più chiare** 🆕 - Messaggi email automatici semplificati e orientati all'azione
 - **Simulazione Flussi (Dry-Run)** 🆕 - Verifica email/tracking/integrazioni senza credenziali e senza invii reali
 - **Pagina Impostazioni ripulita** 🆕 - Correzione testi con caratteri corrotti per una lettura più chiara
+- **Pagamenti Stripe (v1.6)** 🆕 - Checkout redirect, webhook, email dopo conferma pagamento
+- **Conditional Logic 2.0 (v1.6)** 🆕 - Validazione server-side e operatore AND/OR tra regole
+- **Coda email e anti-spam (v1.6)** 🆕 - Invio in background, rate limit, lock submission, spam score composito
 - **Template Library** 🆕 - 8 template pronti all'uso
 - **Notifiche Email** - Invia automaticamente email di notifica
 - **Email di Conferma** - Invia email di conferma agli utenti
@@ -172,6 +175,13 @@ Per supporto, contatta: info@francescopasseri.com
 GPL v2 or later
 
 ## 🔄 Changelog
+
+### 1.6.0 - 2026-03-18
+- Pagamenti Stripe (Checkout redirect, webhook, email dopo pagamento)
+- Conditional Logic 2.0 (validazione server-side, AND/OR)
+- Coda email, rate limit, lock submission, spam score composito, fallback SMTP
+
+Vedi [CHANGELOG.md](CHANGELOG.md) per la cronologia completa.
 
 ### 1.1.0 - 2025-11-04
 - 🆕 **Upload File** - Nuovo campo per caricare file (CV, documenti, immagini)

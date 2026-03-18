@@ -7,6 +7,183 @@ namespace FPForms\Email;
  * Gestisce l'invio delle email
  */
 class Manager {
+
+    /**
+     * Nome azione cron per elaborazione coda email
+     */
+    const CRON_ACTION = 'fp_forms_process_email_queue';
+
+    /**
+     * Registra hook cron per coda email e invio email dopo pagamento completato
+     */
+    public function __construct() {
+        add_action( self::CRON_ACTION, [ $this, 'process_queue_job' ], 10, 3 );
+        add_action( 'fp_forms_payment_completed', [ $this, 'send_emails_after_payment' ], 10, 3 );
+    }
+
+    /**
+     * Invia (o accoda) le email dopo il completamento del pagamento Stripe.
+     *
+     * @param int   $submission_id   ID submission.
+     * @param int   $form_id        ID form.
+     * @param array $transaction_data Dati transazione (per log).
+     */
+    public function send_emails_after_payment( int $submission_id, int $form_id, array $transaction_data = [] ): void {
+        $db = \FPForms\Plugin::instance()->database;
+        $submission = $db->get_submission( $submission_id );
+        if ( ! $submission || (int) $submission->form_id !== $form_id ) {
+            return;
+        }
+        $data = isset( $submission->data ) ? json_decode( $submission->data, true ) : [];
+        if ( ! is_array( $data ) ) {
+            $data = [];
+        }
+        $form = \FPForms\Plugin::instance()->forms->get_form( $form_id );
+        if ( ! $form || ! empty( $form['settings']['disable_wordpress_emails'] ) ) {
+            return;
+        }
+        if ( $this->is_queue_enabled() ) {
+            $this->enqueue_email_job( $form_id, $submission_id, 'notification' );
+            $this->enqueue_email_job( $form_id, $submission_id, 'confirmation' );
+            $this->enqueue_email_job( $form_id, $submission_id, 'staff' );
+        } else {
+            $this->send_notification( $form_id, $submission_id, $data );
+            $user_email = $this->get_user_email_from_data( $form_id, $data );
+            if ( $user_email ) {
+                $this->send_confirmation( $form_id, $user_email, $data );
+            }
+            $this->send_staff_notifications_bulk( $form_id, $submission_id, $data );
+        }
+    }
+
+    /**
+     * Verifica se la coda email è abilitata
+     */
+    public function is_queue_enabled(): bool {
+        return (bool) get_option( 'fp_forms_email_queue_enabled', true );
+    }
+
+    /**
+     * Accoda un job email (notification, confirmation, staff).
+     *
+     * @param int    $form_id       ID form.
+     * @param int    $submission_id ID submission.
+     * @param string $type          'notification' | 'confirmation' | 'staff'.
+     */
+    public function enqueue_email_job( int $form_id, int $submission_id, string $type ): void {
+        $allowed = [ 'notification', 'confirmation', 'staff' ];
+        if ( ! in_array( $type, $allowed, true ) ) {
+            return;
+        }
+        wp_schedule_single_event( time(), self::CRON_ACTION, [ $form_id, $submission_id, $type ] );
+        \FPForms\Core\Logger::debug( 'Email job enqueued', [
+            'form_id'       => $form_id,
+            'submission_id' => $submission_id,
+            'type'          => $type,
+        ] );
+    }
+
+    /**
+     * Elabora un job della coda email (chiamato da cron).
+     *
+     * @param int    $form_id       ID form.
+     * @param int    $submission_id ID submission.
+     * @param string $type          'notification' | 'confirmation' | 'staff'.
+     */
+    public function process_queue_job( int $form_id, int $submission_id, string $type ): void {
+        $max_per_hour = (int) apply_filters( 'fp_forms_email_rate_limit_max', get_option( 'fp_forms_email_rate_limit_max', 50 ) );
+        $slot = date( 'Y-m-d-H', current_time( 'timestamp' ) );
+        $key = 'fp_forms_email_rate_' . $slot;
+        $count = (int) get_transient( $key );
+        if ( $max_per_hour > 0 && $count >= $max_per_hour ) {
+            \FPForms\Core\Logger::warning( 'Email rate limit reached, skipping send', [
+                'form_id' => $form_id,
+                'type'    => $type,
+                'slot'    => $slot,
+            ] );
+            return;
+        }
+
+        $submission = \FPForms\Plugin::instance()->database->get_submission( $submission_id );
+        if ( ! $submission || (int) $submission->form_id !== $form_id ) {
+            \FPForms\Core\Logger::warning( 'Process queue job: submission not found or form mismatch', [
+                'form_id'       => $form_id,
+                'submission_id' => $submission_id,
+            ] );
+            return;
+        }
+        $data = isset( $submission->data ) ? json_decode( $submission->data, true ) : [];
+        if ( ! is_array( $data ) ) {
+            $data = [];
+        }
+
+        try {
+            if ( $type === 'notification' ) {
+                $this->send_notification( $form_id, $submission_id, $data );
+            } elseif ( $type === 'confirmation' ) {
+                $user_email = $this->get_user_email_from_data( $form_id, $data );
+                if ( $user_email ) {
+                    $this->send_confirmation( $form_id, $user_email, $data );
+                }
+            } elseif ( $type === 'staff' ) {
+                $this->send_staff_notifications_bulk( $form_id, $submission_id, $data );
+            }
+        } catch ( \Throwable $e ) {
+            \FPForms\Core\Logger::error( 'Email queue job failed', [
+                'form_id'       => $form_id,
+                'submission_id' => $submission_id,
+                'type'          => $type,
+                'error'         => $e->getMessage(),
+            ] );
+            wp_schedule_single_event( time() + 300, self::CRON_ACTION, [ $form_id, $submission_id, $type ] );
+            return;
+        }
+
+        if ( $max_per_hour > 0 ) {
+            set_transient( $key, $count + 1, HOUR_IN_SECONDS );
+        }
+    }
+
+    /**
+     * Restituisce l'email utente dai dati submission (per conferma)
+     */
+    private function get_user_email_from_data( int $form_id, array $data ): ?string {
+        $fields = \FPForms\Plugin::instance()->forms->get_fields( $form_id );
+        if ( is_array( $fields ) ) {
+            foreach ( $fields as $field ) {
+                if ( isset( $field['type'] ) && $field['type'] === 'email' && ! empty( $field['name'] ) ) {
+                    $v = $data[ $field['name'] ] ?? '';
+                    if ( is_email( $v ) ) {
+                        return $v;
+                    }
+                }
+            }
+        }
+        foreach ( $data as $key => $value ) {
+            if ( is_string( $value ) && stripos( $key, 'email' ) !== false && is_email( $value ) ) {
+                return $value;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Invia notifiche a tutti gli indirizzi staff (usato dalla coda)
+     */
+    private function send_staff_notifications_bulk( int $form_id, int $submission_id, array $data ): void {
+        $form = \FPForms\Plugin::instance()->forms->get_form( $form_id );
+        if ( ! $form || empty( $form['settings']['staff_notifications_enabled'] ) ) {
+            return;
+        }
+        $staff_emails = $form['settings']['staff_emails'] ?? '';
+        if ( $staff_emails === '' ) {
+            return;
+        }
+        $emails = array_filter( array_map( 'trim', preg_split( '/[,;\n\r]+/', $staff_emails ) ), 'is_email' );
+        foreach ( $emails as $staff_email ) {
+            $this->send_staff_notification( $form_id, $submission_id, $staff_email, $data );
+        }
+    }
     
     /**
      * Invia notifica per nuova submission
@@ -55,7 +232,7 @@ class Manager {
         $success = false;
         $this->apply_fp_forms_mail_from();
         try {
-            $success = wp_mail( $to, $subject, $message, $headers );
+            $success = $this->send_via_wp_mail_with_fallback( $to, $subject, $message, $headers );
         } catch ( \Throwable $e ) {
             self::log_email_diagnostic( 'notification', $to, $subject, false, $e->getMessage() );
             throw $e;
@@ -453,7 +630,7 @@ class Manager {
         $success = false;
         $this->apply_fp_forms_mail_from();
         try {
-            $success = wp_mail( $user_email, $subject, $message, $headers );
+            $success = $this->send_via_wp_mail_with_fallback( $user_email, $subject, $message, $headers );
         } catch ( \Throwable $e ) {
             self::log_email_diagnostic( 'confirmation', $user_email, $subject, false, $e->getMessage() );
             throw $e;
@@ -513,7 +690,7 @@ class Manager {
         $success = false;
         $this->apply_fp_forms_mail_from();
         try {
-            $success = wp_mail( $staff_email, $subject, $message, $headers );
+            $success = $this->send_via_wp_mail_with_fallback( $staff_email, $subject, $message, $headers );
         } catch ( \Throwable $e ) {
             self::log_email_diagnostic( 'staff', $staff_email, $subject, false, $e->getMessage() );
             throw $e;
@@ -527,6 +704,33 @@ class Manager {
         do_action( 'fp_forms_after_send_staff_notification', $form_id, $data, $success );
 
         return $success;
+    }
+
+    /**
+     * Invia email via wp_mail con fallback: se fallisce e SMTP FP è attivo, ritenta senza SMTP.
+     *
+     * @param string|string[] $to      Destinatario/i.
+     * @param string          $subject Oggetto.
+     * @param string          $message Corpo.
+     * @param array|string    $headers Headers.
+     * @return bool
+     */
+    private function send_via_wp_mail_with_fallback( $to, $subject, $message, $headers ) {
+        $ok = wp_mail( $to, $subject, $message, $headers );
+        if ( $ok ) {
+            return true;
+        }
+        $settings = Smtp::get_settings();
+        if ( empty( $settings['enabled'] ) || empty( $settings['host'] ) ) {
+            return false;
+        }
+        remove_action( 'phpmailer_init', [ Smtp::class, 'configure_phpmailer' ] );
+        $ok = wp_mail( $to, $subject, $message, $headers );
+        add_action( 'phpmailer_init', [ Smtp::class, 'configure_phpmailer' ] );
+        if ( $ok ) {
+            \FPForms\Core\Logger::info( 'Email sent via fallback (default transport) after SMTP failure' );
+        }
+        return $ok;
     }
 
     /**

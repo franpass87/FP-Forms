@@ -1,5 +1,7 @@
 # Composer - vendor è incluso nel repo perché il server di produzione non ha Composer
 # /vendor/
+# Stripe README contiene chiavi di esempio che attivano GitHub secret scanning
+vendor/stripe/stripe-php/README.md
 
 # IDE
 .idea/

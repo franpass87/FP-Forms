@@ -1,5 +1,24 @@
 # CHANGELOG - FP Forms
 
+## [1.6.0] - 2026-03-18
+### Added
+- **Pagamenti Stripe**: integrazione Stripe Checkout per form a pagamento; redirect a Stripe dopo submit; webhook REST per completamento pagamento; email inviate solo dopo conferma pagamento.
+- **Conditional Logic 2.0**: validazione server-side speculare al frontend (campi nascosti esclusi da required, campi resi obbligatori dalla logica validati); operatore globale AND/OR per combinare più regole; persistenza e sanitizzazione `conditional_rules` e `conditional_operator_global`.
+- **Coda email**: invio in background tramite `wp_schedule_single_event`; opzione "Abilita coda email" e "Rate limit email (max/ora)" nelle impostazioni.
+- **Lock submission**: token one-time per form per prevenire doppio invio lato server (transient); messaggio dedicato se token già usato.
+- **Spam score composito**: punteggio 0-100 (reCAPTCHA v3 + contesto); soglia configurabile in impostazioni; blocco invio se superata.
+- **Fallback SMTP**: in caso di fallimento invio con SMTP configurato, ritento con trasporto di default.
+- Impostazioni globali Stripe (Secret Key, Publishable Key, Webhook Secret) e sezione Pagamento nel form builder (importo fisso o campo).
+- `PaymentManager::get_transactions_by_submission()` e `get_checkout_response()` per flusso pagamento e webhook.
+
+### Changed
+- Flusso email per form a pagamento: notifiche webmaster/staff/conferma inviate (o accodate) solo dopo `fp_forms_payment_completed` (webhook Stripe).
+- Validazione submission: campi nascosti dalla logica condizionale esclusi dalla validazione required; campi resi required dalla logica trattati come obbligatori lato server.
+- Frontend: redirect automatico a `checkout_url` quando la risposta contiene `payment_required` e `checkout_url`.
+
+### Fixed
+- Persistenza impostazioni pagamento e conditional rules nel salvataggio form (whitelist e sanitizzazione in `sanitize_form_settings`).
+
 ## [1.5.1] - 2026-03-18
 ### Fixed
 - Corrette stringhe con encoding errato nella pagina impostazioni plugin (caratteri accentati corrotti).

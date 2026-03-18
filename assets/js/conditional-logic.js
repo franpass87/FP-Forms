@@ -8,12 +8,21 @@
     
     class FPConditionalLogic {
         
-        constructor( formElement, rules ) {
+        constructor( formElement, rulesOrData ) {
             this.form = formElement;
             this.formId = $(formElement).data('form-id');
-            this.rules = rules || [];
-            this._originalRequired = new Map(); // Stato required originale per campo
-            
+            if ( Array.isArray( rulesOrData ) ) {
+                this.rules = rulesOrData;
+                this.operator = 'or';
+            } else if ( rulesOrData && Array.isArray( rulesOrData.rules ) ) {
+                this.rules = rulesOrData.rules;
+                this.operator = ( rulesOrData.operator === 'and' ) ? 'and' : 'or';
+            } else {
+                this.rules = [];
+                this.operator = 'or';
+            }
+            this._originalRequired = new Map();
+
             if ( this.rules.length > 0 ) {
                 this.init();
             }
@@ -75,22 +84,57 @@
         evaluateRule( rule ) {
             const value = this.getFieldValue( rule.trigger_field );
             const shouldApply = this.checkCondition( value, rule.condition, rule.value );
-            
-            if (window.fpFormsDebug) {
-                console.log('[FP Forms] Evaluating rule:', rule, 'Result:', shouldApply);
+            if ( window.fpFormsDebug ) {
+                console.log( '[FP Forms] Evaluating rule:', rule, 'Result:', shouldApply );
             }
-            
             if ( shouldApply ) {
                 this.applyAction( rule.action, rule.target_fields );
             } else {
                 this.reverseAction( rule.action, rule.target_fields );
             }
         }
-        
+
         evaluateAllRules() {
-            this.rules.forEach( rule => {
-                this.evaluateRule( rule );
-            });
+            if ( this.operator === 'or' && this.rules.length <= 1 ) {
+                this.rules.forEach( rule => this.evaluateRule( rule ) );
+                return;
+            }
+            var self = this;
+            var ruleMatches = this.rules.map( function( rule ) {
+                var value = self.getFieldValue( rule.trigger_field );
+                return self.checkCondition( value, rule.condition, rule.value );
+            } );
+            var targetFields = {};
+            this.rules.forEach( function( rule, idx ) {
+                ( rule.target_fields || [] ).forEach( function( fieldName ) {
+                    if ( ! targetFields[ fieldName ] ) targetFields[ fieldName ] = { show: [], hide: [], require: [], unrequire: [] };
+                    if ( rule.action === 'show' ) targetFields[ fieldName ].show.push( idx );
+                    else if ( rule.action === 'hide' ) targetFields[ fieldName ].hide.push( idx );
+                    else if ( rule.action === 'require' ) targetFields[ fieldName ].require.push( idx );
+                    else if ( rule.action === 'unrequire' ) targetFields[ fieldName ].unrequire.push( idx );
+                } );
+            } );
+            Object.keys( targetFields ).forEach( function( fieldName ) {
+                var container = self.getFieldContainer( fieldName );
+                if ( ! container ) return;
+                var t = targetFields[ fieldName ];
+                var anyHide = t.hide.some( function( idx ) { return ruleMatches[ idx ]; } );
+                var showMatchCount = t.show.filter( function( idx ) { return ruleMatches[ idx ]; } ).length;
+                var requireMatchCount = t.require.filter( function( idx ) { return ruleMatches[ idx ]; } ).length;
+                var unrequireMatchCount = t.unrequire.filter( function( idx ) { return ruleMatches[ idx ]; } ).length;
+                var visible = ! anyHide && ( t.show.length === 0 || ( self.operator === 'or' ? showMatchCount > 0 : showMatchCount === t.show.length ) );
+                var required = t.require.length > 0 && unrequireMatchCount === 0 && ( self.operator === 'or' ? requireMatchCount > 0 : requireMatchCount === t.require.length );
+                if ( ! required && t.require.length === 0 ) {
+                    required = self._originalRequired.get( fieldName ) || false;
+                }
+                if ( visible ) {
+                    $( container ).slideDown( 200 ).addClass( 'fp-conditional-visible' );
+                } else {
+                    $( container ).slideUp( 200 ).removeClass( 'fp-conditional-visible' );
+                    self.clearFieldValue( fieldName );
+                }
+                self.setRequired( container, required );
+            } );
         }
         
         checkCondition( value, condition, expected ) {
@@ -264,11 +308,10 @@
         $('.fp-forms-form').each(function() {
             const formElement = this;
             const formId = $(this).data('form-id');
-            
-            const rules = $(this).data('conditional-rules') || window['fpFormsRules_' + formId] || [];
-            
+            const data = $(this).data('conditional-rules') || window['fpFormsRules_' + formId] || [];
+            const rules = Array.isArray( data ) ? data : ( data && data.rules ) || [];
             if ( rules.length > 0 ) {
-                new FPConditionalLogic( formElement, rules );
+                new FPConditionalLogic( formElement, data );
             }
         });
     });

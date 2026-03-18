@@ -212,5 +212,26 @@ class AntiSpam {
         
         return $this->_blacklist_cache;
     }
+
+    /**
+     * Calcola punteggio spam composito (0-100). Usato dopo honeypot/time trap/reCAPTCHA.
+     *
+     * @param int   $form_id ID form.
+     * @param array $data    Dati inviati.
+     * @param array $context Contesto: 'recaptcha_score' => float|null (solo v3).
+     * @return int Punteggio 0-100 (soglia configurabile in fp_forms_spam_score_threshold).
+     */
+    public function compute_spam_score( $form_id, array $data, array $context = [] ) {
+        $score = 0;
+        $recaptcha_score = isset( $context['recaptcha_score'] ) ? $context['recaptcha_score'] : null;
+        if ( $recaptcha_score !== null && is_numeric( $recaptcha_score ) ) {
+            $s = (float) $recaptcha_score;
+            if ( $s >= 0 && $s <= 1 ) {
+                $score += (int) round( ( 1 - $s ) * 50 );
+            }
+        }
+        $score = max( 0, min( 100, $score ) );
+        return apply_filters( 'fp_forms_spam_score', $score, $form_id, $data, $context );
+    }
 }
 

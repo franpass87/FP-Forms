@@ -192,5 +192,8 @@ $btn_hover_hex = sprintf( '#%02x%02x%02x', $btn_hover_r, $btn_hover_g, $btn_hove
         <input type="hidden" name="action" value="fp_forms_submit">
         <input type="hidden" name="form_id" value="<?php echo esc_attr( $form['id'] ); ?>">
         <input type="hidden" name="nonce" value="<?php echo wp_create_nonce( 'fp_forms_submit' ); ?>">
+        <?php if ( ! empty( $submit_token ) ) : ?>
+        <input type="hidden" name="fp_submit_token" value="<?php echo esc_attr( $submit_token ); ?>">
+        <?php endif; ?>
     </form>
 </div>

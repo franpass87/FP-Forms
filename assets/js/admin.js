@@ -623,12 +623,18 @@
                 brevo_event_name: $('input[name="brevo_event_name"]').val(),
                 // Conditional logic
                 conditional_rules: FPFormsAdmin.getConditionalRules(),
+                conditional_operator_global: $('#fp-conditional-operator-global').val() || 'or',
                 // Webhooks
                 webhooks: FPFormsAdmin.getWebhooks(),
                 // Multi-step
                 enable_multistep: $('input[name="enable_multistep"]').is(':checked'),
                 // Progressive save
-                enable_progressive_save: $('input[name="enable_progressive_save"]').is(':checked')
+                enable_progressive_save: $('input[name="enable_progressive_save"]').is(':checked'),
+                // Payment (Stripe)
+                payment_enabled: $('input[name="payment_enabled"]').is(':checked'),
+                payment_provider: $('#payment_provider').val() || '',
+                payment_amount: parseFloat($('input[name="payment_amount"]').val()) || 0,
+                payment_amount_field: $('#payment_amount_field').val() || ''
             };
             
             var $btn = $('#fp-form-builder').find('button[type="submit"]');

@@ -117,6 +117,10 @@
             formData.append('action', 'fp_forms_submit');
             formData.append('form_id', formId);
             formData.append('nonce', $form.find('[name="nonce"]').val());
+            var $submitToken = $form.find('[name="fp_submit_token"]');
+            if ($submitToken.length && $submitToken.val()) {
+                formData.append('fp_submit_token', $submitToken.val());
+            }
             
             // Raccogli tutti i campi
             var fieldValues = {};
@@ -126,7 +130,7 @@
                 var name = $field.attr('name');
                 
                 // Salta campi di sistema e campi honeypot anti-spam
-                if (!name || name === 'action' || name === 'form_id' || name === 'nonce') {
+                if (!name || name === 'action' || name === 'form_id' || name === 'nonce' || name === 'fp_submit_token') {
                     return;
                 }
                 if (name === 'fp_ts' || name === 'fp_ts_token' || /^fp_hp_/.test(name)) {
@@ -214,7 +218,10 @@
                             }
                         }));
                         
-                        // Check per redirect — valida che sia stesso dominio o path relativo
+                        if (response.data.payment_required && response.data.checkout_url) {
+                            window.location.href = response.data.checkout_url;
+                            return;
+                        }
                         if (response.data.redirect) {
                             var redir = String(response.data.redirect);
                             if (redir.charAt(0) === '/' || redir.indexOf(window.location.origin) === 0) {

@@ -16,6 +16,20 @@ $email_accent_color = get_option( 'fp_forms_email_accent_color', '#3b82f6' );
 $email_footer_text = get_option( 'fp_forms_email_footer_text', '' );
 $email_response_time = get_option( 'fp_forms_email_response_time', '' );
 
+$email_queue_enabled = (bool) get_option( 'fp_forms_email_queue_enabled', true );
+$email_rate_limit_max = (int) get_option( 'fp_forms_email_rate_limit_max', 50 );
+$spam_score_threshold = (int) get_option( 'fp_forms_spam_score_threshold', 80 );
+$spam_score_threshold = max( 1, min( 100, $spam_score_threshold ) );
+
+$stripe_settings = get_option( 'fp_forms_stripe_settings', [
+    'secret_key'       => '',
+    'publishable_key'  => '',
+    'webhook_secret'   => '',
+] );
+$stripe_secret_key      = $stripe_settings['secret_key'] ?? '';
+$stripe_publishable_key = $stripe_settings['publishable_key'] ?? '';
+$stripe_webhook_secret  = $stripe_settings['webhook_secret'] ?? '';
+
 // SMTP settings
 $smtp_settings = get_option( 'fp_forms_smtp_settings', [
     'enabled'    => false,
@@ -220,6 +234,31 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                                   placeholder="<?php esc_attr_e( "Via Roma 1 - 00100 Roma\nTel: +39 06 1234567\nP.IVA 12345678901", 'fp-forms' ); ?>"><?php echo esc_textarea( $email_footer_text ); ?></textarea>
                         <p class="description">
                             <?php _e( 'Indirizzo, contatti, P.IVA e altre informazioni mostrate nel footer delle email.', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="email_queue_enabled"><?php esc_html_e( 'Coda email', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" id="email_queue_enabled" name="email_queue_enabled" value="1" <?php checked( $email_queue_enabled ); ?>>
+                            <?php esc_html_e( 'Abilita coda email (invio in background)', 'fp-forms' ); ?>
+                        </label>
+                        <p class="description">
+                            <?php esc_html_e( 'Quando attiva, le email vengono accodate e inviate via cron invece che nella richiesta di submit.', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="email_rate_limit_max"><?php esc_html_e( 'Rate limit email (max/ora)', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="number" id="email_rate_limit_max" name="email_rate_limit_max" value="<?php echo esc_attr( $email_rate_limit_max ); ?>" min="0" max="1000" class="small-text">
+                        <p class="description">
+                            <?php esc_html_e( 'Numero massimo di email inviate per ora (0 = illimitato).', 'fp-forms' ); ?>
                         </p>
                     </td>
                 </tr>
@@ -564,7 +603,47 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                     </td>
                 </tr>
                 <?php endif; ?>
-                
+                <tr>
+                    <th scope="row">
+                        <label for="spam_score_threshold"><?php esc_html_e( 'Soglia spam score', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="number" id="spam_score_threshold" name="spam_score_threshold" value="<?php echo esc_attr( $spam_score_threshold ); ?>" min="1" max="100" class="small-text">
+                        <span><?php esc_html_e( 'su 100', 'fp-forms' ); ?></span>
+                        <p class="description">
+                            <?php esc_html_e( 'Se il punteggio composito anti-spam supera questa soglia, l\'invio viene bloccato (honeypot, tempo, reCAPTCHA).', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th colspan="2">
+                        <h2 id="stripe"><?php esc_html_e( 'Stripe (pagamenti)', 'fp-forms' ); ?></h2>
+                        <p class="description" style="font-weight: normal;">
+                            <?php esc_html_e( 'Configura le chiavi API Stripe per abilitare il pagamento nei form. Ottieni le chiavi dalla dashboard Stripe.', 'fp-forms' ); ?>
+                        </p>
+                    </th>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="stripe_secret_key"><?php esc_html_e( 'Secret Key', 'fp-forms' ); ?></label></th>
+                    <td>
+                        <input type="password" id="stripe_secret_key" name="stripe_secret_key" value="<?php echo esc_attr( $stripe_secret_key ); ?>" class="regular-text" autocomplete="off">
+                        <p class="description"><?php esc_html_e( 'Chiave segreta (sk_live_... o sk_test_...). Non condividerla.', 'fp-forms' ); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="stripe_publishable_key"><?php esc_html_e( 'Publishable Key', 'fp-forms' ); ?></label></th>
+                    <td>
+                        <input type="text" id="stripe_publishable_key" name="stripe_publishable_key" value="<?php echo esc_attr( $stripe_publishable_key ); ?>" class="regular-text" placeholder="pk_live_...">
+                        <p class="description"><?php esc_html_e( 'Chiave pubblica (pk_live_... o pk_test_...).', 'fp-forms' ); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="stripe_webhook_secret"><?php esc_html_e( 'Webhook Secret', 'fp-forms' ); ?></label></th>
+                    <td>
+                        <input type="password" id="stripe_webhook_secret" name="stripe_webhook_secret" value="<?php echo esc_attr( $stripe_webhook_secret ); ?>" class="regular-text" autocomplete="off" placeholder="whsec_...">
+                        <p class="description"><?php esc_html_e( 'Firma webhook (whsec_...) per verificare gli eventi da Stripe.', 'fp-forms' ); ?></p>
+                    </td>
+                </tr>
                 <tr>
                     <th colspan="2">
                         <h2 id="tracking"><?php _e( 'Google Tag Manager & Analytics', 'fp-forms' ); ?></h2>

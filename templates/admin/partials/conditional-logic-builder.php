@@ -8,6 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $rules = isset( $form_settings['conditional_rules'] ) ? $form_settings['conditional_rules'] : [];
+$operator_global = isset( $form_settings['conditional_operator_global'] ) && $form_settings['conditional_operator_global'] === 'and' ? 'and' : 'or';
 ?>
 
 <div class="fp-conditional-logic-section">
@@ -19,6 +20,14 @@ $rules = isset( $form_settings['conditional_rules'] ) ? $form_settings['conditio
     <p class="fp-section-description">
         <?php _e( 'Mostra o nascondi campi in base alle risposte dell\'utente', 'fp-forms' ); ?>
     </p>
+
+    <div class="fp-rule-operator-row">
+        <label for="fp-conditional-operator-global"><?php esc_html_e( 'Combina le regole con', 'fp-forms' ); ?></label>
+        <select id="fp-conditional-operator-global" name="conditional_operator_global" class="fp-conditional-operator-global">
+            <option value="or" <?php selected( $operator_global, 'or' ); ?>><?php esc_html_e( 'OR (almeno una regola vera)', 'fp-forms' ); ?></option>
+            <option value="and" <?php selected( $operator_global, 'and' ); ?>><?php esc_html_e( 'AND (tutte le regole vere)', 'fp-forms' ); ?></option>
+        </select>
+    </div>
     
     <div id="fp-conditional-rules-container">
         <?php if ( ! empty( $rules ) ) : ?>
@@ -157,6 +166,25 @@ $rules = isset( $form_settings['conditional_rules'] ) ? $form_settings['conditio
 
 .fp-rule-body {
     padding: var(--fp-spacing-md);
+}
+
+.fp-rule-operator-row {
+    margin-bottom: var(--fp-spacing-lg);
+}
+.fp-rule-operator-row label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--fp-color-text);
+    font-size: 13px;
+}
+.fp-rule-operator-row select {
+    width: 100%;
+    max-width: 280px;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: var(--fp-radius-md);
+    font-size: 14px;
 }
 
 .fp-rule-row {
