@@ -111,7 +111,7 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                                value="<?php echo esc_attr( $email_from_name ); ?>" 
                                class="regular-text">
                         <p class="description">
-                            <?php _e( 'Il nome che apparirÃ  come mittente nelle email inviate dal plugin.', 'fp-forms' ); ?>
+                            <?php _e( 'Il nome che apparira come mittente nelle email inviate dal plugin.', 'fp-forms' ); ?>
                         </p>
                     </td>
                 </tr>
@@ -126,7 +126,7 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                                value="<?php echo esc_attr( $email_from_address ); ?>" 
                                class="regular-text">
                         <p class="description">
-                            <?php _e( 'L\'indirizzo email che apparirÃ  come mittente.', 'fp-forms' ); ?>
+                            <?php _e( 'L\'indirizzo email che apparira come mittente.', 'fp-forms' ); ?>
                         </p>
                     </td>
                 </tr>
@@ -484,8 +484,8 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                             </option>
                         </select>
                         <p class="description">
-                            <strong>v2:</strong> <?php _e( 'Mostra il checkbox "Non sono un robot" (piÃ¹ affidabile)', 'fp-forms' ); ?><br>
-                            <strong>v3:</strong> <?php _e( 'Completamente invisibile, analizza il comportamento utente (piÃ¹ fluido)', 'fp-forms' ); ?>
+                            <strong>v2:</strong> <?php _e( 'Mostra il checkbox "Non sono un robot" (piu affidabile)', 'fp-forms' ); ?><br>
+                            <strong>v3:</strong> <?php _e( 'Completamente invisibile, analizza il comportamento utente (piu fluido)', 'fp-forms' ); ?>
                         </p>
                     </td>
                 </tr>
@@ -539,7 +539,7 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                             <strong>Consigliato: 0.5</strong>
                         </span>
                         <p class="description">
-                            <?php _e( 'Score piÃ¹ alto = piÃ¹ restrittivo. 0.0 = bot sicuro, 1.0 = umano sicuro. Valori tipici:', 'fp-forms' ); ?><br>
+                            <?php _e( 'Score piu alto = piu restrittivo. 0.0 = bot sicuro, 1.0 = umano sicuro. Valori tipici:', 'fp-forms' ); ?><br>
                             &#x2022; <code>0.9</code>: <?php _e( 'Molto restrittivo (pochi falsi positivi)', 'fp-forms' ); ?><br>
                             &#x2022; <code>0.7</code>: <?php _e( 'Restrittivo', 'fp-forms' ); ?><br>
                             &#x2022; <code>0.5</code>: <?php _e( 'Bilanciato (raccomandato)', 'fp-forms' ); ?><br>
@@ -632,7 +632,7 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                                 <input type="checkbox" name="track_interactions" value="1" <?php checked( $track_interactions, true ); ?>>
                                 <strong><?php _e( 'Field Interactions', 'fp-forms' ); ?></strong>
                             </label>
-                            <p class="description"><?php _e( 'Traccia ogni interazione con i campi (focus, input). PuÃ² generare molti eventi.', 'fp-forms' ); ?></p>
+                            <p class="description"><?php _e( 'Traccia ogni interazione con i campi (focus, input). Puo generare molti eventi.', 'fp-forms' ); ?></p>
                             
                             <br>
                             
@@ -854,7 +854,7 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                         </p>
                         <div style="margin-top: 12px; padding: 12px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
                             <p style="margin: 0; font-size: 13px; color: #856404;">
-                                <strong>&#x26A0;&#xFE0F; PerchÃ© Conversions API?</strong><br>
+                                <strong>&#x26A0;&#xFE0F; Perche Conversions API?</strong><br>
                                 &#x2022; iOS 14.5+ blocca molti pixel client-side<br>
                                 &#x2022; Ad blockers impediscono tracking<br>
                                 &#x2022; Server-side = 100% affidabile<br>

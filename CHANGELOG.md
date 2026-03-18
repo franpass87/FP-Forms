@@ -1,5 +1,10 @@
 # CHANGELOG - FP Forms
 
+## [1.5.1] - 2026-03-18
+### Fixed
+- Corrette stringhe con encoding errato nella pagina impostazioni plugin (caratteri accentati corrotti).
+- Migliorata la leggibilità dei testi in sezioni Email, reCAPTCHA, Tracking e Meta.
+
 ## [1.5.0] - 2026-03-18
 ### Added
 - Nuova sezione admin "Simulazione Flussi (Dry-Run)" nelle impostazioni plugin per verificare email, tracking e integrazioni senza invii reali.
