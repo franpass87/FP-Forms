@@ -10,6 +10,7 @@ Form builder professionale per WordPress, progettato per creare form di prenotaz
 - **Gestione Submissions** - Visualizza e gestisci tutte le submissions ricevute
 - **Export Submissions** 🆕 - Export CSV e Excel con filtri avanzati
 - **Notifiche Webmaster/Staff più chiare** 🆕 - Messaggi email automatici semplificati e orientati all'azione
+- **Simulazione Flussi (Dry-Run)** 🆕 - Verifica email/tracking/integrazioni senza credenziali e senza invii reali
 - **Template Library** 🆕 - 8 template pronti all'uso
 - **Notifiche Email** - Invia automaticamente email di notifica
 - **Email di Conferma** - Invia email di conferma agli utenti

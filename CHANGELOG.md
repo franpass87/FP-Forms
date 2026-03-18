@@ -1,5 +1,15 @@
 # CHANGELOG - FP Forms
 
+## [1.5.0] - 2026-03-18
+### Added
+- Nuova sezione admin "Simulazione Flussi (Dry-Run)" nelle impostazioni plugin per verificare email, tracking e integrazioni senza invii reali.
+
+### Changed
+- Logica del report simulazione aggiornata: i flussi volutamente non configurati ora risultano "Disabilitato" invece di "Warning".
+
+### Fixed
+- Corretto il check staff nel report con etichetta coerente e stato più accurato in base alla configurazione del form.
+
 ## [1.4.12] - 2026-03-18
 ### Changed
 - Migliorata la leggibilità dell'area Submissions con riepilogo rapido, anteprima dati più chiara e dettaglio in modal strutturato.

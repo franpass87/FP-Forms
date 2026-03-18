@@ -36,6 +36,7 @@ class Manager {
         add_action( 'wp_ajax_fp_forms_test_brevo', [ $this, 'ajax_test_brevo' ] );
         add_action( 'wp_ajax_fp_forms_load_brevo_lists', [ $this, 'ajax_load_brevo_lists' ] );
         add_action( 'wp_ajax_fp_forms_test_meta', [ $this, 'ajax_test_meta' ] );
+        add_action( 'wp_ajax_fp_forms_run_simulation', [ $this, 'ajax_run_simulation' ] );
         add_action( 'wp_ajax_fp_forms_test_webhook', [ $this, 'ajax_test_webhook' ] );
         add_action( 'wp_ajax_fp_forms_restore_snapshot', [ $this, 'ajax_restore_snapshot' ] );
         add_action( 'wp_ajax_fp_forms_import_form_config', [ $this, 'ajax_import_form_config' ] );
@@ -948,6 +949,274 @@ class Manager {
         } else {
             wp_send_json_error( [ 'message' => $result['message'] ] );
         }
+    }
+
+    /**
+     * AJAX: Simula i flussi principali del form senza invii reali.
+     *
+     * Il simulatore esegue un dry-run dei controlli operativi per:
+     * email, tracking, Brevo, Meta, webhook e reCAPTCHA.
+     */
+    public function ajax_run_simulation() {
+        check_ajax_referer( 'fp_forms_admin', 'nonce' );
+
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
+            wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
+        }
+
+        $form_id = isset( $_POST['form_id'] ) ? absint( $_POST['form_id'] ) : 0;
+        if ( $form_id <= 0 ) {
+            wp_send_json_error( [ 'message' => __( 'Form non valido.', 'fp-forms' ) ] );
+        }
+
+        $form = \FPForms\Plugin::instance()->forms->get_form( $form_id );
+        if ( ! is_array( $form ) ) {
+            wp_send_json_error( [ 'message' => __( 'Form non trovato.', 'fp-forms' ) ] );
+        }
+
+        $sample_data = $this->build_simulation_sample_data( $form );
+        $report      = $this->build_simulation_report( $form, $sample_data );
+
+        wp_send_json_success(
+            [
+                'message' => __( 'Simulazione completata con successo.', 'fp-forms' ),
+                'report'  => $report,
+            ]
+        );
+    }
+
+    /**
+     * Costruisce dati demo coerenti con i campi del form.
+     *
+     * @param array $form Dati form.
+     * @return array Dati submission simulata.
+     */
+    private function build_simulation_sample_data( array $form ): array {
+        $sample_data = [];
+        $fields      = $form['fields'] ?? [];
+
+        foreach ( $fields as $field ) {
+            if ( ! is_array( $field ) || empty( $field['name'] ) ) {
+                continue;
+            }
+
+            $name = (string) $field['name'];
+            $type = (string) ( $field['type'] ?? 'text' );
+
+            switch ( $type ) {
+                case 'email':
+                    $sample_data[ $name ] = 'simulazione@example.com';
+                    break;
+                case 'phone':
+                    $sample_data[ $name ] = '+39 333 1234567';
+                    break;
+                case 'number':
+                    $sample_data[ $name ] = '42';
+                    break;
+                case 'date':
+                    $sample_data[ $name ] = gmdate( 'Y-m-d' );
+                    break;
+                case 'checkbox':
+                    $choices              = $field['options']['choices'] ?? [];
+                    $sample_data[ $name ] = is_array( $choices ) && ! empty( $choices ) ? [ (string) $choices[0] ] : [ 'opzione-1' ];
+                    break;
+                case 'select':
+                case 'radio':
+                    $choices              = $field['options']['choices'] ?? [];
+                    $sample_data[ $name ] = is_array( $choices ) && ! empty( $choices ) ? (string) $choices[0] : 'opzione-1';
+                    break;
+                case 'fullname':
+                    $sample_data[ $name . '_nome' ]    = 'Mario';
+                    $sample_data[ $name . '_cognome' ] = 'Rossi';
+                    break;
+                default:
+                    $sample_data[ $name ] = 'Valore di test';
+                    break;
+            }
+        }
+
+        return $sample_data;
+    }
+
+    /**
+     * Genera il report completo della simulazione.
+     *
+     * @param array $form Dati form.
+     * @param array $sample_data Dati demo usati nel dry-run.
+     * @return array
+     */
+    private function build_simulation_report( array $form, array $sample_data ): array {
+        $form_settings = is_array( $form['settings'] ?? null ) ? $form['settings'] : [];
+        $form_id       = (int) ( $form['id'] ?? 0 );
+
+        $emails_disabled = ! empty( $form_settings['disable_wordpress_emails'] );
+        $notification_to = isset( $form_settings['notification_email'] ) && trim( (string) $form_settings['notification_email'] ) !== ''
+            ? (string) $form_settings['notification_email']
+            : (string) get_option( 'admin_email' );
+
+        $staff_raw   = (string) ( $form_settings['staff_emails'] ?? '' );
+        $staff_emails = preg_split( '/[,;\n\r]+/', $staff_raw ) ?: [];
+        $staff_emails = array_values( array_filter( array_map( 'trim', $staff_emails ), 'is_email' ) );
+
+        $has_user_email_field = false;
+        foreach ( (array) ( $form['fields'] ?? [] ) as $field ) {
+            if ( ! is_array( $field ) ) {
+                continue;
+            }
+            if ( ( $field['type'] ?? '' ) === 'email' ) {
+                $has_user_email_field = true;
+                break;
+            }
+        }
+
+        $tracking_hook_registered = has_action( 'fp_forms_after_save_submission' ) !== false;
+        $tracking_listeners       = has_action( 'fp_tracking_event' ) !== false;
+        $confirmation_enabled     = ! empty( $form_settings['confirmation_enabled'] );
+        $staff_enabled            = ! empty( $form_settings['staff_notifications_enabled'] );
+
+        $brevo_settings = get_option( 'fp_forms_brevo_settings', [] );
+        $brevo_has_key  = ! empty( $brevo_settings['api_key'] ?? '' );
+        $brevo_enabled_for_form = ! empty( $form_settings['brevo_enabled'] );
+        $brevo_list_id = $form_settings['brevo_list_id'] ?? ( $brevo_settings['default_list_id'] ?? '' );
+
+        $meta_settings   = get_option( 'fp_forms_meta_settings', [] );
+        $meta_has_pixel  = ! empty( $meta_settings['pixel_id'] ?? '' );
+        $meta_has_token  = ! empty( $meta_settings['access_token'] ?? '' );
+
+        $webhooks       = is_array( $form_settings['webhooks'] ?? null ) ? $form_settings['webhooks'] : [];
+        $enabled_hooks  = array_filter(
+            $webhooks,
+            static function ( $wh ) {
+                return is_array( $wh ) && ! empty( $wh['enabled'] ) && ! empty( $wh['url'] );
+            }
+        );
+        $webhook_manager = \FPForms\Plugin::instance()->webhooks;
+        $safe_webhooks   = 0;
+        foreach ( $enabled_hooks as $wh ) {
+            if ( $webhook_manager->is_safe_url_for_save( (string) $wh['url'] ) ) {
+                $safe_webhooks++;
+            }
+        }
+
+        $has_recaptcha_field = false;
+        foreach ( (array) ( $form['fields'] ?? [] ) as $field ) {
+            if ( ! is_array( $field ) ) {
+                continue;
+            }
+            if ( ( $field['type'] ?? '' ) === 'recaptcha' ) {
+                $has_recaptcha_field = true;
+                break;
+            }
+        }
+        $recaptcha_settings   = get_option( 'fp_forms_recaptcha_settings', [] );
+        $recaptcha_configured = ! empty( $recaptcha_settings['site_key'] ?? '' ) && ! empty( $recaptcha_settings['secret_key'] ?? '' );
+
+        $checks = [
+            [
+                'key'     => 'email_webmaster',
+                'label'   => __( 'Email Webmaster', 'fp-forms' ),
+                'status'  => $emails_disabled ? 'disabled' : 'ok',
+                'details' => $emails_disabled
+                    ? __( 'Disabilitata dal toggle "Disabilita email WordPress".', 'fp-forms' )
+                    : sprintf( __( 'Invio previsto verso: %s', 'fp-forms' ), $notification_to ),
+            ],
+            [
+                'key'     => 'email_confirmation',
+                'label'   => __( 'Email Conferma Cliente', 'fp-forms' ),
+                'status'  => $emails_disabled ? 'disabled' : ( ! $confirmation_enabled ? 'disabled' : ( $has_user_email_field ? 'ok' : 'warning' ) ),
+                'details' => $emails_disabled
+                    ? __( 'Disabilitata dal toggle "Disabilita email WordPress".', 'fp-forms' )
+                    : ( ! $confirmation_enabled
+                        ? __( 'Conferma cliente non abilitata per questo form.', 'fp-forms' )
+                        : ( $has_user_email_field ? __( 'Campo email rilevato: conferma inviabile.', 'fp-forms' ) : __( 'Nessun campo email nel form: conferma cliente non inviabile.', 'fp-forms' ) ) ),
+            ],
+            [
+                'key'     => 'email_staff',
+                'label'   => __( 'Email Staff', 'fp-forms' ),
+                'status'  => $emails_disabled ? 'disabled' : ( ! $staff_enabled ? 'disabled' : ( ! empty( $staff_emails ) ? 'ok' : 'warning' ) ),
+                'details' => $emails_disabled
+                    ? __( 'Disabilitata dal toggle "Disabilita email WordPress".', 'fp-forms' )
+                    : ( ! $staff_enabled
+                        ? __( 'Notifiche staff non abilitate per questo form.', 'fp-forms' )
+                        : ( ! empty( $staff_emails )
+                            ? sprintf( __( 'Notifica staff attiva verso %d destinatari validi.', 'fp-forms' ), count( $staff_emails ) )
+                            : __( 'Notifiche staff abilitate ma senza email valide configurate.', 'fp-forms' ) ) ),
+            ],
+            [
+                'key'     => 'tracking',
+                'label'   => __( 'Tracking Eventi', 'fp-forms' ),
+                'status'  => $tracking_hook_registered ? 'ok' : 'warning',
+                'details' => $tracking_hook_registered
+                    ? ( $tracking_listeners
+                        ? __( 'Hook tracking registrati e listener evento disponibili.', 'fp-forms' )
+                        : __( 'Hook registrati, ma nessun listener su fp_tracking_event (controlla plugin tracking layer).', 'fp-forms' ) )
+                    : __( 'Hook tracking non registrati correttamente.', 'fp-forms' ),
+            ],
+            [
+                'key'     => 'brevo',
+                'label'   => __( 'Brevo CRM', 'fp-forms' ),
+                'status'  => ! $brevo_enabled_for_form ? 'disabled' : ( $brevo_has_key && ! empty( $brevo_list_id ) ? 'ok' : 'warning' ),
+                'details' => ! $brevo_enabled_for_form
+                    ? __( 'Integrazione Brevo non abilitata per questo form.', 'fp-forms' )
+                    : ( $brevo_has_key && ! empty( $brevo_list_id )
+                        ? __( 'Configurazione completa per sync contatti/eventi.', 'fp-forms' )
+                        : __( 'Configurazione incompleta (serve API key globale e lista per il form).', 'fp-forms' ) ),
+            ],
+            [
+                'key'     => 'meta',
+                'label'   => __( 'Meta Pixel/CAPI', 'fp-forms' ),
+                'status'  => ! $meta_has_pixel ? 'disabled' : ( $meta_has_token ? 'ok' : 'warning' ),
+                'details' => ! $meta_has_pixel
+                    ? __( 'Meta Pixel non configurato.', 'fp-forms' )
+                    : ( $meta_has_token ? __( 'Pixel ID e token CAPI configurati.', 'fp-forms' ) : __( 'Pixel ID presente, token CAPI mancante (tracciamento server-side ridotto).', 'fp-forms' ) ),
+            ],
+            [
+                'key'     => 'webhooks',
+                'label'   => __( 'Webhooks', 'fp-forms' ),
+                'status'  => empty( $enabled_hooks ) ? 'disabled' : ( $safe_webhooks === count( $enabled_hooks ) ? 'ok' : 'warning' ),
+                'details' => empty( $enabled_hooks )
+                    ? __( 'Nessun webhook attivo nel form.', 'fp-forms' )
+                    : sprintf(
+                        __( 'Webhook attivi: %1$d, URL sicuri: %2$d.', 'fp-forms' ),
+                        count( $enabled_hooks ),
+                        $safe_webhooks
+                    ),
+            ],
+            [
+                'key'     => 'recaptcha',
+                'label'   => __( 'reCAPTCHA', 'fp-forms' ),
+                'status'  => ! $has_recaptcha_field ? 'disabled' : ( $recaptcha_configured ? 'ok' : 'warning' ),
+                'details' => ! $has_recaptcha_field
+                    ? __( 'Nessun campo reCAPTCHA nel form.', 'fp-forms' )
+                    : ( $recaptcha_configured ? __( 'Chiavi reCAPTCHA configurate.', 'fp-forms' ) : __( 'Campo reCAPTCHA presente ma chiavi mancanti.', 'fp-forms' ) ),
+            ],
+        ];
+
+        $ok_count      = 0;
+        $warning_count = 0;
+        $disabled_count = 0;
+        foreach ( $checks as $check ) {
+            if ( $check['status'] === 'ok' ) {
+                $ok_count++;
+            } elseif ( $check['status'] === 'disabled' ) {
+                $disabled_count++;
+            } else {
+                $warning_count++;
+            }
+        }
+
+        return [
+            'form_id'      => $form_id,
+            'form_title'   => (string) ( $form['title'] ?? '' ),
+            'sample_data'  => $sample_data,
+            'checks'       => $checks,
+            'summary'      => [
+                'ok'       => $ok_count,
+                'warning'  => $warning_count,
+                'disabled' => $disabled_count,
+            ],
+            'simulated_at' => current_time( 'mysql' ),
+        ];
     }
     
     /**

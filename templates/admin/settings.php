@@ -81,6 +81,8 @@ $meta_settings = get_option( 'fp_forms_meta_settings', [
 $meta_pixel_id = $meta_settings['pixel_id'] ?? '';
 $meta_access_token = $meta_settings['access_token'] ?? '';
 $meta_track_views = $meta_settings['track_views'] ?? true;
+
+$simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
 ?>
 
 <div class="wrap fp-forms-admin">
@@ -953,6 +955,49 @@ $meta_track_views = $meta_settings['track_views'] ?? true;
                     </td>
                 </tr>
                 <?php endif; ?>
+
+                <tr>
+                    <th colspan="2">
+                        <h2 id="simulation"><?php _e( 'Simulazione Flussi (Dry-Run)', 'fp-forms' ); ?></h2>
+                        <p class="description" style="font-weight: normal;">
+                            <?php _e( 'Esegue un controllo completo di email, tracking e integrazioni senza invii reali e senza credenziali obbligatorie.', 'fp-forms' ); ?>
+                        </p>
+                    </th>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="fp_simulation_form_id"><?php _e( 'Form da simulare', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <select id="fp_simulation_form_id" class="regular-text">
+                            <?php if ( empty( $simulation_forms ) ) : ?>
+                                <option value=""><?php _e( 'Nessun form disponibile', 'fp-forms' ); ?></option>
+                            <?php else : ?>
+                                <?php foreach ( $simulation_forms as $sim_form ) : ?>
+                                    <option value="<?php echo esc_attr( (string) ( $sim_form['id'] ?? 0 ) ); ?>">
+                                        <?php
+                                        echo esc_html(
+                                            sprintf(
+                                                '#%1$d - %2$s',
+                                                (int) ( $sim_form['id'] ?? 0 ),
+                                                (string) ( $sim_form['title'] ?? __( 'Form senza titolo', 'fp-forms' ) )
+                                            )
+                                        );
+                                        ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                        <button type="button" id="fp-run-simulation" class="button button-secondary" <?php disabled( empty( $simulation_forms ) ); ?>>
+                            <span class="dashicons dashicons-controls-play"></span>
+                            <?php _e( 'Esegui Simulazione', 'fp-forms' ); ?>
+                        </button>
+                        <p class="description" style="margin-top:8px;">
+                            <?php _e( 'La simulazione verifica configurazione e readiness dei flussi senza inviare email, webhook o chiamate esterne.', 'fp-forms' ); ?>
+                        </p>
+                        <div id="fp-simulation-result" style="margin-top: 12px;"></div>
+                    </td>
+                </tr>
             </tbody>
         </table>
         

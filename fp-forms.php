@@ -3,7 +3,7 @@
  * Plugin Name: FP Forms
  * Plugin URI: https://francescopasseri.com/
  * Description: Form builder professionale per landing page e prenotazioni - Simile a WPForms
- * Version: 1.4.12
+ * Version: 1.5.0
  * Author: Francesco Passeri
  * Author URI: https://francescopasseri.com/
  * Text Domain: fp-forms
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Definizione costanti del plugin
-define( 'FP_FORMS_VERSION', '1.4.12' );
+define( 'FP_FORMS_VERSION', '1.5.0' );
 define( 'FP_FORMS_PLUGIN_FILE', __FILE__ );
 define( 'FP_FORMS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FP_FORMS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

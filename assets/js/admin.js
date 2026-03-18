@@ -1136,6 +1136,7 @@
             this.initRecaptchaTest();
             this.initBrevoHandlers();
             this.initMetaHandlers();
+            this.initSimulationRunner();
         },
         
         /**
@@ -1347,6 +1348,105 @@
                     }
                 });
             });
+        },
+
+        /**
+         * Simulazione flussi (dry-run): email, tracking, integrazioni.
+         */
+        initSimulationRunner: function() {
+            $('#fp-run-simulation').on('click', function(e) {
+                e.preventDefault();
+
+                var $btn = $(this);
+                var $result = $('#fp-simulation-result');
+                var formId = parseInt($('#fp_simulation_form_id').val(), 10) || 0;
+                var originalHtml = $btn.html();
+
+                if (!formId) {
+                    if (typeof window.fpToast !== 'undefined') {
+                        fpToast.warning('Seleziona un form da simulare');
+                    }
+                    return;
+                }
+
+                $btn.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> Simulazione...');
+                $result.html('');
+
+                $.ajax({
+                    url: fpFormsAdmin.ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'fp_forms_run_simulation',
+                        nonce: fpFormsAdmin.nonce,
+                        form_id: formId
+                    },
+                    success: function(response) {
+                        $btn.prop('disabled', false).html(originalHtml);
+
+                        if (response.success && response.data && response.data.report) {
+                            FPFormsSettings.renderSimulationReport(response.data.report);
+                            if (typeof window.fpToast !== 'undefined') {
+                                fpToast.success(response.data.message || 'Simulazione completata');
+                            }
+                        } else {
+                            var msg = (response.data && response.data.message) ? response.data.message : 'Errore simulazione';
+                            $result.empty().append(FPFormsAdmin._safeNotice('error', msg));
+                            if (typeof window.fpToast !== 'undefined') {
+                                fpToast.error(msg);
+                            }
+                        }
+                    },
+                    error: function() {
+                        $btn.prop('disabled', false).html(originalHtml);
+                        $result.empty().append(FPFormsAdmin._safeNotice('error', 'Errore di connessione durante la simulazione'));
+                        if (typeof window.fpToast !== 'undefined') {
+                            fpToast.error('Errore di connessione durante la simulazione');
+                        }
+                    }
+                });
+            });
+        },
+
+        /**
+         * Render report simulazione in formato leggibile.
+         */
+        renderSimulationReport: function(report) {
+            var $result = $('#fp-simulation-result');
+            var checks = Array.isArray(report.checks) ? report.checks : [];
+            var summary = report.summary || {};
+            var ok = parseInt(summary.ok || 0, 10);
+            var warning = parseInt(summary.warning || 0, 10);
+            var disabled = parseInt(summary.disabled || 0, 10);
+
+            var $box = $('<div>').css({
+                background: '#fff',
+                border: '1px solid #d0d7de',
+                borderRadius: '8px',
+                padding: '12px'
+            });
+
+            var title = 'Report simulazione - #' + String(report.form_id || '') + ' ' + String(report.form_title || '');
+            $box.append($('<p>').css({margin: '0 0 10px', fontWeight: '600'}).text(title));
+            $box.append($('<p>').css({margin: '0 0 12px', color: '#4b5563'}).text(
+                'Esito: ' + ok + ' OK, ' + warning + ' warning, ' + disabled + ' disabilitati.'
+            ));
+
+            var $list = $('<ul>').css({margin: '0 0 10px 18px'});
+            checks.forEach(function(item) {
+                var status = String(item.status || 'warning');
+                var label = String(item.label || item.key || 'Check');
+                var details = String(item.details || '');
+                var badge = status === 'ok' ? 'OK' : (status === 'disabled' ? 'DISABILITATO' : 'WARNING');
+                var prefix = status === 'ok' ? '✅ ' : (status === 'disabled' ? '⚪ ' : '⚠️ ');
+                $list.append($('<li>').text(prefix + label + ' [' + badge + '] - ' + details));
+            });
+            $box.append($list);
+
+            if (report.simulated_at) {
+                $box.append($('<small>').css({color: '#6b7280'}).text('Eseguita il: ' + String(report.simulated_at)));
+            }
+
+            $result.empty().append($box);
         },
         
         /**
