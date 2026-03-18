@@ -22,12 +22,8 @@ class Deactivator {
         // Flush rewrite rules
         flush_rewrite_rules();
 
-        // Pulisci coda email (cron)
-        $timestamp = wp_next_scheduled( \FPForms\Email\Manager::CRON_ACTION );
-        while ( $timestamp ) {
-            wp_unschedule_event( $timestamp, \FPForms\Email\Manager::CRON_ACTION );
-            $timestamp = wp_next_scheduled( \FPForms\Email\Manager::CRON_ACTION );
-        }
+        // Pulisci coda email (tutti gli eventi per l'hook, indipendentemente dagli args)
+        wp_unschedule_hook( \FPForms\Email\Manager::CRON_ACTION );
     }
 }
 

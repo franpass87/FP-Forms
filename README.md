@@ -176,6 +176,9 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.1 - 2025-03-18
+- Fix: pulizia coda email in Deactivator con `wp_unschedule_hook()`.
+
 ### 1.6.0 - 2026-03-18
 - Pagamenti Stripe (Checkout redirect, webhook, email dopo pagamento)
 - Conditional Logic 2.0 (validazione server-side, AND/OR)

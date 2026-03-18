@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.1] - 2025-03-18
+### Fixed
+- Pulizia coda email in Deactivator: uso di `wp_unschedule_hook()` per rimuovere tutti gli eventi cron dell'hook (il loop con `wp_unschedule_event` senza args non rimuoveva gli eventi).
+
 ## [1.6.0] - 2026-03-18
 ### Added
 - **Pagamenti Stripe**: integrazione Stripe Checkout per form a pagamento; redirect a Stripe dopo submit; webhook REST per completamento pagamento; email inviate solo dopo conferma pagamento.
