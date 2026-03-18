@@ -3,8 +3,8 @@
 Contributors: franpass87
 Tags: forms, form builder, contact form, landing page, stripe, payments, conditional logic
 Requires at least: 5.8
-Tested up to: 6.4
-Stable tag: 1.6.1
+Tested up to: 6.6
+Stable tag: 1.6.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,6 +38,9 @@ Per i form a pagamento Stripe: configura le chiavi in **FP Forms** > **Impostazi
 
 == Changelog ==
 
+= 1.6.2 = (2025-03-18)
+* Docs: readme Tested up to 6.6; sezione Traduzioni in README.
+
 = 1.6.1 = (2025-03-18)
 * Fix: pulizia coda email in Deactivator con wp_unschedule_hook().
 
@@ -57,6 +60,9 @@ Per i form a pagamento Stripe: configura le chiavi in **FP Forms** > **Impostazi
 * Changed: Migliorata area Submissions e testi notifiche email.
 
 == Upgrade Notice ==
+
+= 1.6.2 =
+Aggiornamento documentazione: Tested up to 6.6, istruzioni traduzioni in README.
 
 = 1.6.1 =
 Fix pulizia eventi cron della coda email alla disattivazione del plugin.

@@ -112,6 +112,16 @@ Puoi sovrascrivere gli stili del plugin aggiungendo CSS personalizzato nel tuo t
 
 Copia i file da `templates/frontend/` nel tuo tema in `your-theme/fp-forms/` per personalizzarli.
 
+## 🌐 Traduzioni
+
+Text domain: `fp-forms`. Per generare il file `.pot` (dalla root del sito WordPress):
+
+```bash
+wp i18n make-pot wp-content/plugins/FP-Forms wp-content/plugins/FP-Forms/languages/fp-forms.pot --domain=fp-forms
+```
+
+Le traduzioni vanno in `languages/` (es. `fp-forms-it_IT.po`).
+
 ## 🔧 Requisiti
 
 - WordPress 5.8+
@@ -175,6 +185,9 @@ Per supporto, contatta: info@francescopasseri.com
 GPL v2 or later
 
 ## 🔄 Changelog
+
+### 1.6.2 - 2025-03-18
+- Docs: readme Tested up to 6.6; sezione Traduzioni in README.
 
 ### 1.6.1 - 2025-03-18
 - Fix: pulizia coda email in Deactivator con `wp_unschedule_hook()`.

@@ -1,5 +1,10 @@
 # CHANGELOG - FP Forms
 
+## [1.6.2] - 2025-03-18
+### Changed
+- readme.txt: Tested up to 6.6.
+- README.md: aggiunta sezione Traduzioni con comando per generare .pot.
+
 ## [1.6.1] - 2025-03-18
 ### Fixed
 - Pulizia coda email in Deactivator: uso di `wp_unschedule_hook()` per rimuovere tutti gli eventi cron dell'hook (il loop con `wp_unschedule_event` senza args non rimuoveva gli eventi).
