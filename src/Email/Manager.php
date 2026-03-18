@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace FPForms\Email;
 
 /**
@@ -28,7 +30,7 @@ class Manager {
         // Oggetto
         $subject = isset( $form['settings']['notification_subject'] ) && ! empty( $form['settings']['notification_subject'] )
             ? $form['settings']['notification_subject']
-            : sprintf( __( 'Nuova submission dal form: %s', 'fp-forms' ), $form['title'] );
+            : sprintf( __( 'Nuovo invio dal form: %s', 'fp-forms' ), $form['title'] );
         
         // Sostituisci tag dinamici, rimuovi newline (prevenzione header injection) e applica filtro
         $subject = $this->replace_tags( $subject, $data, $form );
@@ -76,20 +78,35 @@ class Manager {
         $site_name = get_bloginfo( 'name' );
         $lines = [];
 
-        $lines[] = sprintf( __( 'Nuova submission - %s', 'fp-forms' ), $form['title'] );
+        $lines[] = sprintf( __( 'Nuova richiesta ricevuta - %s', 'fp-forms' ), $form['title'] );
         $lines[] = str_repeat( '=', 50 );
         $lines[] = '';
 
-        // Dati compilati
-        $lines[] = __( 'DATI RICEVUTI', 'fp-forms' );
+        // Dati compilati (solo campi utili a chi legge l'email)
+        $lines[] = __( 'RIEPILOGO DATI', 'fp-forms' );
         $lines[] = str_repeat( '-', 50 );
 
         foreach ( $form['fields'] as $field ) {
+            $field_type = $field['type'] ?? '';
+
+            if ( in_array( $field_type, [ 'hidden', 'honeypot', 'recaptcha', 'step_break', 'privacy-checkbox', 'marketing-checkbox' ], true ) ) {
+                continue;
+            }
+
             $value = $this->get_field_display_value( $field, $data );
             if ( is_array( $value ) ) {
                 $value = implode( ', ', $value );
             }
-            $lines[] = $field['label'] . ': ' . ( $value !== '' ? $value : '—' );
+
+            if ( trim( (string) $value ) === '' ) {
+                continue;
+            }
+
+            $label = isset( $field['label'] ) && trim( (string) $field['label'] ) !== ''
+                ? (string) $field['label']
+                : (string) ( $field['name'] ?? __( 'Campo', 'fp-forms' ) );
+
+            $lines[] = $label . ': ' . (string) $value;
         }
 
         $lines[] = '';
@@ -97,7 +114,7 @@ class Manager {
         // Info tecniche
         $submission = \FPForms\Plugin::instance()->submissions->get_submission( $submission_id );
         if ( $submission ) {
-            $lines[] = __( 'DETTAGLI TECNICI', 'fp-forms' );
+            $lines[] = __( 'DETTAGLI INVIO', 'fp-forms' );
             $lines[] = str_repeat( '-', 50 );
             $lines[] = __( 'Data:', 'fp-forms' ) . ' ' . date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $submission->created_at ) );
             $lines[] = __( 'IP:', 'fp-forms' ) . ' ' . $submission->user_ip;
@@ -114,13 +131,74 @@ class Manager {
 
         // Link admin
         $admin_url = admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . $form['id'] );
-        $lines[] = __( 'Vedi tutte le submissions:', 'fp-forms' );
+        $lines[] = __( 'Apri tutte le richieste in admin:', 'fp-forms' );
         $lines[] = $admin_url;
         $lines[] = '';
 
         // Footer
         $lines[] = str_repeat( '-', 50 );
         $lines[] = sprintf( __( '%s - Notifica automatica via FP Forms', 'fp-forms' ), $site_name );
+
+        return implode( "\n", $lines );
+    }
+
+    /**
+     * Costruisce il messaggio di notifica per lo staff con focus operativo.
+     */
+    private function build_staff_notification_message( $form, $data, $submission_id ) {
+        $site_name = get_bloginfo( 'name' );
+        $lines = [];
+
+        $lines[] = sprintf( __( '[STAFF] Nuova richiesta da gestire - %s', 'fp-forms' ), $form['title'] );
+        $lines[] = str_repeat( '=', 50 );
+        $lines[] = '';
+        $lines[] = __( 'AZIONE RICHIESTA', 'fp-forms' );
+        $lines[] = __( 'Rispondi a questa email per contattare il cliente il prima possibile.', 'fp-forms' );
+        $lines[] = '';
+
+        $lines[] = __( 'RIEPILOGO DATI', 'fp-forms' );
+        $lines[] = str_repeat( '-', 50 );
+
+        foreach ( $form['fields'] as $field ) {
+            $field_type = $field['type'] ?? '';
+
+            if ( in_array( $field_type, [ 'hidden', 'honeypot', 'recaptcha', 'step_break', 'privacy-checkbox', 'marketing-checkbox' ], true ) ) {
+                continue;
+            }
+
+            $value = $this->get_field_display_value( $field, $data );
+            if ( is_array( $value ) ) {
+                $value = implode( ', ', $value );
+            }
+
+            if ( trim( (string) $value ) === '' ) {
+                continue;
+            }
+
+            $label = isset( $field['label'] ) && trim( (string) $field['label'] ) !== ''
+                ? (string) $field['label']
+                : (string) ( $field['name'] ?? __( 'Campo', 'fp-forms' ) );
+
+            $lines[] = $label . ': ' . (string) $value;
+        }
+
+        $lines[] = '';
+
+        $submission = \FPForms\Plugin::instance()->submissions->get_submission( $submission_id );
+        if ( $submission ) {
+            $lines[] = __( 'DETTAGLI INVIO', 'fp-forms' );
+            $lines[] = str_repeat( '-', 50 );
+            $lines[] = __( 'Data:', 'fp-forms' ) . ' ' . date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $submission->created_at ) );
+            $lines[] = __( 'IP:', 'fp-forms' ) . ' ' . $submission->user_ip;
+            $lines[] = '';
+        }
+
+        $lines[] = __( 'Suggerimento:', 'fp-forms' );
+        $lines[] = __( 'Usa il pulsante "Rispondi" del tuo client email per contattare direttamente il mittente.', 'fp-forms' );
+        $lines[] = '';
+
+        $lines[] = str_repeat( '-', 50 );
+        $lines[] = sprintf( __( '%s - Notifica staff via FP Forms', 'fp-forms' ), $site_name );
 
         return implode( "\n", $lines );
     }
@@ -405,7 +483,7 @@ class Manager {
         // Oggetto
         $subject = isset( $form['settings']['staff_notification_subject'] ) && ! empty( $form['settings']['staff_notification_subject'] )
             ? $form['settings']['staff_notification_subject']
-            : sprintf( __( '[STAFF] Nuova submission: %s', 'fp-forms' ), $form['title'] );
+            : sprintf( __( '[STAFF] Nuova richiesta dal form: %s', 'fp-forms' ), $form['title'] );
         
         $subject = $this->replace_tags( $subject, $data, $form );
         $subject = \FPForms\Core\Hooks::filter_email_subject( $subject, $form_id, $data );
@@ -419,8 +497,8 @@ class Manager {
             // Template personalizzato
             $message = $this->replace_tags( $message, $data, $form );
         } else {
-            // Fallback: usa template standard
-            $message = $this->build_notification_message( $form, $data, $submission_id );
+            // Fallback: usa template staff, più orientato all'azione
+            $message = $this->build_staff_notification_message( $form, $data, $submission_id );
         }
         
         $message = \FPForms\Core\Hooks::filter_email_message( $message, $form_id, $data );

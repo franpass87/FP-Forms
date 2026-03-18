@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Template: Lista submissions
  */
@@ -76,6 +78,35 @@ if ( ! defined( 'ABSPATH' ) ) {
             </div>
         </div>
     <?php else : ?>
+        <?php
+        $unread_submissions = 0;
+        foreach ( $submissions as $submission_item ) {
+            if ( $submission_item->status === 'unread' ) {
+                $unread_submissions++;
+            }
+        }
+        $read_submissions = max( 0, count( $submissions ) - $unread_submissions );
+        ?>
+
+        <div class="fp-submissions-summary-grid">
+            <div class="fp-submissions-summary-card">
+                <span class="fp-submissions-summary-label"><?php esc_html_e( 'Totali', 'fp-forms' ); ?></span>
+                <strong class="fp-submissions-summary-value"><?php echo esc_html( (string) $total_submissions ); ?></strong>
+            </div>
+            <div class="fp-submissions-summary-card fp-submissions-summary-card--unread">
+                <span class="fp-submissions-summary-label"><?php esc_html_e( 'Non lette', 'fp-forms' ); ?></span>
+                <strong class="fp-submissions-summary-value"><?php echo esc_html( (string) $unread_submissions ); ?></strong>
+            </div>
+            <div class="fp-submissions-summary-card">
+                <span class="fp-submissions-summary-label"><?php esc_html_e( 'Lette', 'fp-forms' ); ?></span>
+                <strong class="fp-submissions-summary-value"><?php echo esc_html( (string) $read_submissions ); ?></strong>
+            </div>
+            <div class="fp-submissions-summary-card">
+                <span class="fp-submissions-summary-label"><?php esc_html_e( 'In questa pagina', 'fp-forms' ); ?></span>
+                <strong class="fp-submissions-summary-value"><?php echo esc_html( (string) count( $submissions ) ); ?></strong>
+            </div>
+        </div>
+
         <!-- Bulk Actions -->
         <div class="fp-bulk-actions-bar">
             <input type="checkbox" id="fp-select-all-submissions" />
@@ -131,10 +162,12 @@ if ( ! defined( 'ABSPATH' ) ) {
                 ?>
                     <tr class="<?php echo $submission->status === 'unread' ? 'fp-submission-unread' : ''; ?>" data-submission-id="<?php echo esc_attr( $submission->id ); ?>">
                         <td><input type="checkbox" class="fp-submission-checkbox" value="<?php echo esc_attr( $submission->id ); ?>" /></td>
-                        <td><?php echo esc_html( $submission->id ); ?></td>
+                        <td><span class="fp-submission-id-pill">#<?php echo esc_html( (string) $submission->id ); ?></span></td>
                         <td>
-                            <?php echo rtrim( $preview, ' | ' ); ?>
-                            <?php if ( $count >= 3 ) echo '...'; ?>
+                            <div class="fp-submission-preview"><?php echo wp_kses_post( rtrim( $preview, ' | ' ) ); ?></div>
+                            <?php if ( $count >= 3 ) : ?>
+                                <span class="fp-submission-preview-more"><?php esc_html_e( 'Altri campi disponibili nel dettaglio', 'fp-forms' ); ?></span>
+                            <?php endif; ?>
                         </td>
                         <td><?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $submission->created_at ) ) ); ?></td>
                         <td>
@@ -144,7 +177,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                                 <span class="fp-status-read"><?php _e( 'Letta', 'fp-forms' ); ?></span>
                             <?php endif; ?>
                         </td>
-                        <td>
+                        <td class="fp-submission-actions">
                             <button class="button button-small fp-view-submission" data-submission-id="<?php echo esc_attr( $submission->id ); ?>">
                                 <?php _e( 'Visualizza', 'fp-forms' ); ?>
                             </button>

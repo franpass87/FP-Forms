@@ -29,7 +29,7 @@ $default_settings = [
     'success_message_duration' => '0',
     'disable_wordpress_emails' => false,
     'notification_email' => get_option( 'admin_email' ),
-    'notification_subject' => __( 'Nuova submission da {form_title}', 'fp-forms' ),
+    'notification_subject' => __( 'Nuovo invio dal form: {form_title}', 'fp-forms' ),
     'notification_message' => '',
     'confirmation_enabled' => false,
     'confirmation_template' => '',
@@ -39,7 +39,7 @@ $default_settings = [
     'confirmation_message' => '',
     'staff_notifications_enabled' => false,
     'staff_emails' => '',
-    'staff_notification_subject' => __( '[STAFF] Nuova submission: {form_title}', 'fp-forms' ),
+    'staff_notification_subject' => __( '[STAFF] Nuova richiesta dal form: {form_title}', 'fp-forms' ),
     'staff_notification_message' => '',
     'brevo_enabled' => false,
     'brevo_list_id' => '',
@@ -407,14 +407,14 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Oggetto Email Webmaster', 'fp-forms' ); ?></label>
-                    <input type="text" name="notification_subject" value="<?php echo esc_attr( $form_settings['notification_subject'] ); ?>" placeholder="Nuova submission da {form_title}">
-                    <small><?php esc_html_e( 'Tag disponibili: {form_title}, {site_name}, {date}, {time}', 'fp-forms' ); ?></small>
+                    <input type="text" name="notification_subject" value="<?php echo esc_attr( $form_settings['notification_subject'] ); ?>" placeholder="<?php esc_attr_e( 'Nuovo invio dal form: {form_title}', 'fp-forms' ); ?>">
+                    <small><?php esc_html_e( 'Esempio: "Nuovo contatto da {form_title}". Tag disponibili: {form_title}, {site_name}, {date}, {time}', 'fp-forms' ); ?></small>
                 </div>
                 
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Messaggio Email Webmaster (opzionale)', 'fp-forms' ); ?></label>
-                    <textarea name="notification_message" rows="8" placeholder="Lascia vuoto per usare il template automatico con tutti i campi del form..."><?php echo esc_textarea( $form_settings['notification_message'] ?? '' ); ?></textarea>
-                    <small><?php esc_html_e( 'Template personalizzato per il webmaster. Lascia vuoto per template automatico. Tag disponibili: {nome}, {email}, {form_title}, etc.', 'fp-forms' ); ?></small>
+                    <textarea name="notification_message" rows="8" placeholder="<?php esc_attr_e( "Lascia vuoto per un'email chiara con riepilogo dati e dettagli invio.", 'fp-forms' ); ?>"><?php echo esc_textarea( $form_settings['notification_message'] ?? '' ); ?></textarea>
+                    <small><?php esc_html_e( 'Scrivi un testo semplice e diretto per chi riceve l\'email. Lascia vuoto per il template automatico. Tag disponibili: {nome}, {email}, {form_title}, {site_name}, {date}, {time}.', 'fp-forms' ); ?></small>
                 </div>
                 
                 <h4><?php esc_html_e( 'Email di Conferma (Cliente)', 'fp-forms' ); ?></h4>
@@ -511,14 +511,14 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Oggetto Email Staff (opzionale)', 'fp-forms' ); ?></label>
-                    <input type="text" name="staff_notification_subject" value="<?php echo esc_attr( $form_settings['staff_notification_subject'] ?? '' ); ?>" placeholder="[STAFF] Nuova submission: {form_title}">
-                    <small><?php esc_html_e( 'Lascia vuoto per usare il template di default. Tag disponibili: {form_title}, {site_name}, {date}', 'fp-forms' ); ?></small>
+                    <input type="text" name="staff_notification_subject" value="<?php echo esc_attr( $form_settings['staff_notification_subject'] ?? '' ); ?>" placeholder="<?php esc_attr_e( '[STAFF] Nuova richiesta dal form: {form_title}', 'fp-forms' ); ?>">
+                    <small><?php esc_html_e( 'Esempio: "[STAFF] Richiesta urgente da {form_title}". Tag disponibili: {form_title}, {site_name}, {date}, {time}', 'fp-forms' ); ?></small>
                 </div>
                 
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Messaggio Email Staff (opzionale)', 'fp-forms' ); ?></label>
-                    <textarea name="staff_notification_message" rows="5" placeholder="Lascia vuoto per usare il template standard con tutti i campi..."><?php echo esc_textarea( $form_settings['staff_notification_message'] ?? '' ); ?></textarea>
-                    <small><?php esc_html_e( 'Template personalizzato per lo staff. Lascia vuoto per usare il template standard. Tag disponibili: {nome_campo}, {form_title}, etc.', 'fp-forms' ); ?></small>
+                    <textarea name="staff_notification_message" rows="5" placeholder="<?php esc_attr_e( 'Lascia vuoto per un template staff operativo con checklist e link admin.', 'fp-forms' ); ?>"><?php echo esc_textarea( $form_settings['staff_notification_message'] ?? '' ); ?></textarea>
+                    <small><?php esc_html_e( 'Usa frasi brevi e orientate all\'azione (es. "Richiamare entro 2 ore"). Lascia vuoto per il template staff automatico. Tag disponibili: {nome}, {email}, {form_title}, {site_name}, {date}, {time}.', 'fp-forms' ); ?></small>
                 </div>
                 
                 <h4><?php esc_html_e( 'Integrazione Brevo', 'fp-forms' ); ?></h4>

@@ -1,5 +1,14 @@
 # CHANGELOG - FP Forms
 
+## [1.4.12] - 2026-03-18
+### Changed
+- Migliorata la leggibilità dell'area Submissions con riepilogo rapido, anteprima dati più chiara e dettaglio in modal strutturato.
+- Aggiornati testi e placeholder nel form builder per notifiche webmaster/staff con copy più semplice e orientato all'azione.
+
+### Fixed
+- Notifiche email automatiche rese più comprensibili: oggetti default aggiornati e template staff separato dal webmaster.
+- Rimossi riferimenti all'admin nella notifica staff automatica, ora focalizzata sulla risposta diretta via email (Reply-To).
+
 ## [1.4.11] - 2026-03-13
 ### Changed
 - Builder admin riallineato al design system FP con token UI condivisi e gestione notice WordPress più robusta.

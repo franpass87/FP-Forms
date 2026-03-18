@@ -9,6 +9,7 @@ Form builder professionale per WordPress, progettato per creare form di prenotaz
 - **Campi Multipli** - Testo, email, telefono, textarea, select, radio, checkbox, data, numero, **file upload** 🆕
 - **Gestione Submissions** - Visualizza e gestisci tutte le submissions ricevute
 - **Export Submissions** 🆕 - Export CSV e Excel con filtri avanzati
+- **Notifiche Webmaster/Staff più chiare** 🆕 - Messaggi email automatici semplificati e orientati all'azione
 - **Template Library** 🆕 - 8 template pronti all'uso
 - **Notifiche Email** - Invia automaticamente email di notifica
 - **Email di Conferma** - Invia email di conferma agli utenti

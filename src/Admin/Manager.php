@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace FPForms\Admin;
 
 use FPForms\Core\Capabilities;
@@ -798,18 +800,14 @@ class Manager {
         
         // Formatta HTML
         $html = '<div class="fp-submission-details">';
-        
-        // Info submission
-        $html .= '<div class="fp-submission-meta">';
-        $html .= '<p><strong>' . esc_html__( 'Data:', 'fp-forms' ) . '</strong> ' . esc_html( \FPForms\Helpers\Helper::format_date( $submission->created_at ) ) . '</p>';
-        $html .= '<p><strong>' . esc_html__( 'Stato:', 'fp-forms' ) . '</strong> ' . ( $submission->status === 'read' ? esc_html__( 'Letta', 'fp-forms' ) : esc_html__( 'Non letta', 'fp-forms' ) ) . '</p>';
-        $html .= '<p><strong>' . esc_html__( 'IP:', 'fp-forms' ) . '</strong> ' . esc_html( $submission->user_ip ) . '</p>';
+        $html .= '<div class="fp-submission-meta-grid">';
+        $html .= '<div class="fp-submission-meta-card"><span class="fp-submission-meta-label">' . esc_html__( 'Data', 'fp-forms' ) . '</span><strong class="fp-submission-meta-value">' . esc_html( \FPForms\Helpers\Helper::format_date( $submission->created_at ) ) . '</strong></div>';
+        $html .= '<div class="fp-submission-meta-card"><span class="fp-submission-meta-label">' . esc_html__( 'Stato', 'fp-forms' ) . '</span><strong class="fp-submission-meta-value">' . ( $submission->status === 'read' ? esc_html__( 'Letta', 'fp-forms' ) : esc_html__( 'Non letta', 'fp-forms' ) ) . '</strong></div>';
+        $html .= '<div class="fp-submission-meta-card"><span class="fp-submission-meta-label">' . esc_html__( 'IP', 'fp-forms' ) . '</span><strong class="fp-submission-meta-value">' . esc_html( $submission->user_ip ) . '</strong></div>';
         $html .= '</div>';
-        
-        $html .= '<hr style="margin: 20px 0;">';
-        
+
         // Dati form
-        $html .= '<div class="fp-submission-data">';
+        $html .= '<div class="fp-submission-data-list">';
         $fullname_bases = [];
         foreach ( $form['fields'] as $f ) {
             if ( isset( $f['type'] ) && $f['type'] === 'fullname' && ! empty( $f['name'] ) ) {
@@ -832,7 +830,7 @@ class Manager {
                 $val_nome = isset( $submission->data[ $key_nome ] ) ? ( is_array( $submission->data[ $key_nome ] ) ? implode( ', ', $submission->data[ $key_nome ] ) : $submission->data[ $key_nome ] ) : '';
                 $val_cognome = isset( $submission->data[ $key_cognome ] ) ? ( is_array( $submission->data[ $key_cognome ] ) ? implode( ', ', $submission->data[ $key_cognome ] ) : $submission->data[ $key_cognome ] ) : '';
                 $combined = trim( $val_nome . ' ' . $val_cognome );
-                $html .= '<p><strong>' . esc_html( $label ) . ':</strong> ' . esc_html( $combined ) . '</p>';
+                $html .= '<div class="fp-submission-data-row"><span class="fp-submission-data-key">' . esc_html( $label ) . '</span><span class="fp-submission-data-value">' . esc_html( $combined ) . '</span></div>';
                 $shown_keys[] = $key_nome;
                 $shown_keys[] = $key_cognome;
                 continue;
@@ -847,20 +845,19 @@ class Manager {
             if ( is_array( $value ) ) {
                 $value = implode( ', ', $value );
             }
-            $html .= '<p><strong>' . esc_html( $field_label ) . ':</strong> ' . esc_html( $value ) . '</p>';
+            $html .= '<div class="fp-submission-data-row"><span class="fp-submission-data-key">' . esc_html( $field_label ) . '</span><span class="fp-submission-data-value">' . esc_html( (string) $value ) . '</span></div>';
         }
         $html .= '</div>';
         
         // File allegati
         if ( ! empty( $files ) ) {
-            $html .= '<hr style="margin: 20px 0;">';
-            $html .= '<h4>' . esc_html__( 'File Allegati', 'fp-forms' ) . '</h4>';
+            $html .= '<h4 class="fp-submission-files-title">' . esc_html__( 'File Allegati', 'fp-forms' ) . '</h4>';
             $html .= '<div class="fp-submission-files">';
             
             foreach ( $files as $file ) {
                 $html .= '<div class="fp-file-item">';
                 $html .= '<span class="dashicons dashicons-media-default"></span> ';
-                $html .= '<a href="' . esc_url( $file->file_url ) . '" target="_blank">' . esc_html( $file->file_name ) . '</a>';
+                $html .= '<a href="' . esc_url( $file->file_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $file->file_name ) . '</a>';
                 $html .= ' <small>(' . \FPForms\Helpers\Helper::format_bytes( $file->file_size ) . ')</small>';
                 $html .= '</div>';
             }
