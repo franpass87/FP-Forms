@@ -146,7 +146,8 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     margin: 0;
 }
 
-.fp-forms-admin__header h1 {
+.fp-forms-admin__header h1,
+.fp-forms-admin__header h2.fp-forms-page-header-title {
     font-size: 28px;
     font-weight: 700;
     color: var(--fp-color-text);

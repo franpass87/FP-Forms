@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.4] - 2026-03-19
+### Fixed
+- Admin template: `h1` screen reader come primo elemento nel `.wrap` e titolo pagina visibile in `h2` nell’header (compat notice JS su `.wrap h1`).
+
 ## [1.6.3] - 2025-03-19
 ### Fixed
 - Admin CSS: rimosso flex/`order` su `#wpbody-content` che alterava l’ordine delle notice WordPress; allineato al design system FP (`margin-top` sul `.wrap`).

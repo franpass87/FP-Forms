@@ -9,8 +9,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 
 <div class="wrap fp-forms-admin">
+    <h1 class="screen-reader-text"><?php esc_html_e( 'I tuoi Form', 'fp-forms' ); ?></h1>
     <div class="fp-forms-admin__header">
-        <h1><?php _e( 'I tuoi Form', 'fp-forms' ); ?></h1>
+        <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php esc_html_e( 'I tuoi Form', 'fp-forms' ); ?></h2>
         <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-new' ) ); ?>" class="page-title-action">
             <?php _e( 'Aggiungi Nuovo', 'fp-forms' ); ?>
         </a>

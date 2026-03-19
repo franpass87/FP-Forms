@@ -186,8 +186,11 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.4 - 2026-03-19
+- Fix: template admin con `h1` screen reader nel `.wrap` e titolo visibile in `h2` (compat notice WordPress).
+
 ### 1.6.3 - 2025-03-19
-- Fix: admin CSS — ordine corretto delle notice WordPress (niente flex/order su `#wpbody-content`).
+- Fix: admin CSS — niente flex/order su `#wpbody-content`; margine sul `.wrap` per le notice.
 
 ### 1.6.2 - 2025-03-18
 - Docs: readme Tested up to 6.6; sezione Traduzioni in README.

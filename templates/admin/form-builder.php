@@ -50,8 +50,12 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
 ?>
 
 <div class="wrap fp-forms-admin fp-forms-builder">
+    <?php
+    $fp_forms_builder_heading = $is_new ? __( 'Nuovo Form', 'fp-forms' ) : __( 'Modifica Form', 'fp-forms' );
+    ?>
+    <h1 class="screen-reader-text"><?php echo esc_html( $fp_forms_builder_heading ); ?></h1>
     <div class="fp-forms-admin__header">
-        <h1><?php echo $is_new ? __( 'Nuovo Form', 'fp-forms' ) : __( 'Modifica Form', 'fp-forms' ); ?></h1>
+        <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php echo esc_html( $fp_forms_builder_heading ); ?></h2>
         <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">
             &larr; <?php esc_html_e( 'Torna ai Form', 'fp-forms' ); ?>
         </a>

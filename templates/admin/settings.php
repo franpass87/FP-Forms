@@ -100,8 +100,9 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
 ?>
 
 <div class="wrap fp-forms-admin">
+    <h1 class="screen-reader-text"><?php esc_html_e( 'Impostazioni FP Forms', 'fp-forms' ); ?></h1>
     <div class="fp-forms-admin__header">
-        <h1><?php _e( 'Impostazioni FP Forms', 'fp-forms' ); ?></h1>
+        <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php esc_html_e( 'Impostazioni FP Forms', 'fp-forms' ); ?></h2>
     </div>
     
     <form method="post" action="">

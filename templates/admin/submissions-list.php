@@ -11,8 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 
 <div class="wrap fp-forms-admin">
+    <?php
+    $fp_forms_submissions_heading = sprintf( __( 'Submissions: %s', 'fp-forms' ), $form['title'] );
+    ?>
+    <h1 class="screen-reader-text"><?php echo esc_html( $fp_forms_submissions_heading ); ?></h1>
     <div class="fp-forms-admin__header">
-        <h1><?php printf( esc_html__( 'Submissions: %s', 'fp-forms' ), esc_html( $form['title'] ) ); ?></h1>
+        <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php echo esc_html( $fp_forms_submissions_heading ); ?></h2>
         <div class="fp-header-actions">
             <button class="button fp-export-submissions-btn" data-form-id="<?php echo esc_attr( $form['id'] ); ?>">
                 <span class="dashicons dashicons-download"></span>
