@@ -82,26 +82,10 @@ body.fp-forms-admin-shell #wpbody-content {
     padding: var(--fp-spacing-lg) clamp(16px, 4vw, 32px) 48px;
 }
 
-/* FP rules: avoid overlap with WordPress notices */
-body.toplevel_page_fp-forms #wpbody-content,
-body[class*="fp-forms_page_"] #wpbody-content {
-    display: flex;
-    flex-direction: column;
-}
-
+/* Notice admin: flusso DOM naturale; NO flex+order su #wpbody-content (fp-admin-ui-design-system.mdc) */
 body.toplevel_page_fp-forms #wpbody-content > .wrap.fp-forms-admin,
 body[class*="fp-forms_page_"] #wpbody-content > .wrap.fp-forms-admin {
-    order: 1;
-}
-
-body.toplevel_page_fp-forms #wpbody-content > .notice,
-body.toplevel_page_fp-forms #wpbody-content > .updated,
-body.toplevel_page_fp-forms #wpbody-content > .settings-error,
-body[class*="fp-forms_page_"] #wpbody-content > .notice,
-body[class*="fp-forms_page_"] #wpbody-content > .updated,
-body[class*="fp-forms_page_"] #wpbody-content > .settings-error {
-    order: 2;
-    margin: 0 20px 20px;
+    margin-top: 12px;
 }
 
 body.fp-forms-admin-shell #wpbody-content > .wrap {

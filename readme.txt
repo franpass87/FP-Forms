@@ -4,7 +4,7 @@ Contributors: franpass87
 Tags: forms, form builder, contact form, landing page, stripe, payments, conditional logic
 Requires at least: 5.8
 Tested up to: 6.6
-Stable tag: 1.6.2
+Stable tag: 1.6.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -60,6 +60,9 @@ Per i form a pagamento Stripe: configura le chiavi in **FP Forms** > **Impostazi
 * Changed: Migliorata area Submissions e testi notifiche email.
 
 == Upgrade Notice ==
+
+= 1.6.3 =
+Fix layout admin: notice WordPress visualizzate nell'ordine corretto.
 
 = 1.6.2 =
 Aggiornamento documentazione: Tested up to 6.6, istruzioni traduzioni in README.

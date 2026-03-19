@@ -186,6 +186,9 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.3 - 2025-03-19
+- Fix: admin CSS — ordine corretto delle notice WordPress (niente flex/order su `#wpbody-content`).
+
 ### 1.6.2 - 2025-03-18
 - Docs: readme Tested up to 6.6; sezione Traduzioni in README.
 

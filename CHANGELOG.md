@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.3] - 2025-03-19
+### Fixed
+- Admin CSS: rimosso flex/`order` su `#wpbody-content` che alterava l’ordine delle notice WordPress; allineato al design system FP (`margin-top` sul `.wrap`).
+
 ## [1.6.2] - 2025-03-18
 ### Changed
 - readme.txt: Tested up to 6.6.
