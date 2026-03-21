@@ -174,38 +174,82 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
             <div class="fp-sidebar-section">
                 <h3><?php esc_html_e( 'Impostazioni Form', 'fp-forms' ); ?></h3>
                 
-                <h4><?php esc_html_e( 'Badge di Fiducia', 'fp-forms' ); ?></h4>
+                <h4><?php esc_html_e( 'Badge euristici', 'fp-forms' ); ?></h4>
                 
-                <div class="fp-setting-field">
+                <div class="fp-setting-field fp-heuristic-badges">
                     <label><?php esc_html_e( 'Mostra Badge (opzionale)', 'fp-forms' ); ?></label>
-                    <small style="display: block; margin-bottom: 12px;"><?php esc_html_e( 'Seleziona i badge da mostrare in fondo al form, dopo il pulsante Invia, per aumentare fiducia e conversioni', 'fp-forms' ); ?></small>
+                    <small class="fp-heuristic-description"><?php esc_html_e( 'Seleziona i badge da mostrare in fondo al form. Ogni badge sfrutta un bias cognitivo (euristica) per aumentare fiducia e conversioni. Consiglio: 2-3 badge massimo.', 'fp-forms' ); ?></small>
                     
                     <?php
-                    $available_badges = [
-                        'instant-response' => [ 'icon' => '⚡', 'text' => __( 'Risposta Immediata', 'fp-forms' ) ],
-                        'data-secure' => [ 'icon' => '🔒', 'text' => __( 'I Tuoi Dati Sono Al Sicuro', 'fp-forms' ) ],
-                        'no-spam' => [ 'icon' => '🚫', 'text' => __( 'No Spam, Mai', 'fp-forms' ) ],
-                        'gdpr-compliant' => [ 'icon' => '✓', 'text' => __( 'GDPR Compliant', 'fp-forms' ) ],
-                        'ssl-secure' => [ 'icon' => '🔐', 'text' => __( 'Connessione Sicura SSL', 'fp-forms' ) ],
-                        'quick-reply' => [ 'icon' => '💬', 'text' => __( 'Risposta Entro 24h', 'fp-forms' ) ],
-                        'free-quote' => [ 'icon' => '💰', 'text' => __( 'Preventivo Gratuito', 'fp-forms' ) ],
-                        'trusted' => [ 'icon' => '⭐', 'text' => __( '1000+ Clienti Soddisfatti', 'fp-forms' ) ],
-                        'support' => [ 'icon' => '🎯', 'text' => __( 'Supporto Dedicato', 'fp-forms' ) ],
-                        'privacy-first' => [ 'icon' => '👤', 'text' => __( 'Privacy Garantita', 'fp-forms' ) ],
+                    // Badge raggruppati per euristica/bias cognitivo
+                    $badge_groups = [
+                        'prova-sociale' => [
+                            'label' => __( 'Prova sociale', 'fp-forms' ),
+                            'tooltip' => __( 'Gli utenti si fidano di ciò che scelgono gli altri', 'fp-forms' ),
+                            'badges' => [
+                                'trusted' => [ 'icon' => '⭐', 'text' => __( '1000+ Clienti Soddisfatti', 'fp-forms' ) ],
+                            ],
+                        ],
+                        'autorita' => [
+                            'label' => __( 'Autorità', 'fp-forms' ),
+                            'tooltip' => __( 'Riferimenti a norme e certificazioni riconosciute', 'fp-forms' ),
+                            'badges' => [
+                                'gdpr-compliant' => [ 'icon' => '✓', 'text' => __( 'GDPR Compliant', 'fp-forms' ) ],
+                                'ssl-secure' => [ 'icon' => '🔐', 'text' => __( 'Connessione Sicura SSL', 'fp-forms' ) ],
+                            ],
+                        ],
+                        'reciprocita' => [
+                            'label' => __( 'Reciprocità', 'fp-forms' ),
+                            'tooltip' => __( 'Offrire qualcosa di valore incoraggia a ricambiare', 'fp-forms' ),
+                            'badges' => [
+                                'free-quote' => [ 'icon' => '💰', 'text' => __( 'Preventivo Gratuito', 'fp-forms' ) ],
+                            ],
+                        ],
+                        'urgenza' => [
+                            'label' => __( 'Urgenza / Immediato', 'fp-forms' ),
+                            'tooltip' => __( 'Tempi rapidi riducono l\'attrito e l\'abbandono', 'fp-forms' ),
+                            'badges' => [
+                                'instant-response' => [ 'icon' => '⚡', 'text' => __( 'Risposta Immediata', 'fp-forms' ) ],
+                                'quick-reply' => [ 'icon' => '💬', 'text' => __( 'Risposta Entro 24h', 'fp-forms' ) ],
+                            ],
+                        ],
+                        'riduzione-rischio' => [
+                            'label' => __( 'Riduzione del rischio', 'fp-forms' ),
+                            'tooltip' => __( 'Rassicurare su privacy e sicurezza elimina paure', 'fp-forms' ),
+                            'badges' => [
+                                'data-secure' => [ 'icon' => '🔒', 'text' => __( 'I Tuoi Dati Sono Al Sicuro', 'fp-forms' ) ],
+                                'no-spam' => [ 'icon' => '🚫', 'text' => __( 'No Spam, Mai', 'fp-forms' ) ],
+                                'privacy-first' => [ 'icon' => '👤', 'text' => __( 'Privacy Garantita', 'fp-forms' ) ],
+                            ],
+                        ],
+                        'impegno' => [
+                            'label' => __( 'Impegno / Supporto', 'fp-forms' ),
+                            'tooltip' => __( 'Assistenza dedicata aumenta percezione di valore', 'fp-forms' ),
+                            'badges' => [
+                                'support' => [ 'icon' => '🎯', 'text' => __( 'Supporto Dedicato', 'fp-forms' ) ],
+                            ],
+                        ],
                     ];
                     
                     $selected_badges = isset( $form_settings['trust_badges'] ) && is_array( $form_settings['trust_badges'] ) 
                         ? $form_settings['trust_badges'] 
                         : [];
                     
-                    foreach ( $available_badges as $badge_key => $badge_data ) :
-                        $checked = in_array( $badge_key, $selected_badges );
+                    foreach ( $badge_groups as $group_key => $group ) :
+                        $tooltip = isset( $group['tooltip'] ) ? $group['tooltip'] : '';
                     ?>
-                        <label style="display: block; margin-bottom: 8px; padding: 8px; background: #f9fafb; border-radius: 4px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='#f9fafb'">
-                            <input type="checkbox" name="trust_badges[]" value="<?php echo esc_attr( $badge_key ); ?>" <?php checked( $checked, true ); ?>>
-                            <span style="font-size: 16px; margin: 0 6px;"><?php echo $badge_data['icon']; ?></span>
-                            <span style="font-weight: 500;"><?php echo esc_html( $badge_data['text'] ); ?></span>
-                        </label>
+                        <div class="fp-heuristic-group">
+                            <span class="fp-heuristic-group-label"<?php echo $tooltip ? ' title="' . esc_attr( $tooltip ) . '"' : ''; ?>><?php echo esc_html( $group['label'] ); ?></span>
+                            <?php foreach ( $group['badges'] as $badge_key => $badge_data ) :
+                                $checked = in_array( $badge_key, $selected_badges );
+                            ?>
+                                <label class="fp-heuristic-badge-item">
+                                    <input type="checkbox" name="trust_badges[]" value="<?php echo esc_attr( $badge_key ); ?>" <?php checked( $checked, true ); ?>>
+                                    <span class="fp-badge-icon"><?php echo $badge_data['icon']; ?></span>
+                                    <span class="fp-badge-text"><?php echo esc_html( $badge_data['text'] ); ?></span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
                     <?php endforeach; ?>
                 </div>
                 

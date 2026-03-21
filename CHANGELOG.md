@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.5] - 2026-03-21
+### Changed
+- Badge fiducia: rinominati in "Badge euristici", raggruppati per bias cognitivo (Prova sociale, Autorità, Reciprocità, Urgenza, Riduzione del rischio, Impegno); aggiunte label euristica e tooltip descrittivi; layout admin migliorato con CSS dedicato.
+
 ## [1.6.4] - 2026-03-19
 ### Fixed
 - Admin template: `h1` screen reader come primo elemento nel `.wrap` e titolo pagina visibile in `h2` nell’header (compat notice JS su `.wrap h1`).

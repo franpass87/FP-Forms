@@ -186,6 +186,9 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.5 - 2026-03-21
+- Changed: Badge fiducia rinominati in "Badge euristici", raggruppati per bias cognitivo con label e tooltip; layout admin migliorato.
+
 ### 1.6.4 - 2026-03-19
 - Fix: template admin con `h1` screen reader nel `.wrap` e titolo visibile in `h2` (compat notice WordPress).
 
