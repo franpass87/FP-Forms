@@ -33,8 +33,6 @@ class Manager {
         add_action( 'wp_ajax_fp_forms_bulk_action_submissions', [ $this, 'ajax_bulk_action_submissions' ] );
         add_action( 'wp_ajax_fp_forms_export_form_config', [ $this, 'ajax_export_form_config' ] );
         add_action( 'wp_ajax_fp_forms_test_recaptcha', [ $this, 'ajax_test_recaptcha' ] );
-        add_action( 'wp_ajax_fp_forms_test_brevo', [ $this, 'ajax_test_brevo' ] );
-        add_action( 'wp_ajax_fp_forms_load_brevo_lists', [ $this, 'ajax_load_brevo_lists' ] );
         add_action( 'wp_ajax_fp_forms_test_meta', [ $this, 'ajax_test_meta' ] );
         add_action( 'wp_ajax_fp_forms_run_simulation', [ $this, 'ajax_run_simulation' ] );
         add_action( 'wp_ajax_fp_forms_test_webhook', [ $this, 'ajax_test_webhook' ] );
@@ -486,21 +484,13 @@ class Manager {
             ];
             update_option( 'fp_forms_tracking_settings', $tracking_settings );
             
-            // Salva impostazioni Brevo
-            $brevo_default_list_it = absint( $_POST['brevo_default_list_it'] ?? 0 );
-            $brevo_default_list_en = absint( $_POST['brevo_default_list_en'] ?? 0 );
-            $brevo_default_list_legacy = absint( $_POST['brevo_default_list'] ?? 0 );
-            $brevo_settings = [
-                'api_key' => sanitize_text_field( $_POST['brevo_api_key'] ?? '' ),
-                // Retrocompatibilità: mantiene default_list_id come fallback generale.
-                'default_list_id' => $brevo_default_list_it > 0
-                    ? $brevo_default_list_it
-                    : $brevo_default_list_legacy,
-                'default_list_id_it' => $brevo_default_list_it,
-                'default_list_id_en' => $brevo_default_list_en,
+            // Salva impostazioni Brevo (solo opzioni Forms-specifiche; API key e liste sono in FP Tracking)
+            $existing_brevo = get_option( 'fp_forms_brevo_settings', [] );
+            $existing_brevo = is_array( $existing_brevo ) ? $existing_brevo : [];
+            $brevo_settings = array_merge( $existing_brevo, [
                 'double_optin' => isset( $_POST['brevo_double_optin'] ),
                 'track_events' => isset( $_POST['brevo_track_events'] ),
-            ];
+            ] );
             update_option( 'fp_forms_brevo_settings', $brevo_settings );
             
             // Salva impostazioni Meta Pixel
@@ -1099,18 +1089,24 @@ class Manager {
         $confirmation_enabled     = ! empty( $form_settings['confirmation_enabled'] );
         $staff_enabled            = ! empty( $form_settings['staff_notifications_enabled'] );
 
-        $brevo_settings = get_option( 'fp_forms_brevo_settings', [] );
-        $brevo_has_key  = ! empty( $brevo_settings['api_key'] ?? '' );
         $brevo_enabled_for_form = ! empty( $form_settings['brevo_enabled'] );
         $brevo_list_id = $form_settings['brevo_list_id'] ?? '';
-        if ( empty( $brevo_list_id ) ) {
-            $brevo_list_id = $brevo_settings['default_list_id'] ?? '';
-        }
-        if ( empty( $brevo_list_id ) ) {
-            $brevo_list_id = $brevo_settings['default_list_id_it'] ?? '';
-        }
-        if ( empty( $brevo_list_id ) ) {
-            $brevo_list_id = $brevo_settings['default_list_id_en'] ?? '';
+        $brevo_has_key = false;
+        if ( function_exists( 'fp_tracking_get_brevo_settings' ) ) {
+            $central = fp_tracking_get_brevo_settings();
+            $brevo_has_key = ! empty( $central['enabled'] );
+            if ( empty( $brevo_list_id ) ) {
+                $brevo_list_id = ! empty( $central['list_id_en'] ) ? $central['list_id_en'] : ( $central['list_id_it'] ?? '' );
+            }
+            if ( empty( $brevo_list_id ) ) {
+                $brevo_list_id = $central['list_id_it'] ?? '';
+            }
+        } else {
+            $brevo_settings = get_option( 'fp_forms_brevo_settings', [] );
+            $brevo_has_key = ! empty( $brevo_settings['api_key'] ?? '' );
+            if ( empty( $brevo_list_id ) ) {
+                $brevo_list_id = $brevo_settings['default_list_id_it'] ?? ( $brevo_settings['default_list_id'] ?? ( $brevo_settings['default_list_id_en'] ?? '' ) );
+            }
         }
 
         $meta_settings   = get_option( 'fp_forms_meta_settings', [] );

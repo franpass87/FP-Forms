@@ -63,16 +63,25 @@ class Brevo {
     }
     
     /**
-     * Carica settings
+     * Carica settings da FP-Tracking (se attivo) o da fp_forms_brevo_settings (fallback).
      */
     private function load_settings() {
+        if ( function_exists( 'fp_tracking_get_brevo_settings' ) ) {
+            $central = fp_tracking_get_brevo_settings();
+            $this->api_key           = (string) ( $central['api_key'] ?? '' );
+            $this->enabled           = ! empty( $central['enabled'] ) && ! empty( $this->api_key );
+            $this->default_list_id   = '';
+            $this->default_list_id_it = (int) ( $central['list_id_it'] ?? 0 ) ?: '';
+            $this->default_list_id_en = (int) ( $central['list_id_en'] ?? 0 ) ?: '';
+        } else {
+            $settings = get_option( 'fp_forms_brevo_settings', [] );
+            $this->api_key           = $settings['api_key'] ?? '';
+            $this->enabled           = ! empty( $this->api_key );
+            $this->default_list_id   = $settings['default_list_id'] ?? '';
+            $this->default_list_id_it = $settings['default_list_id_it'] ?? ( $settings['default_list_id'] ?? '' );
+            $this->default_list_id_en = $settings['default_list_id_en'] ?? '';
+        }
         $settings = get_option( 'fp_forms_brevo_settings', [] );
-        
-        $this->api_key = $settings['api_key'] ?? '';
-        $this->enabled = ! empty( $this->api_key );
-        $this->default_list_id = $settings['default_list_id'] ?? '';
-        $this->default_list_id_it = $settings['default_list_id_it'] ?? '';
-        $this->default_list_id_en = $settings['default_list_id_en'] ?? '';
         $this->double_optin = $settings['double_optin'] ?? false;
         $this->track_events = $settings['track_events'] ?? true;
     }
@@ -496,7 +505,11 @@ class Brevo {
             return $this->default_list_id_it;
         }
 
-        return $this->default_list_id;
+        if ( ! empty( $this->default_list_id ) ) {
+            return $this->default_list_id;
+        }
+
+        return ! empty( $this->default_list_id_it ) ? $this->default_list_id_it : $this->default_list_id_en;
     }
 
     /**

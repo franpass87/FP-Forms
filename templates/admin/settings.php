@@ -62,19 +62,12 @@ $recaptcha_site_key = $recaptcha_settings['site_key'] ?? '';
 $recaptcha_secret_key = $recaptcha_settings['secret_key'] ?? '';
 $recaptcha_min_score = $recaptcha_settings['min_score'] ?? 0.5;
 
-// Brevo (Sendinblue) settings
+// Brevo: API key e liste sono in FP-Tracking. Qui solo opzioni Forms-specifiche.
 $brevo_settings = get_option( 'fp_forms_brevo_settings', [
-    'api_key' => '',
-    'default_list_id' => '',
-    'default_list_id_it' => '',
-    'default_list_id_en' => '',
     'double_optin' => false,
     'track_events' => true,
 ] );
-$brevo_api_key = $brevo_settings['api_key'] ?? '';
-$brevo_default_list_it = $brevo_settings['default_list_id_it'] ?? ( $brevo_settings['default_list_id'] ?? '' );
-$brevo_default_list_en = $brevo_settings['default_list_id_en'] ?? '';
-$brevo_default_list = $brevo_settings['default_list_id'] ?? '';
+$brevo_has_central = function_exists( 'fp_tracking_get_brevo_settings' ) && fp_tracking_get_brevo_settings()['enabled'];
 $brevo_double_optin = $brevo_settings['double_optin'] ?? false;
 $brevo_track_events = $brevo_settings['track_events'] ?? true;
 
@@ -656,73 +649,27 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                 <tr>
                     <th colspan="2">
                         <h2 id="brevo"><?php _e( 'Brevo (Sendinblue) Integration', 'fp-forms' ); ?></h2>
+                        <?php if ( $brevo_has_central ) : ?>
+                        <div class="notice notice-info inline" style="margin: 8px 0; padding: 10px 12px;">
+                            <p style="margin: 0;">
+                                <?php printf(
+                                    /* translators: %s: link to FP Tracking settings */
+                                    __( 'API Key e liste ITA/ENG sono configurate in FP Tracking. Configura Brevo in %s.', 'fp-forms' ),
+                                    '<a href="' . esc_url( admin_url( 'admin.php?page=fp-tracking' ) ) . '">FP Tracking → Configurazione</a>'
+                                ); ?>
+                            </p>
+                        </div>
+                        <?php else : ?>
+                        <div class="notice notice-warning inline" style="margin: 8px 0; padding: 10px 12px;">
+                            <p style="margin: 0;">
+                                <?php _e( 'Per usare Brevo, attiva FP Marketing Tracking Layer e configura API Key e liste ITA/ENG nella sua pagina impostazioni.', 'fp-forms' ); ?>
+                            </p>
+                        </div>
+                        <?php endif; ?>
                         <p class="description" style="font-weight: normal;">
-                            <?php printf(
-                                __( 'Sincronizza automaticamente contatti con Brevo CRM e traccia eventi. %sOttieni API Key%s', 'fp-forms' ),
-                                '<a href="https://app.brevo.com/settings/keys/api" target="_blank" rel="noopener">',
-                                '</a>'
-                            ); ?>
+                            <?php _e( 'Sincronizza contatti con Brevo e traccia eventi. La lista per form si imposta nel builder di ogni form.', 'fp-forms' ); ?>
                         </p>
                     </th>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <label for="brevo_api_key"><?php _e( 'Brevo API Key', 'fp-forms' ); ?></label>
-                    </th>
-                    <td>
-                        <input type="text" 
-                               id="brevo_api_key" 
-                               name="brevo_api_key" 
-                               value="<?php echo esc_attr( $brevo_api_key ); ?>" 
-                               class="regular-text"
-                               placeholder="xkeysib-...">
-                        <p class="description">
-                            <?php _e( 'La tua API Key v3 da Brevo (Settings &#x2192; API Keys)', 'fp-forms' ); ?>
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <label for="brevo_default_list_it"><?php _e( 'Lista Default ITA', 'fp-forms' ); ?></label>
-                    </th>
-                    <td>
-                        <input type="number" 
-                               id="brevo_default_list_it" 
-                               name="brevo_default_list_it" 
-                               value="<?php echo esc_attr( $brevo_default_list_it ); ?>" 
-                               class="small-text"
-                               placeholder="2">
-                        <p class="description">
-                            <?php _e( 'Lista usata automaticamente per submission in italiano, se nel form non è impostata una lista specifica.', 'fp-forms' ); ?>
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <label for="brevo_default_list_en"><?php _e( 'Lista Default ENG', 'fp-forms' ); ?></label>
-                    </th>
-                    <td>
-                        <input type="number"
-                               id="brevo_default_list_en"
-                               name="brevo_default_list_en"
-                               value="<?php echo esc_attr( $brevo_default_list_en ); ?>"
-                               class="small-text"
-                               placeholder="3">
-                        <button type="button" id="fp-load-brevo-lists" class="button" <?php disabled( empty( $brevo_api_key ) ); ?>>
-                            <span class="dashicons dashicons-update"></span>
-                            <?php _e( 'Carica Liste', 'fp-forms' ); ?>
-                        </button>
-                        <div id="fp-brevo-lists-container" style="margin-top: 10px;"></div>
-                        <p class="description">
-                            <?php _e( 'Lista usata automaticamente per submission in inglese. Se vuota, viene usata la lista ITA/fallback.', 'fp-forms' ); ?>
-                        </p>
-                        <input type="hidden"
-                               name="brevo_default_list"
-                               value="<?php echo esc_attr( $brevo_default_list ); ?>">
-                        <p class="description">
-                            <?php _e( 'La lista specifica nel singolo form (se valorizzata) ha sempre priorità su queste impostazioni globali.', 'fp-forms' ); ?>
-                        </p>
-                    </td>
                 </tr>
                 <tr>
                     <th scope="row">
@@ -737,9 +684,7 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                             <p class="description">
                                 <?php _e( 'Invia email di conferma prima di aggiungere il contatto alla lista (raccomandato per GDPR)', 'fp-forms' ); ?>
                             </p>
-                            
                             <br>
-                            
                             <label>
                                 <input type="checkbox" name="brevo_track_events" value="1" <?php checked( $brevo_track_events, true ); ?>>
                                 <strong><?php _e( 'Traccia Eventi', 'fp-forms' ); ?></strong>
@@ -750,43 +695,6 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                         </fieldset>
                     </td>
                 </tr>
-                <?php if ( ! empty( $brevo_api_key ) ) : ?>
-                <tr>
-                    <th scope="row">
-                        <?php _e( 'Test Connessione', 'fp-forms' ); ?>
-                    </th>
-                    <td>
-                        <button type="button" id="fp-test-brevo" class="button">
-                            <span class="dashicons dashicons-admin-network"></span>
-                            <?php _e( 'Testa Connessione Brevo', 'fp-forms' ); ?>
-                        </button>
-                        <div id="fp-brevo-test-result" style="margin-top: 10px;"></div>
-                        <p class="description">
-                            <?php _e( 'Verifica che la API Key sia valida e che Brevo risponda', 'fp-forms' ); ?>
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <?php _e( 'Dati Inviati a Brevo', 'fp-forms' ); ?>
-                    </th>
-                    <td>
-                        <div style="padding: 12px; background: #f0f6fc; border-left: 4px solid #0073aa; border-radius: 4px;">
-                            <p style="margin: 0 0 8px; font-weight: 600; color: #0073aa;">
-                                &#x1F4E4; <?php _e( 'Per ogni submission:', 'fp-forms' ); ?>
-                            </p>
-                            <ul style="margin: 0 0 12px 20px; font-size: 13px;">
-                                <li><strong><?php _e( 'Contatto:', 'fp-forms' ); ?></strong> <?php _e( 'Email + attributi (nome, cognome, telefono, ecc.)', 'fp-forms' ); ?></li>
-                                <li><strong><?php _e( 'Liste:', 'fp-forms' ); ?></strong> <?php _e( 'Aggiunto alla lista configurata nel form', 'fp-forms' ); ?></li>
-                                <li><strong><?php _e( 'Evento:', 'fp-forms' ); ?></strong> <code>form_submission</code> <?php _e( 'con metadata (form_id, form_title, submission_id)', 'fp-forms' ); ?></li>
-                            </ul>
-                            <p style="margin: 0; font-size: 13px; color: #666;">
-                                &#x1F4A1; <?php _e( 'Puoi personalizzare il nome evento e la lista per ogni form nelle impostazioni form.', 'fp-forms' ); ?>
-                            </p>
-                        </div>
-                    </td>
-                </tr>
-                <?php endif; ?>
                 
 
                 <tr>

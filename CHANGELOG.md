@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.8] - 2026-03-23
+### Changed
+- Brevo: API key e liste ITA/ENG ora lette da FP Marketing Tracking Layer. Rimossa la sezione Brevo dedicata; rimangono solo opzioni Forms-specifiche (double opt-in, track events). Se FP Tracking è attivo, configura Brevo in FP Tracking.
+
 ## [1.6.7] - 2026-03-22
 ### Fixed
 - Console log/warn/error condizionati a WP_DEBUG: conditional-logic, admin, progressive-save, calculator. Aggiunto `debug` in fpForms e fpFormsAdmin via wp_localize_script.
