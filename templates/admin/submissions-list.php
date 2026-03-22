@@ -16,16 +16,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     ?>
     <h1 class="screen-reader-text"><?php echo esc_html( $fp_forms_submissions_heading ); ?></h1>
     <div class="fp-forms-admin__header">
-        <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php echo esc_html( $fp_forms_submissions_heading ); ?></h2>
-        <div class="fp-header-actions">
-            <button class="button fp-export-submissions-btn" data-form-id="<?php echo esc_attr( $form['id'] ); ?>">
-                <span class="dashicons dashicons-download"></span>
-                <?php _e( 'Export', 'fp-forms' ); ?>
-            </button>
-            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">
-                &larr; <?php _e( 'Torna ai Form', 'fp-forms' ); ?>
-            </a>
+        <div class="fpforms-page-header-content">
+            <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php echo esc_html( $fp_forms_submissions_heading ); ?></h2>
+            <p class="fpforms-page-header-desc"><?php esc_html_e( 'Visualizza e gestisci le submission di questo form.', 'fp-forms' ); ?></p>
         </div>
+        <div class="fp-header-actions">
+            <button class="button fp-export-submissions-btn" data-form-id="<?php echo esc_attr( $form['id'] ); ?>"><span class="dashicons dashicons-download"></span> <?php _e( 'Export', 'fp-forms' ); ?></button>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">&larr; <?php _e( 'Torna ai Form', 'fp-forms' ); ?></a>
+        </div>
+        <span class="fpforms-page-header-badge">v<?php echo esc_html( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '0' ); ?></span>
     </div>
     
     <!-- Search & Filters Bar -->

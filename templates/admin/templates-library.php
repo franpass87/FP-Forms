@@ -11,10 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wrap fp-forms-admin">
     <h1 class="screen-reader-text"><?php esc_html_e( 'Template Library', 'fp-forms' ); ?></h1>
     <div class="fp-forms-admin__header">
-        <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php esc_html_e( 'Template Library', 'fp-forms' ); ?></h2>
-        <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">
-            &larr; <?php _e( 'Torna ai Form', 'fp-forms' ); ?>
-        </a>
+        <div class="fpforms-page-header-content">
+            <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php esc_html_e( 'Template Library', 'fp-forms' ); ?></h2>
+            <p class="fpforms-page-header-desc"><?php esc_html_e( 'Usa un template per iniziare velocemente.', 'fp-forms' ); ?></p>
+        </div>
+        <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button"> &larr; <?php _e( 'Torna ai Form', 'fp-forms' ); ?></a>
+        <span class="fpforms-page-header-badge">v<?php echo esc_html( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '0' ); ?></span>
     </div>
     
     <div class="fp-templates-intro">

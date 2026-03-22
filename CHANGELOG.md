@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.6] - 2026-03-22
+### Changed
+- Admin impostazioni: rimosse le credenziali marketing locali (GTM/GA4/Meta) e allineata la configurazione al layer centralizzato FP Marketing Tracking Layer per evitare doppi tracciamenti.
+
 ## [1.6.5] - 2026-03-21
 ### Changed
 - Badge fiducia: rinominati in "Badge euristici", raggruppati per bias cognitivo (Prova sociale, Autorità, Reciprocità, Urgenza, Riduzione del rischio, Impegno); aggiunte label euristica e tooltip descrittivi; layout admin migliorato con CSS dedicato.

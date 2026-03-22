@@ -116,64 +116,83 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
 }
 
 /* ============================================
-   Page Header
+   Page Header (standard FP — gradiente viola come FP CTA Bar)
    ============================================ */
 .fp-forms-admin__header {
+    background: var(--fpdms-gradient-primary);
+    padding: 28px 32px;
+    border-radius: 16px;
+    box-shadow: var(--fp-shadow-md);
+    margin-bottom: var(--fp-spacing-lg);
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: var(--fp-spacing-sm);
-    margin-bottom: var(--fp-spacing-lg);
-    padding: 0;
-    clear: both;
-    width: 100%;
-    overflow: auto;
+    gap: 16px;
+    color: white;
 }
 
-.fp-forms-admin__header > h1 {
-    margin-right: auto;
+.fp-forms-admin__header .fpforms-page-header-content {
+    flex: 1;
 }
 
-.fp-forms-admin__header > a.button {
-    margin-left: auto;
-}
-
-.fp-forms-admin__header > .notice,
-.fp-forms-admin__header > .updated,
-.fp-forms-admin__header > .settings-error {
-    flex: 1 1 100%;
-    margin: 0;
-}
-
-.fp-forms-admin__header h1 {
-    font-size: 28px;
+.fp-forms-admin__header .fpforms-page-header-title,
+.fp-forms-admin__header h2.fp-forms-page-header-title {
+    font-size: 26px;
     font-weight: 700;
-    color: var(--fp-color-text);
+    margin: 0 0 6px;
+    color: white !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.fp-forms-admin__header .fpforms-page-header-desc,
+.fp-forms-admin__header p.fpforms-page-header-desc {
+    font-size: 14px;
     margin: 0;
-    line-height: 1.2;
+    color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.fp-forms-admin__header .fpforms-page-header-badge {
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .fp-forms-admin__header .page-title-action {
-    background: var(--fp-color-primary);
+    background: rgba(255, 255, 255, 0.25);
     color: #fff;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: var(--fp-radius-md);
     padding: 10px 20px;
     font-weight: 600;
     transition: all 0.2s ease;
-    box-shadow: var(--fp-shadow-sm);
 }
 
 .fp-forms-admin__header .page-title-action:hover {
-    background: var(--fp-color-primary-hover);
+    background: rgba(255, 255, 255, 0.35);
+    color: #fff;
     transform: translateY(-1px);
-    box-shadow: var(--fp-shadow-md);
 }
 
 .fp-forms-admin__header .page-title-action:focus-visible {
-    outline: 3px solid var(--fp-focus-ring);
+    outline: 3px solid rgba(255, 255, 255, 0.5);
     outline-offset: 2px;
+}
+
+.fp-forms-admin__header .fp-header-actions .button {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.fp-forms-admin__header .fp-header-actions .button:hover {
+    background: rgba(255, 255, 255, 0.35);
+    color: #fff;
 }
 
 /* ============================================

@@ -55,10 +55,12 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
     ?>
     <h1 class="screen-reader-text"><?php echo esc_html( $fp_forms_builder_heading ); ?></h1>
     <div class="fp-forms-admin__header">
-        <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php echo esc_html( $fp_forms_builder_heading ); ?></h2>
-        <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">
-            &larr; <?php esc_html_e( 'Torna ai Form', 'fp-forms' ); ?>
-        </a>
+        <div class="fpforms-page-header-content">
+            <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php echo esc_html( $fp_forms_builder_heading ); ?></h2>
+            <p class="fpforms-page-header-desc"><?php esc_html_e( 'Costruisci il tuo form con drag & drop.', 'fp-forms' ); ?></p>
+        </div>
+        <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">&larr; <?php esc_html_e( 'Torna ai Form', 'fp-forms' ); ?></a>
+        <span class="fpforms-page-header-badge">v<?php echo esc_html( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '0' ); ?></span>
     </div>
     
     <form id="fp-form-builder" class="fp-builder-container" method="post" action="" onsubmit="return false;">

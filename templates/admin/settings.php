@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Template: Impostazioni plugin
  */
@@ -60,41 +62,21 @@ $recaptcha_site_key = $recaptcha_settings['site_key'] ?? '';
 $recaptcha_secret_key = $recaptcha_settings['secret_key'] ?? '';
 $recaptcha_min_score = $recaptcha_settings['min_score'] ?? 0.5;
 
-// Tracking settings (GTM & GA4)
-$tracking_settings = get_option( 'fp_forms_tracking_settings', [
-    'gtm_id' => '',
-    'ga4_id' => '',
-    'track_views' => true,
-    'track_interactions' => false,
-    'debug_mode' => false,
-] );
-$gtm_id = $tracking_settings['gtm_id'] ?? '';
-$ga4_id = $tracking_settings['ga4_id'] ?? '';
-$track_views = $tracking_settings['track_views'] ?? true;
-$track_interactions = $tracking_settings['track_interactions'] ?? false;
-$track_debug_mode = $tracking_settings['debug_mode'] ?? false;
-
 // Brevo (Sendinblue) settings
 $brevo_settings = get_option( 'fp_forms_brevo_settings', [
     'api_key' => '',
     'default_list_id' => '',
+    'default_list_id_it' => '',
+    'default_list_id_en' => '',
     'double_optin' => false,
     'track_events' => true,
 ] );
 $brevo_api_key = $brevo_settings['api_key'] ?? '';
+$brevo_default_list_it = $brevo_settings['default_list_id_it'] ?? ( $brevo_settings['default_list_id'] ?? '' );
+$brevo_default_list_en = $brevo_settings['default_list_id_en'] ?? '';
 $brevo_default_list = $brevo_settings['default_list_id'] ?? '';
 $brevo_double_optin = $brevo_settings['double_optin'] ?? false;
 $brevo_track_events = $brevo_settings['track_events'] ?? true;
-
-// Meta (Facebook) Pixel settings
-$meta_settings = get_option( 'fp_forms_meta_settings', [
-    'pixel_id' => '',
-    'access_token' => '',
-    'track_views' => true,
-] );
-$meta_pixel_id = $meta_settings['pixel_id'] ?? '';
-$meta_access_token = $meta_settings['access_token'] ?? '';
-$meta_track_views = $meta_settings['track_views'] ?? true;
 
 $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
 ?>
@@ -102,7 +84,11 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
 <div class="wrap fp-forms-admin">
     <h1 class="screen-reader-text"><?php esc_html_e( 'Impostazioni FP Forms', 'fp-forms' ); ?></h1>
     <div class="fp-forms-admin__header">
-        <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php esc_html_e( 'Impostazioni FP Forms', 'fp-forms' ); ?></h2>
+        <div class="fpforms-page-header-content">
+            <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php esc_html_e( 'Impostazioni FP Forms', 'fp-forms' ); ?></h2>
+            <p class="fpforms-page-header-desc"><?php esc_html_e( 'Configura email, reCAPTCHA, pagamenti e integrazioni.', 'fp-forms' ); ?></p>
+        </div>
+        <span class="fpforms-page-header-badge">v<?php echo esc_html( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '0' ); ?></span>
     </div>
     
     <form method="post" action="">
@@ -647,130 +633,25 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                 </tr>
                 <tr>
                     <th colspan="2">
-                        <h2 id="tracking"><?php _e( 'Google Tag Manager & Analytics', 'fp-forms' ); ?></h2>
+                        <h2 id="tracking"><?php _e( 'Tracking marketing', 'fp-forms' ); ?></h2>
                         <p class="description" style="font-weight: normal;">
-                            <?php _e( 'Traccia submissions, conversioni e comportamento utenti con GTM e GA4', 'fp-forms' ); ?>
+                            <?php _e( 'FP Forms invia eventi al layer centralizzato. Configura GTM, GA4, Google Ads, Meta Pixel e Clarity solo in FP Marketing Tracking Layer.', 'fp-forms' ); ?>
                         </p>
                     </th>
                 </tr>
                 <tr>
                     <th scope="row">
-                        <label for="gtm_id"><?php _e( 'Google Tag Manager ID', 'fp-forms' ); ?></label>
+                        <?php _e( 'Configurazione centralizzata', 'fp-forms' ); ?>
                     </th>
                     <td>
-                        <input type="text" 
-                               id="gtm_id" 
-                               name="gtm_id" 
-                               value="<?php echo esc_attr( $gtm_id ); ?>" 
-                               class="regular-text"
-                               placeholder="GTM-XXXXXXX">
-                        <p class="description">
-                            <?php printf(
-                                __( 'Il tuo Container ID di Google Tag Manager. %sOttieni il tuo ID%s', 'fp-forms' ),
-                                '<a href="https://tagmanager.google.com/" target="_blank" rel="noopener">',
-                                '</a>'
-                            ); ?>
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <label for="ga4_id"><?php _e( 'Google Analytics 4 ID', 'fp-forms' ); ?></label>
-                    </th>
-                    <td>
-                        <input type="text" 
-                               id="ga4_id" 
-                               name="ga4_id" 
-                               value="<?php echo esc_attr( $ga4_id ); ?>" 
-                               class="regular-text"
-                               placeholder="G-XXXXXXXXXX">
-                        <p class="description">
-                            <?php printf(
-                                __( 'Il tuo Measurement ID di Google Analytics 4. %sOttieni il tuo ID%s', 'fp-forms' ),
-                                '<a href="https://analytics.google.com/" target="_blank" rel="noopener">',
-                                '</a>'
-                            ); ?>
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <?php _e( 'Eventi da Tracciare', 'fp-forms' ); ?>
-                    </th>
-                    <td>
-                        <fieldset>
-                            <legend class="screen-reader-text"><span><?php _e( 'Eventi da tracciare', 'fp-forms' ); ?></span></legend>
-                            <label>
-                                <input type="checkbox" name="track_views" value="1" <?php checked( $track_views, true ); ?>>
-                                <strong><?php _e( 'Form Views', 'fp-forms' ); ?></strong>
-                            </label>
-                            <p class="description"><?php _e( 'Traccia quando un form viene visualizzato (page view con form)', 'fp-forms' ); ?></p>
-                            
-                            <br>
-                            
-                            <label>
-                                <input type="checkbox" name="track_interactions" value="1" <?php checked( $track_interactions, true ); ?>>
-                                <strong><?php _e( 'Field Interactions', 'fp-forms' ); ?></strong>
-                            </label>
-                            <p class="description"><?php _e( 'Traccia ogni interazione con i campi (focus, input). Puo generare molti eventi.', 'fp-forms' ); ?></p>
-                            
-                            <br>
-                            
-                            <label>
-                                <input type="checkbox" name="track_debug_mode" value="1" <?php checked( $track_debug_mode, true ); ?>>
-                                <strong><?php _e( 'Debug Mode', 'fp-forms' ); ?></strong>
-                            </label>
-                            <p class="description"><?php _e( 'Mostra log dettagliati nella console del browser. Disattivare in produzione.', 'fp-forms' ); ?></p>
-                        </fieldset>
-                        
-                        <div style="margin-top: 16px; padding: 12px; background: #f0f6fc; border-left: 4px solid #0073aa; border-radius: 4px;">
-                            <p style="margin: 0; font-weight: 600; color: #0073aa;">
-                                &#x1F4CA; <?php _e( 'Eventi Tracciati Automaticamente (Funnel Completo):', 'fp-forms' ); ?>
-                            </p>
-                            <ul style="margin: 8px 0 0 20px; font-size: 13px;">
-                                <li><code>fp_form_view</code> - &#x1F441;&#xFE0F; <?php _e( 'Form visualizzato (awareness)', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_start</code> - &#x270F;&#xFE0F; <?php _e( 'Inizio compilazione - primo campo focus (interest)', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_progress</code> - &#x1F4CA; <?php _e( 'Progressione form (25%, 50%, 75%)', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_submit</code> - &#x2705; <?php _e( 'Form completato con successo (conversion)', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_conversion</code> - &#x1F3AF; <?php _e( 'Conversione per Google Ads', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_abandon</code> - &#x274C; <?php _e( 'Abbandono form (remarketing)', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_validation_error</code> - &#x26A0;&#xFE0F; <?php _e( 'Errore validazione campo (optimization)', 'fp-forms' ); ?></li>
-                                <li><code>fp_form_error</code> - &#x1F6AB; <?php _e( 'Errore invio generale', 'fp-forms' ); ?></li>
-                            </ul>
-                            <p style="margin: 12px 0 0; font-size: 12px; padding: 8px; background: #fff; border-radius: 4px;">
-                                <strong>&#x1F4C8; Metriche Incluse:</strong> Tempo compilazione, % progress, error_field, conversion_value
-                            </p>
-                        </div>
-                    </td>
-                </tr>
-                <?php if ( ! empty( $gtm_id ) || ! empty( $ga4_id ) ) : ?>
-                <tr>
-                    <th scope="row">
-                        <?php _e( 'Status Tracking', 'fp-forms' ); ?>
-                    </th>
-                    <td>
-                        <div class="notice notice-success inline" style="margin: 0; padding: 8px 12px;">
+                        <div class="notice notice-info inline" style="margin: 0; padding: 8px 12px;">
                             <p style="margin: 0;">
-                                <span class="dashicons dashicons-yes-alt" style="color: #46b450;"></span>
-                                <strong><?php _e( 'Tracking Attivo!', 'fp-forms' ); ?></strong>
+                                <strong><?php _e( 'Nessun ID da inserire qui.', 'fp-forms' ); ?></strong>
+                                <?php _e( ' Per evitare doppi tracciamenti, gli ID marketing vengono gestiti solo in FP Tracking.', 'fp-forms' ); ?>
                             </p>
-                            <?php if ( ! empty( $gtm_id ) ) : ?>
-                            <p style="margin: 8px 0 0; font-size: 13px;">
-                                &#x2705; Google Tag Manager: <code><?php echo esc_html( $gtm_id ); ?></code>
-                            </p>
-                            <?php endif; ?>
-                            <?php if ( ! empty( $ga4_id ) ) : ?>
-                            <p style="margin: 8px 0 0; font-size: 13px;">
-                                &#x2705; Google Analytics 4: <code><?php echo esc_html( $ga4_id ); ?></code>
-                            </p>
-                            <?php endif; ?>
                         </div>
-                        <p class="description" style="margin-top: 12px;">
-                            <?php _e( 'Verifica che gli script siano caricati correttamente usando la console del browser o Google Tag Assistant.', 'fp-forms' ); ?>
-                        </p>
                     </td>
                 </tr>
-                <?php endif; ?>
                 
                 <tr>
                     <th colspan="2">
@@ -802,22 +683,44 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                 </tr>
                 <tr>
                     <th scope="row">
-                        <label for="brevo_default_list"><?php _e( 'Lista Default', 'fp-forms' ); ?></label>
+                        <label for="brevo_default_list_it"><?php _e( 'Lista Default ITA', 'fp-forms' ); ?></label>
                     </th>
                     <td>
                         <input type="number" 
-                               id="brevo_default_list" 
-                               name="brevo_default_list" 
-                               value="<?php echo esc_attr( $brevo_default_list ); ?>" 
+                               id="brevo_default_list_it" 
+                               name="brevo_default_list_it" 
+                               value="<?php echo esc_attr( $brevo_default_list_it ); ?>" 
                                class="small-text"
                                placeholder="2">
+                        <p class="description">
+                            <?php _e( 'Lista usata automaticamente per submission in italiano, se nel form non è impostata una lista specifica.', 'fp-forms' ); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="brevo_default_list_en"><?php _e( 'Lista Default ENG', 'fp-forms' ); ?></label>
+                    </th>
+                    <td>
+                        <input type="number"
+                               id="brevo_default_list_en"
+                               name="brevo_default_list_en"
+                               value="<?php echo esc_attr( $brevo_default_list_en ); ?>"
+                               class="small-text"
+                               placeholder="3">
                         <button type="button" id="fp-load-brevo-lists" class="button" <?php disabled( empty( $brevo_api_key ) ); ?>>
                             <span class="dashicons dashicons-update"></span>
                             <?php _e( 'Carica Liste', 'fp-forms' ); ?>
                         </button>
                         <div id="fp-brevo-lists-container" style="margin-top: 10px;"></div>
                         <p class="description">
-                            <?php _e( 'ID della lista Brevo a cui aggiungere i contatti (se non specificato nel form)', 'fp-forms' ); ?>
+                            <?php _e( 'Lista usata automaticamente per submission in inglese. Se vuota, viene usata la lista ITA/fallback.', 'fp-forms' ); ?>
+                        </p>
+                        <input type="hidden"
+                               name="brevo_default_list"
+                               value="<?php echo esc_attr( $brevo_default_list ); ?>">
+                        <p class="description">
+                            <?php _e( 'La lista specifica nel singolo form (se valorizzata) ha sempre priorità su queste impostazioni globali.', 'fp-forms' ); ?>
                         </p>
                     </td>
                 </tr>
@@ -885,156 +788,6 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                 </tr>
                 <?php endif; ?>
                 
-                <tr>
-                    <th colspan="2">
-                        <h2 id="meta"><?php _e( 'Meta (Facebook) Pixel & Conversions API', 'fp-forms' ); ?></h2>
-                        <p class="description" style="font-weight: normal;">
-                            <?php printf(
-                                __( 'Traccia conversioni con Facebook Pixel (client-side) e Conversions API (server-side per iOS 14.5+). %sOttieni Pixel ID%s', 'fp-forms' ),
-                                '<a href="https://business.facebook.com/events_manager2" target="_blank" rel="noopener">',
-                                '</a>'
-                            ); ?>
-                        </p>
-                    </th>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <label for="meta_pixel_id"><?php _e( 'Facebook Pixel ID', 'fp-forms' ); ?></label>
-                    </th>
-                    <td>
-                        <input type="text" 
-                               id="meta_pixel_id" 
-                               name="meta_pixel_id" 
-                               value="<?php echo esc_attr( $meta_pixel_id ); ?>" 
-                               class="regular-text"
-                               placeholder="1234567890123456">
-                        <p class="description">
-                            <?php _e( 'Il tuo Pixel ID da Facebook Events Manager (15-16 cifre)', 'fp-forms' ); ?>
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <label for="meta_access_token"><?php _e( 'Conversions API Token (opzionale)', 'fp-forms' ); ?></label>
-                    </th>
-                    <td>
-                        <input type="text" 
-                               id="meta_access_token" 
-                               name="meta_access_token" 
-                               value="<?php echo esc_attr( $meta_access_token ); ?>" 
-                               class="regular-text"
-                               placeholder="EAAG...">
-                        <p class="description">
-                            <strong><?php _e( 'Raccomandato!', 'fp-forms' ); ?></strong>
-                            <?php printf(
-                                __( 'Access Token per tracking server-side (bypassa ad blockers e iOS 14.5+ restrictions). %sGenera Token%s', 'fp-forms' ),
-                                '<a href="https://business.facebook.com/events_manager2/list/pixel/settings" target="_blank" rel="noopener">',
-                                '</a>'
-                            ); ?>
-                        </p>
-                        <div style="margin-top: 12px; padding: 12px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-                            <p style="margin: 0; font-size: 13px; color: #856404;">
-                                <strong>&#x26A0;&#xFE0F; Perche Conversions API?</strong><br>
-                                &#x2022; iOS 14.5+ blocca molti pixel client-side<br>
-                                &#x2022; Ad blockers impediscono tracking<br>
-                                &#x2022; Server-side = 100% affidabile<br>
-                                &#x2022; Migliora accuratezza campagne Meta Ads
-                            </p>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <?php _e( 'Opzioni Tracking', 'fp-forms' ); ?>
-                    </th>
-                    <td>
-                        <label>
-                            <input type="checkbox" name="meta_track_views" value="1" <?php checked( $meta_track_views, true ); ?>>
-                            <strong><?php _e( 'Traccia Form Views', 'fp-forms' ); ?></strong>
-                        </label>
-                        <p class="description">
-                            <?php _e( 'Invia evento ViewContent quando un form viene visualizzato', 'fp-forms' ); ?>
-                        </p>
-                    </td>
-                </tr>
-                <?php if ( ! empty( $meta_pixel_id ) ) : ?>
-                <tr>
-                    <th scope="row">
-                        <?php _e( 'Test Connessione', 'fp-forms' ); ?>
-                    </th>
-                    <td>
-                        <button type="button" id="fp-test-meta" class="button">
-                            <span class="dashicons dashicons-admin-network"></span>
-                            <?php _e( 'Testa Connessione Meta', 'fp-forms' ); ?>
-                        </button>
-                        <div id="fp-meta-test-result" style="margin-top: 10px;"></div>
-                        <p class="description">
-                            <?php _e( 'Verifica che Pixel ID e Access Token siano validi', 'fp-forms' ); ?>
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <?php _e( 'Eventi Tracciati', 'fp-forms' ); ?>
-                    </th>
-                    <td>
-                        <div style="padding: 12px; background: #f0f6fc; border-left: 4px solid #0073aa; border-radius: 4px;">
-                            <p style="margin: 0 0 8px; font-weight: 600; color: #0073aa;">
-                                &#x1F4CA; <?php _e( 'Eventi Meta (Funnel Completo):', 'fp-forms' ); ?>
-                            </p>
-                            
-                            <p style="margin: 8px 0 4px; font-weight: 600; font-size: 12px; color: #0073aa;">
-                                <?php _e( '&#x2705; Eventi Standard (usabili in Meta Ads):', 'fp-forms' ); ?>
-                            </p>
-                            <ul style="margin: 0 0 12px 20px; font-size: 13px;">
-                                <li><code>PageView</code> - <?php _e( 'Caricamento pagina', 'fp-forms' ); ?></li>
-                                <li><code>ViewContent</code> - &#x1F441;&#xFE0F; <?php _e( 'Form visualizzato', 'fp-forms' ); ?></li>
-                                <li><code>Lead</code> - &#x1F3AF; <?php _e( 'Form submission (CONVERSIONE PRINCIPALE)', 'fp-forms' ); ?></li>
-                                <li><code>CompleteRegistration</code> - &#x2705; <?php _e( 'Completata registrazione (se signup form)', 'fp-forms' ); ?></li>
-                            </ul>
-                            
-                            <p style="margin: 8px 0 4px; font-weight: 600; font-size: 12px; color: #666;">
-                                <?php _e( '&#x1F527; Eventi Custom (analytics & optimization):', 'fp-forms' ); ?>
-                            </p>
-                            <ul style="margin: 0 0 12px 20px; font-size: 13px;">
-                                <li><code>FormStart</code> - &#x270F;&#xFE0F; <?php _e( 'Inizio compilazione', 'fp-forms' ); ?></li>
-                                <li><code>FormProgress</code> - &#x1F4CA; <?php _e( 'Progressione (25%, 50%, 75%)', 'fp-forms' ); ?></li>
-                                <li><code>FormAbandoned</code> - &#x274C; <?php _e( 'Abbandono form', 'fp-forms' ); ?></li>
-                                <li><code>FormValidationError</code> - &#x26A0;&#xFE0F; <?php _e( 'Errore validazione', 'fp-forms' ); ?></li>
-                                <li><code>FormSubmission</code> - &#x1F4DD; <?php _e( 'Metadata dettagliati submission', 'fp-forms' ); ?></li>
-                            </ul>
-                            
-                            <p style="margin: 0; padding: 8px; background: #fff; border-radius: 4px; font-size: 13px; color: #666;">
-                                &#x1F4A1; <?php _e( 'Eventi Lead e CompleteRegistration sono ottimizzabili in campagne Meta Ads. Eventi custom per remarketing e analytics.', 'fp-forms' ); ?>
-                            </p>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <?php _e( 'Dati Inviati (CAPI)', 'fp-forms' ); ?>
-                    </th>
-                    <td>
-                        <div style="padding: 12px; background: #f0f6fc; border-left: 4px solid #0073aa; border-radius: 4px;">
-                            <p style="margin: 0 0 8px; font-weight: 600; color: #0073aa;">
-                                &#x1F512; <?php _e( 'Dati Hashed (SHA256) per Privacy:', 'fp-forms' ); ?>
-                            </p>
-                            <ul style="margin: 0; font-size: 13px;">
-                                <li><strong>em</strong> - Email (hashed)</li>
-                                <li><strong>fn</strong> - Nome (hashed)</li>
-                                <li><strong>ln</strong> - Cognome (hashed)</li>
-                                <li><strong>ph</strong> - Telefono (hashed)</li>
-                                <li><strong>client_ip_address</strong> - IP utente</li>
-                                <li><strong>client_user_agent</strong> - User Agent</li>
-                                <li><strong>fbp/fbc</strong> - Cookie Facebook (se presenti)</li>
-                            </ul>
-                        </div>
-                        <p class="description" style="margin-top: 12px;">
-                            &#x2139;&#xFE0F; <?php _e( 'Tutti i dati personali sono hashed con SHA256 prima dell\'invio (GDPR compliant)', 'fp-forms' ); ?>
-                        </p>
-                    </td>
-                </tr>
-                <?php endif; ?>
 
                 <tr>
                     <th colspan="2">

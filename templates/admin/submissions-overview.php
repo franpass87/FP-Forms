@@ -11,7 +11,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wrap fp-forms-admin">
     <h1 class="screen-reader-text"><?php esc_html_e( 'Submissions', 'fp-forms' ); ?></h1>
     <div class="fp-forms-admin__header">
-        <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php esc_html_e( 'Submissions', 'fp-forms' ); ?></h2>
+        <div class="fpforms-page-header-content">
+            <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php esc_html_e( 'Submissions', 'fp-forms' ); ?></h2>
+            <p class="fpforms-page-header-desc"><?php esc_html_e( 'Visualizza e gestisci le submission dei form.', 'fp-forms' ); ?></p>
+        </div>
+        <span class="fpforms-page-header-badge">v<?php echo esc_html( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '0' ); ?></span>
     </div>
 
     <?php if ( empty( $forms_data ) ) : ?>

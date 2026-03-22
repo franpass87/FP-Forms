@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace FPForms\Integrations;
 
 /**
@@ -28,6 +30,16 @@ class Brevo {
      * Default list ID
      */
     private $default_list_id;
+
+    /**
+     * Default list ID per italiano.
+     */
+    private $default_list_id_it;
+
+    /**
+     * Default list ID per inglese.
+     */
+    private $default_list_id_en;
     
     /**
      * Enable double opt-in
@@ -59,6 +71,8 @@ class Brevo {
         $this->api_key = $settings['api_key'] ?? '';
         $this->enabled = ! empty( $this->api_key );
         $this->default_list_id = $settings['default_list_id'] ?? '';
+        $this->default_list_id_it = $settings['default_list_id_it'] ?? '';
+        $this->default_list_id_en = $settings['default_list_id_en'] ?? '';
         $this->double_optin = $settings['double_optin'] ?? false;
         $this->track_events = $settings['track_events'] ?? true;
     }
@@ -97,8 +111,12 @@ class Brevo {
             return;
         }
         
-        // Ottieni lista ID (form-specific o default)
-        $list_id = $form['settings']['brevo_list_id'] ?? $this->default_list_id;
+        // Ottieni lista ID (form-specific o default in base alla lingua).
+        $form_list_id = $form['settings']['brevo_list_id'] ?? '';
+        $language = $this->detect_submission_language( $data );
+        $list_id = ! empty( $form_list_id )
+            ? $form_list_id
+            : $this->resolve_default_list_id_for_language( $language );
         
         if ( empty( $list_id ) ) {
             \FPForms\Core\Logger::warning( 'Brevo sync skipped: no list ID', [
@@ -138,6 +156,7 @@ class Brevo {
             'form_id' => $form_id,
             'email'   => self::mask_email( $email ),
             'list_id' => $list_id,
+            'language' => $language,
         ] );
         
         // Track evento se abilitato
@@ -460,6 +479,89 @@ class Brevo {
         $attributes['FP_SUBMISSION_DATE'] = current_time( 'Y-m-d H:i:s' );
         
         return $attributes;
+    }
+
+    /**
+     * Seleziona la lista default in base alla lingua submission.
+     *
+     * @param string $language Codice lingua (it|en).
+     * @return string
+     */
+    private function resolve_default_list_id_for_language( $language ) {
+        if ( $language === 'en' && ! empty( $this->default_list_id_en ) ) {
+            return $this->default_list_id_en;
+        }
+
+        if ( $language === 'it' && ! empty( $this->default_list_id_it ) ) {
+            return $this->default_list_id_it;
+        }
+
+        return $this->default_list_id;
+    }
+
+    /**
+     * Rileva la lingua della submission (italiano o inglese).
+     *
+     * @param array $data Dati submission.
+     * @return string 'it' oppure 'en'
+     */
+    private function detect_submission_language( $data ) {
+        // 1) Prova da campi espliciti nel payload del form.
+        $candidate_keys = [ 'lang', 'language', 'locale', 'lingua' ];
+        foreach ( $candidate_keys as $candidate_key ) {
+            foreach ( $data as $key => $value ) {
+                $normalized_key = strtolower( str_replace( 'fp_field_', '', (string) $key ) );
+                if ( $normalized_key !== $candidate_key ) {
+                    continue;
+                }
+                $detected = $this->normalize_language_code( (string) $value );
+                if ( $detected !== '' ) {
+                    return $detected;
+                }
+            }
+        }
+
+        // 2) Fallback dall'URL di provenienza.
+        $referer = wp_get_referer();
+        if ( ! $referer && isset( $_SERVER['HTTP_REFERER'] ) ) {
+            $referer = sanitize_text_field( wp_unslash( $_SERVER['HTTP_REFERER'] ) );
+        }
+
+        if ( is_string( $referer ) && $referer !== '' ) {
+            $path = (string) ( wp_parse_url( $referer, PHP_URL_PATH ) ?? '' );
+            if ( preg_match( '#^/en(/|$)#i', $path ) ) {
+                return 'en';
+            }
+            if ( preg_match( '#^/it(/|$)#i', $path ) ) {
+                return 'it';
+            }
+        }
+
+        // Default: italiano.
+        return 'it';
+    }
+
+    /**
+     * Normalizza codici lingua verso it/en.
+     *
+     * @param string $value Valore lingua grezzo.
+     * @return string
+     */
+    private function normalize_language_code( $value ) {
+        $value = strtolower( trim( $value ) );
+        if ( $value === '' ) {
+            return '';
+        }
+
+        if ( strpos( $value, 'en' ) === 0 || $value === 'eng' || strpos( $value, 'english' ) === 0 ) {
+            return 'en';
+        }
+
+        if ( strpos( $value, 'it' ) === 0 || $value === 'ita' || strpos( $value, 'italian' ) === 0 || strpos( $value, 'italiano' ) === 0 ) {
+            return 'it';
+        }
+
+        return '';
     }
 
     /**

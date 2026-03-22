@@ -14,15 +14,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     ?>
     <h1 class="screen-reader-text"><?php echo esc_html( $fp_forms_analytics_heading ); ?></h1>
     <div class="fp-forms-admin__header">
-        <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php echo esc_html( $fp_forms_analytics_heading ); ?></h2>
-        <div class="fp-header-actions">
-            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . intval( $form['id'] ) ) ); ?>" class="button">
-                <?php esc_html_e( 'Vedi Submissions', 'fp-forms' ); ?>
-            </a>
-            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">
-                &larr; <?php esc_html_e( 'Torna ai Form', 'fp-forms' ); ?>
-            </a>
+        <div class="fpforms-page-header-content">
+            <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php echo esc_html( $fp_forms_analytics_heading ); ?></h2>
+            <p class="fpforms-page-header-desc"><?php esc_html_e( 'Metriche e conversioni per questo form.', 'fp-forms' ); ?></p>
         </div>
+        <div class="fp-header-actions">
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms-submissions&form_id=' . intval( $form['id'] ) ) ); ?>" class="button"><?php esc_html_e( 'Vedi Submissions', 'fp-forms' ); ?></a>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">&larr; <?php esc_html_e( 'Torna ai Form', 'fp-forms' ); ?></a>
+        </div>
+        <span class="fpforms-page-header-badge">v<?php echo esc_html( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '0' ); ?></span>
     </div>
     
     <!-- Stats Cards -->
