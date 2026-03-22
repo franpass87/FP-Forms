@@ -67,7 +67,8 @@ $brevo_settings = get_option( 'fp_forms_brevo_settings', [
     'double_optin' => false,
     'track_events' => true,
 ] );
-$brevo_has_central = function_exists( 'fp_tracking_get_brevo_settings' ) && fp_tracking_get_brevo_settings()['enabled'];
+$brevo_central = function_exists( 'fp_tracking_get_brevo_settings' ) ? fp_tracking_get_brevo_settings() : null;
+$brevo_has_central = $brevo_central && ! empty( $brevo_central['enabled'] );
 $brevo_double_optin = $brevo_settings['double_optin'] ?? false;
 $brevo_track_events = $brevo_settings['track_events'] ?? true;
 
