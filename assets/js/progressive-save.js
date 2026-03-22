@@ -118,7 +118,9 @@
                 
             } catch (e) {
                 // LocalStorage potrebbe essere disabilitato o pieno
-                console.warn('[FP Forms] Auto-save failed:', e);
+                if ( window.fpFormsDebug || ( typeof fpForms !== 'undefined' && fpForms.debug ) ) {
+                    console.warn('[FP Forms] Auto-save failed:', e);
+                }
             }
         },
         
@@ -207,7 +209,9 @@
                 });
                 
             } catch (e) {
-                console.warn('[FP Forms] Auto-restore failed:', e);
+                if ( window.fpFormsDebug || ( typeof fpForms !== 'undefined' && fpForms.debug ) ) {
+                    console.warn('[FP Forms] Auto-restore failed:', e);
+                }
             }
         },
         
@@ -218,7 +222,9 @@
             try {
                 localStorage.removeItem(storageKey);
             } catch (e) {
-                console.warn('[FP Forms] Clear auto-save failed:', e);
+                if ( window.fpFormsDebug || ( typeof fpForms !== 'undefined' && fpForms.debug ) ) {
+                    console.warn('[FP Forms] Clear auto-save failed:', e);
+                }
             }
         }
     };

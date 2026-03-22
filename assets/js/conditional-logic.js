@@ -29,7 +29,7 @@
         }
         
         init() {
-            if (window.fpFormsDebug) {
+            if ( window.fpFormsDebug || ( typeof fpForms !== 'undefined' && fpForms.debug ) ) {
                 console.log('[FP Forms] Initializing conditional logic with', this.rules.length, 'rules');
             }
             
@@ -59,7 +59,9 @@
             const triggerField = this.getFieldElement( rule.trigger_field );
             
             if ( ! triggerField ) {
-                console.warn('[FP Forms] Trigger field not found:', rule.trigger_field);
+                if ( window.fpFormsDebug || ( typeof fpForms !== 'undefined' && fpForms.debug ) ) {
+                    console.warn('[FP Forms] Trigger field not found:', rule.trigger_field);
+                }
                 return;
             }
             
@@ -84,7 +86,7 @@
         evaluateRule( rule ) {
             const value = this.getFieldValue( rule.trigger_field );
             const shouldApply = this.checkCondition( value, rule.condition, rule.value );
-            if ( window.fpFormsDebug ) {
+            if ( window.fpFormsDebug || ( typeof fpForms !== 'undefined' && fpForms.debug ) ) {
                 console.log( '[FP Forms] Evaluating rule:', rule, 'Result:', shouldApply );
             }
             if ( shouldApply ) {

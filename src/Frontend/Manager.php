@@ -106,6 +106,7 @@ class Manager {
         wp_localize_script( 'fp-forms-frontend', 'fpForms', [
             'ajaxurl' => admin_url( 'admin-ajax.php' ),
             'nonce' => wp_create_nonce( 'fp_forms_submit' ),
+            'debug' => defined( 'WP_DEBUG' ) && WP_DEBUG,
             'strings' => [
                 'submitting'          => __( 'Invio in corso...', 'fp-forms' ),
                 'error'               => __( 'Si è verificato un errore. Riprova.', 'fp-forms' ),

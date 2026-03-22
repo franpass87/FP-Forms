@@ -96,7 +96,9 @@
                     });
                 }
             } catch (err) {
-                console.warn('FP Forms: sortable init skipped', err);
+                if ( window.fpFormsDebug || ( typeof fpFormsAdmin !== 'undefined' && fpFormsAdmin.debug ) ) {
+                    console.warn('FP Forms: sortable init skipped', err);
+                }
             }
         },
         
@@ -365,7 +367,9 @@
         getFieldHtml: function(field, index) {
             var template = $('#fp-field-template').html();
             if (!template) {
-                console.warn('FP Forms: template #fp-field-template non trovato');
+                if ( window.fpFormsDebug || ( typeof fpFormsAdmin !== 'undefined' && fpFormsAdmin.debug ) ) {
+                    console.warn('FP Forms: template #fp-field-template non trovato');
+                }
                 return '';
             }
             template = template.replace(/\{\{index\}\}/g, index);
@@ -1122,12 +1126,16 @@
         try {
             FPFormsAdmin.init();
         } catch (err) {
-            console.error('FP Forms Admin init error:', err);
+            if ( window.fpFormsDebug || ( typeof fpFormsAdmin !== 'undefined' && fpFormsAdmin.debug ) ) {
+                console.error('FP Forms Admin init error:', err);
+            }
         }
         try {
             FPFormsSettings.init();
         } catch (err) {
-            console.error('FP Forms Settings init error:', err);
+            if ( window.fpFormsDebug || ( typeof fpFormsAdmin !== 'undefined' && fpFormsAdmin.debug ) ) {
+                console.error('FP Forms Settings init error:', err);
+            }
         }
     });
     

@@ -244,6 +244,7 @@ class Manager {
         wp_localize_script( 'fp-forms-admin', 'fpFormsAdmin', [
             'ajaxurl' => admin_url( 'admin-ajax.php' ),
             'nonce' => wp_create_nonce( 'fp_forms_admin' ),
+            'debug' => defined( 'WP_DEBUG' ) && WP_DEBUG,
             'editFormUrlBase' => admin_url( 'admin.php?page=fp-forms-edit&form_id=' ),
             'strings' => [
                 'confirmDelete' => __( 'Sei sicuro di voler eliminare questo elemento?', 'fp-forms' ),

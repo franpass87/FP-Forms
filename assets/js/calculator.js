@@ -133,7 +133,9 @@
                     $calc.val(result.toFixed(decimals));
                 }
             } catch (e) {
-                console.warn('[FP Forms Calculator] Error:', e);
+                if ( window.fpFormsDebug || ( typeof fpForms !== 'undefined' && fpForms.debug ) ) {
+                    console.warn('[FP Forms Calculator] Error:', e);
+                }
                 $calc.val('Error');
             }
         }

@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.7] - 2026-03-22
+### Fixed
+- Console log/warn/error condizionati a WP_DEBUG: conditional-logic, admin, progressive-save, calculator. Aggiunto `debug` in fpForms e fpFormsAdmin via wp_localize_script.
+
 ## [1.6.6] - 2026-03-22
 ### Changed
 - Admin impostazioni: rimosse le credenziali marketing locali (GTM/GA4/Meta) e allineata la configurazione al layer centralizzato FP Marketing Tracking Layer per evitare doppi tracciamenti.

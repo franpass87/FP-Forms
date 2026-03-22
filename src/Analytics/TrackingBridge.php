@@ -38,6 +38,9 @@ class TrackingBridge {
 
         // Pagamento avviato (form con integrazione pagamento)
         add_action('fp_forms_payment_started', [$this, 'on_payment_started'], 10, 4);
+
+        // Pagamento completato (webhook provider)
+        add_action('fp_forms_payment_completed', [$this, 'on_payment_completed'], 10, 3);
     }
 
     /**
@@ -156,6 +159,27 @@ class TrackingBridge {
             'value'         => $amount,
             'currency'      => 'EUR',
             'event_id'      => 'fp_forms_pay_' . $submission_id . '_' . time(),
+        ]);
+    }
+
+    /**
+     * Fires form_payment_completed after provider confirmation (webhook/callback).
+     *
+     * @param int   $submission_id
+     * @param int   $form_id
+     * @param array $payment_data
+     */
+    public function on_payment_completed(int $submission_id, int $form_id, array $payment_data): void {
+        $form  = get_post($form_id);
+        $title = $form instanceof \WP_Post ? $form->post_title : '';
+
+        do_action('fp_tracking_event', 'form_payment_completed', [
+            'form_id'         => $form_id,
+            'form_title'      => $title,
+            'submission_id'   => $submission_id,
+            'transaction_id'  => isset($payment_data['transaction_id']) ? sanitize_text_field((string) $payment_data['transaction_id']) : '',
+            'payment_status'  => isset($payment_data['payment_status']) ? sanitize_text_field((string) $payment_data['payment_status']) : '',
+            'event_id'        => 'fp_forms_pay_ok_' . $submission_id . '_' . time(),
         ]);
     }
 }
