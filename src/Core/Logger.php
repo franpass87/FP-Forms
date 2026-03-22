@@ -33,7 +33,7 @@ class Logger {
         $htaccess = self::$log_dir . '.htaccess';
         if ( ! file_exists( $htaccess ) ) {
             $result = file_put_contents( $htaccess, "deny from all\n" );
-            if ( $result === false ) {
+            if ( $result === false && defined( 'WP_DEBUG' ) && WP_DEBUG ) {
                 error_log( 'FP Forms: impossibile creare .htaccess nella directory dei log. I log potrebbero essere accessibili pubblicamente.' );
             }
         }
