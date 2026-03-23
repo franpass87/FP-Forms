@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.10] - 2026-03-23
+### Changed
+- Brevo: aggiunto link "Configura in FP Tracking" anche quando centralizzato non attivo (allineamento UX con altri plugin FP).
+
 ## [1.6.9] - 2026-03-23
 ### Changed
 - Brevo: evitata doppia chiamata a `fp_tracking_get_brevo_settings()` in template impostazioni.

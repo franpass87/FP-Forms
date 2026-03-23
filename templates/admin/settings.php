@@ -663,7 +663,10 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                         <?php else : ?>
                         <div class="notice notice-warning inline" style="margin: 8px 0; padding: 10px 12px;">
                             <p style="margin: 0;">
-                                <?php _e( 'Per usare Brevo, attiva FP Marketing Tracking Layer e configura API Key e liste ITA/ENG nella sua pagina impostazioni.', 'fp-forms' ); ?>
+                                <?php
+                                echo esc_html__( 'Per usare Brevo, attiva FP Marketing Tracking Layer e configura API Key e liste ITA/ENG nella sua pagina impostazioni.', 'fp-forms' );
+                                echo ' <a href="' . esc_url( admin_url( 'admin.php?page=fp-tracking' ) ) . '">' . esc_html__( 'Configura in FP Tracking', 'fp-forms' ) . '</a>';
+                                ?>
                             </p>
                         </div>
                         <?php endif; ?>
