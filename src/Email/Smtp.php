@@ -36,7 +36,14 @@ class Smtp {
      * Rileva se un plugin SMTP esterno gestisce già il transport.
      */
     private static function external_smtp_plugin_active(): bool {
+        // FP Mail SMTP: verifica via costante (più affidabile di basename)
+        if ( defined( 'FP_FPMAIL_VERSION' ) ) {
+            return true;
+        }
+
         $smtp_plugins = [
+            'fp-mail-smtp/fp-mail-smtp.php',
+            'FP-Mail-SMTP/fp-mail-smtp.php',
             'wp-mail-smtp/wp_mail_smtp.php',
             'wp-mail-smtp-pro/wp_mail_smtp.php',
             'easy-wp-smtp/easy-wp-smtp.php',
