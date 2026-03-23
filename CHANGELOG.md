@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.11] - 2026-03-23
+### Added
+- Notice in sezione SMTP: se FP Mail SMTP è installato, avvisa che centralizza la configurazione e link a Impostazioni.
+
 ## [1.6.10] - 2026-03-23
 ### Fixed
 - Compatibilità FP Mail SMTP: riconosciuto come plugin SMTP esterno; FP Forms cede la configurazione PHPMailer quando FP Mail SMTP è attivo (evita doppia configurazione SMTP).

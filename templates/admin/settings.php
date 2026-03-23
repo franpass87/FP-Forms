@@ -269,6 +269,20 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                         <p class="description" style="font-weight: normal;">
                             <?php _e( 'Configura un server SMTP per inviare email in modo affidabile. Senza SMTP, WordPress usa la funzione PHP mail() che spesso finisce in spam.', 'fp-forms' ); ?>
                         </p>
+                        <?php if ( defined( 'FP_FPMAIL_VERSION' ) ) : ?>
+                        <div class="notice notice-info inline" style="margin:12px 0 0 0;padding:12px 16px;">
+                            <p style="margin:0;">
+                                <span class="dashicons dashicons-email-alt" style="color:#2271b1;vertical-align:middle;"></span>
+                                <?php
+                                printf(
+                                    /* translators: 1: link to FP Mail SMTP settings */
+                                    esc_html__( 'FP Mail SMTP è installato e attivo: centralizza la configurazione SMTP per tutti i plugin FP. Le impostazioni qui sotto vengono ignorate. Configura host e credenziali in %s.', 'fp-forms' ),
+                                    '<a href="' . esc_url( admin_url( 'admin.php?page=fp-fpmail' ) ) . '">FP Mail SMTP → Impostazioni</a>'
+                                );
+                                ?>
+                            </p>
+                        </div>
+                        <?php endif; ?>
                     </th>
                 </tr>
                 <tr>
