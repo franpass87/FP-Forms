@@ -1,24 +1,12 @@
 # CHANGELOG - FP Forms
 
-## [1.6.12] - 2026-03-23
-### Changed
-- Menu admin: ordine voci (Operatività, Gestione, Sistema), separatori visivi e link rapidi nella admin bar (pattern FP-Experiences).
-
-## [1.6.11] - 2026-03-23
-### Changed
-- Brevo: fallback lingua per lista ITA/ENG da get_locale(), WPML (ICL_LANGUAGE_CODE) o Polylang quando manca nel form/URL.
-
-## [1.6.10] - 2026-03-23
-### Changed
-- Brevo: aggiunto link "Configura in FP Tracking" anche quando centralizzato non attivo (allineamento UX con altri plugin FP).
-
 ## [1.6.9] - 2026-03-23
 ### Changed
-- Brevo: evitata doppia chiamata a `fp_tracking_get_brevo_settings()` in template impostazioni.
+- Menu admin: Accrediti (add-on FP-Forms-Accrediti) spostato sotto Operatività; Accrediti Settings sotto Sistema.
 
-## [1.6.8] - 2026-03-23
-### Changed
-- Brevo: API key e liste ITA/ENG ora lette da FP Marketing Tracking Layer. Rimossa la sezione Brevo dedicata; rimangono solo opzioni Forms-specifiche (double opt-in, track events). Se FP Tracking è attivo, configura Brevo in FP Tracking.
+## [1.6.8] - 2026-03-22
+### Fixed
+- Logger: error_log su fallimento creazione .htaccess condizionato a WP_DEBUG (no-debug-in-production).
 
 ## [1.6.7] - 2026-03-22
 ### Fixed

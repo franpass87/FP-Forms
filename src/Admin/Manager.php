@@ -161,9 +161,11 @@ class Manager {
         $desired_order = [
             'fp-forms',
             'fp-forms-submissions',
+            'fp-forms-accrediti-requests',  // Operatività (add-on FP-Forms-Accrediti)
             'fp-forms-new',
             'fp-forms-templates',
             'fp-forms-settings',
+            'fp-forms-accrediti-settings',  // Sistema (add-on FP-Forms-Accrediti)
         ];
         $reordered = [];
         foreach ( $desired_order as $slug ) {

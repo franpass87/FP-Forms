@@ -4,7 +4,7 @@ Contributors: franpass87
 Tags: forms, form builder, contact form, landing page, stripe, payments, conditional logic
 Requires at least: 5.8
 Tested up to: 6.6
-Stable tag: 1.6.12
+Stable tag: 1.6.9
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,14 +38,8 @@ Per i form a pagamento Stripe: configura le chiavi in **FP Forms** > **Impostazi
 
 == Changelog ==
 
-= 1.6.12 = (2026-03-23)
-* Changed: Menu admin - ordine voci (Operatività, Gestione, Sistema), separatori visivi e link rapidi admin bar (pattern FP-Experiences).
-
-= 1.6.11 = (2026-03-23)
-* Changed: Brevo - fallback lingua per lista da locale WP/WPML/Polylang.
-
 = 1.6.9 = (2026-03-23)
-* Changed: Brevo - evitata doppia chiamata a fp_tracking_get_brevo_settings() in template impostazioni.
+* Changed: Menu admin - Accrediti (add-on FP-Forms-Accrediti) spostato sotto Operatività; Accrediti Settings sotto Sistema.
 
 = 1.6.8 = (2026-03-22)
 * Fix: Logger - error_log su fallimento creazione .htaccess condizionato a WP_DEBUG.
