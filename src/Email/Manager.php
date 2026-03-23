@@ -724,6 +724,10 @@ class Manager {
         if ( empty( $settings['enabled'] ) || empty( $settings['host'] ) ) {
             return false;
         }
+        // Se cediamo a FP Mail SMTP (o altro), il nostro SMTP non è in uso: retry non aiuta, evita di inquinare phpmailer_init
+        if ( Smtp::is_yielding_to_external_smtp() ) {
+            return false;
+        }
         remove_action( 'phpmailer_init', [ Smtp::class, 'configure_phpmailer' ] );
         $ok = wp_mail( $to, $subject, $message, $headers );
         add_action( 'phpmailer_init', [ Smtp::class, 'configure_phpmailer' ] );

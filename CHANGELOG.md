@@ -3,6 +3,7 @@
 ## [1.6.10] - 2026-03-23
 ### Fixed
 - Compatibilità FP Mail SMTP: riconosciuto come plugin SMTP esterno; FP Forms cede la configurazione PHPMailer quando FP Mail SMTP è attivo (evita doppia configurazione SMTP).
+- Fallback email: quando si cede a FP Mail SMTP, il retry non tocca phpmailer_init (evita inquinamento hook dopo fallimento wp_mail).
 
 ## [1.6.9] - 2026-03-23
 ### Changed

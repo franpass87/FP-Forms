@@ -65,6 +65,16 @@ class Smtp {
     }
 
     /**
+     * Indica se FP Forms cede il controllo SMTP a un plugin esterno (es. FP Mail SMTP).
+     * Usato dal fallback in Manager per evitare di registrare phpmailer_init dopo un retry.
+     *
+     * @return bool
+     */
+    public static function is_yielding_to_external_smtp(): bool {
+        return self::external_smtp_plugin_active();
+    }
+
+    /**
      * Restituisce le impostazioni SMTP correnti.
      *
      * @return array
