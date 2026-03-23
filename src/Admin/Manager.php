@@ -15,6 +15,9 @@ class Manager {
      */
     public function __construct() {
         add_action( 'admin_menu', [ $this, 'add_menu_pages' ] );
+        add_action( 'admin_menu', [ $this, 'reorder_submenus' ], 99 );
+        add_action( 'admin_head', [ $this, 'render_submenu_section_enhancements' ] );
+        add_action( 'admin_bar_menu', [ $this, 'register_admin_bar_links' ], 80 );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
         
         // AJAX handlers
@@ -133,6 +136,142 @@ class Manager {
             'fp-forms-settings',
             [ $this, 'render_settings_page' ]
         );
+    }
+
+    /**
+     * Riordina le voci del submenu (Operatività prima, poi Gestione, Sistema).
+     */
+    public function reorder_submenus(): void {
+        global $submenu;
+        if ( ! isset( $submenu['fp-forms'] ) || ! is_array( $submenu['fp-forms'] ) ) {
+            return;
+        }
+        $items  = $submenu['fp-forms'];
+        $bucketed = [];
+        foreach ( $items as $item ) {
+            if ( ! is_array( $item ) || ! isset( $item[2] ) ) {
+                continue;
+            }
+            $slug = (string) $item[2];
+            if ( ! isset( $bucketed[ $slug ] ) ) {
+                $bucketed[ $slug ] = [];
+            }
+            $bucketed[ $slug ][] = $item;
+        }
+        $desired_order = [
+            'fp-forms',
+            'fp-forms-submissions',
+            'fp-forms-new',
+            'fp-forms-templates',
+            'fp-forms-settings',
+        ];
+        $reordered = [];
+        foreach ( $desired_order as $slug ) {
+            if ( ! isset( $bucketed[ $slug ] ) ) {
+                continue;
+            }
+            foreach ( $bucketed[ $slug ] as $entry ) {
+                $reordered[] = $entry;
+            }
+            unset( $bucketed[ $slug ] );
+        }
+        foreach ( $bucketed as $entries ) {
+            foreach ( $entries as $entry ) {
+                $reordered[] = $entry;
+            }
+        }
+        $submenu['fp-forms'] = $reordered;
+    }
+
+    /**
+     * Separatori visivi tra sezioni nel submenu.
+     */
+    public function render_submenu_section_enhancements(): void {
+        if ( ! Capabilities::can_manage_forms() && ! Capabilities::can_manage_settings() ) {
+            return;
+        }
+        ?>
+        <style>
+            #toplevel_page_fp-forms .wp-submenu li.fpforms-submenu-section-start {
+                margin-top: 8px;
+                padding-top: 8px;
+                border-top: 1px solid rgba(240, 246, 252, 0.18);
+            }
+            #toplevel_page_fp-forms .wp-submenu li.fpforms-submenu-section-start::before {
+                content: attr(data-section-label);
+                display: block;
+                margin: 0 10px 6px 10px;
+                font-size: 10px;
+                line-height: 1.2;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: rgba(240, 246, 252, 0.62);
+                font-weight: 600;
+                pointer-events: none;
+            }
+        </style>
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const root = document.querySelector('#toplevel_page_fp-forms .wp-submenu');
+            if (!root) return;
+            const markers = [
+                { selector: 'a[href*="page=fp-forms-submissions"]', label: '<?php echo esc_js( __( 'Operatività', 'fp-forms' ) ); ?>' },
+                { selector: 'a[href*="page=fp-forms"]', label: '<?php echo esc_js( __( 'Gestione', 'fp-forms' ) ); ?>' },
+                { selector: 'a[href*="page=fp-forms-settings"]', label: '<?php echo esc_js( __( 'Sistema', 'fp-forms' ) ); ?>' },
+            ];
+            markers.forEach(function (marker) {
+                const link = root.querySelector(marker.selector);
+                if (!link) return;
+                const item = link.closest('li');
+                if (!item) return;
+                item.classList.add('fpforms-submenu-section-start');
+                item.setAttribute('data-section-label', marker.label);
+            });
+        });
+        </script>
+        <?php
+    }
+
+    /**
+     * Link rapidi nella admin bar.
+     *
+     * @param \WP_Admin_Bar $admin_bar
+     */
+    public function register_admin_bar_links( $admin_bar ): void {
+        if ( ! Capabilities::can_manage_forms() && ! Capabilities::can_manage_settings() ) {
+            return;
+        }
+        $screen = get_current_screen();
+        $screen_id = $screen ? ( $screen->id ?? '' ) : '';
+        $is_plugin_screen = strpos( $screen_id, 'fp-forms' ) !== false;
+        $admin_bar->add_node( [
+            'id'    => 'fp-forms',
+            'title' => __( 'FP Forms', 'fp-forms' ),
+            'href'  => admin_url( 'admin.php?page=fp-forms' ),
+            'meta'  => $is_plugin_screen ? [ 'aria-current' => 'page' ] : [],
+        ] );
+        if ( Capabilities::can_manage_forms() ) {
+            $admin_bar->add_node( [
+                'id'     => 'fp-forms-new',
+                'parent' => 'fp-forms',
+                'title'  => __( 'Nuovo Form', 'fp-forms' ),
+                'href'   => admin_url( 'admin.php?page=fp-forms-new' ),
+            ] );
+            $admin_bar->add_node( [
+                'id'     => 'fp-forms-submissions',
+                'parent' => 'fp-forms',
+                'title'  => __( 'Submissions', 'fp-forms' ),
+                'href'   => admin_url( 'admin.php?page=fp-forms-submissions' ),
+            ] );
+        }
+        if ( Capabilities::can_manage_settings() ) {
+            $admin_bar->add_node( [
+                'id'     => 'fp-forms-settings',
+                'parent' => 'fp-forms',
+                'title'  => __( 'Impostazioni', 'fp-forms' ),
+                'href'   => admin_url( 'admin.php?page=fp-forms-settings' ),
+            ] );
+        }
     }
     
     /**

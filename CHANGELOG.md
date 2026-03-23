@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.12] - 2026-03-23
+### Changed
+- Menu admin: ordine voci (Operatività, Gestione, Sistema), separatori visivi e link rapidi nella admin bar (pattern FP-Experiences).
+
 ## [1.6.11] - 2026-03-23
 ### Changed
 - Brevo: fallback lingua per lista ITA/ENG da get_locale(), WPML (ICL_LANGUAGE_CODE) o Polylang quando manca nel form/URL.
