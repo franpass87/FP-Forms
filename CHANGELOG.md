@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.11] - 2026-03-23
+### Changed
+- Brevo: fallback lingua per lista ITA/ENG da get_locale(), WPML (ICL_LANGUAGE_CODE) o Polylang quando manca nel form/URL.
+
 ## [1.6.10] - 2026-03-23
 ### Changed
 - Brevo: aggiunto link "Configura in FP Tracking" anche quando centralizzato non attivo (allineamento UX con altri plugin FP).

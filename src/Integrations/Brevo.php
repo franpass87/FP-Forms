@@ -550,8 +550,42 @@ class Brevo {
             }
         }
 
+        // 3) Fallback da WP locale o plugin multilingua.
+        $locale = $this->detect_site_language();
+        if ( $locale !== '' ) {
+            return $locale;
+        }
+
         // Default: italiano.
         return 'it';
+    }
+
+    /**
+     * Rileva lingua da get_locale(), WPML o Polylang.
+     *
+     * @return string 'it', 'en' o ''
+     */
+    private function detect_site_language() {
+        if ( defined( 'ICL_LANGUAGE_CODE' ) && ICL_LANGUAGE_CODE !== '' ) {
+            $detected = $this->normalize_language_code( ICL_LANGUAGE_CODE );
+            if ( $detected !== '' ) {
+                return $detected;
+            }
+        }
+        if ( function_exists( 'pll_current_language' ) ) {
+            $pll = pll_current_language();
+            if ( is_string( $pll ) && $pll !== '' ) {
+                $detected = $this->normalize_language_code( $pll );
+                if ( $detected !== '' ) {
+                    return $detected;
+                }
+            }
+        }
+        $locale = get_locale();
+        if ( is_string( $locale ) && $locale !== '' ) {
+            return $this->normalize_language_code( substr( $locale, 0, 2 ) );
+        }
+        return '';
     }
 
     /**
