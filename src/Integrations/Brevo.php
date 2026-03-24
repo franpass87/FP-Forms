@@ -71,8 +71,24 @@ class Brevo {
             $this->api_key           = (string) ( $central['api_key'] ?? '' );
             $this->enabled           = ! empty( $central['enabled'] ) && ! empty( $this->api_key );
             $this->default_list_id   = '';
-            $this->default_list_id_it = (int) ( $central['list_id_it'] ?? 0 ) ?: '';
-            $this->default_list_id_en = (int) ( $central['list_id_en'] ?? 0 ) ?: '';
+            $forms_list_it = 0;
+            $forms_list_en = 0;
+            if ( function_exists( 'fp_tracking_get_brevo_list_id' ) ) {
+                $forms_list_it = (int) fp_tracking_get_brevo_list_id( 'forms', 'it' );
+                $forms_list_en = (int) fp_tracking_get_brevo_list_id( 'forms', 'en' );
+            } else {
+                $forms_lists = is_array( $central['source_lists']['forms'] ?? null ) ? $central['source_lists']['forms'] : [];
+                $forms_list_it = (int) ( $forms_lists['it'] ?? 0 );
+                $forms_list_en = (int) ( $forms_lists['en'] ?? 0 );
+            }
+            if ( $forms_list_it <= 0 ) {
+                $forms_list_it = (int) ( $central['list_id_it'] ?? 0 );
+            }
+            if ( $forms_list_en <= 0 ) {
+                $forms_list_en = (int) ( $central['list_id_en'] ?? 0 );
+            }
+            $this->default_list_id_it = $forms_list_it ?: '';
+            $this->default_list_id_en = $forms_list_en ?: '';
         } else {
             $settings = get_option( 'fp_forms_brevo_settings', [] );
             $this->api_key           = $settings['api_key'] ?? '';

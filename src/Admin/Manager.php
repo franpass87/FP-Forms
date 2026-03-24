@@ -1095,11 +1095,27 @@ class Manager {
         if ( function_exists( 'fp_tracking_get_brevo_settings' ) ) {
             $central = fp_tracking_get_brevo_settings();
             $brevo_has_key = ! empty( $central['enabled'] );
-            if ( empty( $brevo_list_id ) ) {
-                $brevo_list_id = ! empty( $central['list_id_en'] ) ? $central['list_id_en'] : ( $central['list_id_it'] ?? '' );
+            $forms_list_it = 0;
+            $forms_list_en = 0;
+            if ( function_exists( 'fp_tracking_get_brevo_list_id' ) ) {
+                $forms_list_it = (int) fp_tracking_get_brevo_list_id( 'forms', 'it' );
+                $forms_list_en = (int) fp_tracking_get_brevo_list_id( 'forms', 'en' );
+            } else {
+                $forms_lists = is_array( $central['source_lists']['forms'] ?? null ) ? $central['source_lists']['forms'] : [];
+                $forms_list_it = (int) ( $forms_lists['it'] ?? 0 );
+                $forms_list_en = (int) ( $forms_lists['en'] ?? 0 );
+            }
+            if ( $forms_list_it <= 0 ) {
+                $forms_list_it = (int) ( $central['list_id_it'] ?? 0 );
+            }
+            if ( $forms_list_en <= 0 ) {
+                $forms_list_en = (int) ( $central['list_id_en'] ?? 0 );
             }
             if ( empty( $brevo_list_id ) ) {
-                $brevo_list_id = $central['list_id_it'] ?? '';
+                $brevo_list_id = $forms_list_en ?: $forms_list_it;
+            }
+            if ( empty( $brevo_list_id ) ) {
+                $brevo_list_id = $forms_list_it ?: ( $central['list_id_it'] ?? '' );
             }
         } else {
             $brevo_settings = get_option( 'fp_forms_brevo_settings', [] );
