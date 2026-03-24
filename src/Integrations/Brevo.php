@@ -99,7 +99,27 @@ class Brevo {
         }
         $settings = get_option( 'fp_forms_brevo_settings', [] );
         $this->double_optin = $settings['double_optin'] ?? false;
-        $this->track_events = $settings['track_events'] ?? true;
+        $this->track_events = self::resolve_track_events_enabled( $settings );
+    }
+
+    /**
+     * Evento Track predefinito (checklist; estendibile in futuro).
+     */
+    public const TRACK_EVENT_FORM_SUBMISSION = 'form_submission';
+
+    /**
+     * @param array<string, mixed> $settings Opzione fp_forms_brevo_settings.
+     */
+    private static function resolve_track_events_enabled( array $settings ): bool {
+        $submitted = isset( $settings['brevo_track_events_submitted'] ) && $settings['brevo_track_events_submitted'] === '1';
+        if ( ! $submitted ) {
+            return ! empty( $settings['track_events'] );
+        }
+        $map = isset( $settings['brevo_track_events'] ) && is_array( $settings['brevo_track_events'] )
+            ? $settings['brevo_track_events']
+            : [];
+
+        return ! empty( $map[ self::TRACK_EVENT_FORM_SUBMISSION ] );
     }
     
     /**

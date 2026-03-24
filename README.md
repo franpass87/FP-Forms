@@ -186,6 +186,9 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.13 - 2026-03-24
+- Brevo: chiarito che le email del form restano su WordPress; evento Track opzionale con checklist allineata agli altri plugin FP.
+
 ### 1.6.5 - 2026-03-21
 - Changed: Badge fiducia rinominati in "Badge euristici", raggruppati per bias cognitivo con label e tooltip; layout admin migliorato.
 

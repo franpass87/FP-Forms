@@ -487,9 +487,14 @@ class Manager {
             // Salva impostazioni Brevo (solo opzioni Forms-specifiche; API key e liste sono in FP Tracking)
             $existing_brevo = get_option( 'fp_forms_brevo_settings', [] );
             $existing_brevo = is_array( $existing_brevo ) ? $existing_brevo : [];
-            $brevo_settings = array_merge( $existing_brevo, [
-                'double_optin' => isset( $_POST['brevo_double_optin'] ),
-                'track_events' => isset( $_POST['brevo_track_events'] ),
+            $form_submission_on = isset( $_POST['brevo_track_events'][ \FPForms\Integrations\Brevo::TRACK_EVENT_FORM_SUBMISSION ] );
+            $brevo_settings     = array_merge( $existing_brevo, [
+                'double_optin'                 => isset( $_POST['brevo_double_optin'] ),
+                'brevo_track_events_submitted' => ! empty( $_POST['brevo_track_events_submitted'] ) ? '1' : '0',
+                'brevo_track_events'           => [
+                    \FPForms\Integrations\Brevo::TRACK_EVENT_FORM_SUBMISSION => $form_submission_on ? '1' : '0',
+                ],
+                'track_events'                 => $form_submission_on,
             ] );
             update_option( 'fp_forms_brevo_settings', $brevo_settings );
             

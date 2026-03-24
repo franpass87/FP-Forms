@@ -1,5 +1,12 @@
 # CHANGELOG - FP Forms
 
+## [1.6.13] - 2026-03-24
+### Added
+- Impostazioni Brevo: nota esplicita che le notifiche email del form restano su WordPress (`wp_mail`); evento Track dopo sync con checklist (`brevo_track_events_submitted` + `form_submission`), retrocompatibile con il vecchio flag `track_events`.
+
+### Changed
+- Salvataggio Brevo: mappa `brevo_track_events` e mirror di `track_events` per compatibilità.
+
 ## [1.6.12] - 2026-03-24
 ### Changed
 - Analytics `TrackingBridge`: payload arricchito (`affiliation`, `fp_source`, `form_type`, URL pagina completo, UTM/click ID da query string) e filtro `fp_forms_tracking_event_params` per tutti gli eventi server-side.

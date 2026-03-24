@@ -70,7 +70,11 @@ $brevo_settings = get_option( 'fp_forms_brevo_settings', [
 $brevo_central = function_exists( 'fp_tracking_get_brevo_settings' ) ? fp_tracking_get_brevo_settings() : null;
 $brevo_has_central = $brevo_central && ! empty( $brevo_central['enabled'] );
 $brevo_double_optin = $brevo_settings['double_optin'] ?? false;
-$brevo_track_events = $brevo_settings['track_events'] ?? true;
+$brevo_fs_key              = \FPForms\Integrations\Brevo::TRACK_EVENT_FORM_SUBMISSION;
+$brevo_track_submitted     = isset( $brevo_settings['brevo_track_events_submitted'] ) && $brevo_settings['brevo_track_events_submitted'] === '1';
+$brevo_track_form_checked  = $brevo_track_submitted
+    ? ! empty( $brevo_settings['brevo_track_events'][ $brevo_fs_key ] )
+    : ! empty( $brevo_settings['track_events'] );
 
 $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
 ?>
@@ -685,8 +689,13 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                         </div>
                         <?php endif; ?>
                         <p class="description" style="font-weight: normal;">
-                            <?php _e( 'Sincronizza contatti con Brevo e traccia eventi. La lista per form si imposta nel builder di ogni form.', 'fp-forms' ); ?>
+                            <?php _e( 'Sincronizza contatti con Brevo e, se abilitato, invia eventi Track. La lista per form si imposta nel builder di ogni form.', 'fp-forms' ); ?>
                         </p>
+                        <div class="notice notice-info inline" style="margin: 8px 0 0; padding: 10px 12px;">
+                            <p style="margin: 0;">
+                                <?php esc_html_e( 'Le notifiche email al visitatore e allo staff restano sempre su WordPress (wp_mail / coda FP Forms). Brevo qui non sostituisce l\'invio delle mail del form.', 'fp-forms' ); ?>
+                            </p>
+                        </div>
                     </th>
                 </tr>
                 <tr>
@@ -694,6 +703,7 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                         <?php _e( 'Opzioni Sync', 'fp-forms' ); ?>
                     </th>
                     <td>
+                        <input type="hidden" name="brevo_track_events_submitted" value="1">
                         <fieldset>
                             <label>
                                 <input type="checkbox" name="brevo_double_optin" value="1" <?php checked( $brevo_double_optin, true ); ?>>
@@ -704,11 +714,11 @@ $simulation_forms = \FPForms\Plugin::instance()->forms->get_forms();
                             </p>
                             <br>
                             <label>
-                                <input type="checkbox" name="brevo_track_events" value="1" <?php checked( $brevo_track_events, true ); ?>>
-                                <strong><?php _e( 'Traccia Eventi', 'fp-forms' ); ?></strong>
+                                <input type="checkbox" name="brevo_track_events[<?php echo esc_attr( $brevo_fs_key ); ?>]" value="1" <?php checked( $brevo_track_form_checked, true ); ?>>
+                                <strong><?php _e( 'Evento Track dopo sync contatto', 'fp-forms' ); ?></strong>
                             </label>
                             <p class="description">
-                                <?php _e( 'Invia eventi personalizzati a Brevo per ogni submission (utile per automazioni e segmentazione)', 'fp-forms' ); ?>
+                                <?php _e( 'Invia un evento a Brevo (nome configurabile nel form, predefinito form_submission) dopo la creazione/aggiornamento contatto. Utile per automazioni; disattivalo se vuoi solo la lista contatti.', 'fp-forms' ); ?>
                             </p>
                         </fieldset>
                     </td>
