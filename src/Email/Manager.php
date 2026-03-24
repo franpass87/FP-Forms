@@ -499,6 +499,16 @@ class Manager {
 
         return $headers;
     }
+
+    /**
+     * True se gli header includono Content-Type: text/html.
+     *
+     * @param array|string $headers
+     */
+    private function email_headers_indicate_html( $headers ): bool {
+        $flat = is_array( $headers ) ? implode( "\n", $headers ) : (string) $headers;
+        return (bool) preg_match( '/Content-Type:\s*text\/html/i', $flat );
+    }
     
     /**
      * Restituisce il valore da mostrare per un campo (gestisce fullname)
@@ -716,6 +726,9 @@ class Manager {
      * @return bool
      */
     private function send_via_wp_mail_with_fallback( $to, $subject, $message, $headers ) {
+        if ( function_exists( 'fp_fpmail_brand_html' ) && $this->email_headers_indicate_html( $headers ) && is_string( $message ) && trim( $message ) !== '' ) {
+            $message = fp_fpmail_brand_html( $message );
+        }
         $ok = wp_mail( $to, $subject, $message, $headers );
         if ( $ok ) {
             return true;

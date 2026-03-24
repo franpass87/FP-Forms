@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.14] - 2026-03-24
+### Changed
+- Email HTML (es. conferma con template): prima di `wp_mail`, applicazione di `fp_fpmail_brand_html()` se **FP Mail SMTP** è attivo; email plain text non modificate.
+
 ## [1.6.13] - 2026-03-24
 ### Added
 - Impostazioni Brevo: nota esplicita che le notifiche email del form restano su WordPress (`wp_mail`); evento Track dopo sync con checklist (`brevo_track_events_submitted` + `form_submission`), retrocompatibile con il vecchio flag `track_events`.
