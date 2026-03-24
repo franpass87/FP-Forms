@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace FPForms\Analytics;
 
 use function add_action;
+use function apply_filters;
 use function array_filter;
 use function count;
 use function do_action;
+use function esc_url_raw;
+use function get_bloginfo;
 use function get_post;
 use function in_array;
+use function is_ssl;
 use function sanitize_email;
 use function sanitize_text_field;
 use function strtolower;
@@ -57,11 +61,12 @@ class TrackingBridge {
         $form  = get_post($form_id);
         $title = $form instanceof \WP_Post ? $form->post_title : '';
 
-        do_action('fp_tracking_event', 'form_view', [
+        $params = [
             'form_id'    => $form_id,
             'form_title' => $title,
-            'page_url'   => (isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : ''),
-        ]);
+            'page_url'   => $this->getRequestPageUrl(),
+        ];
+        do_action('fp_tracking_event', 'form_view', $this->enrichEventParams($params, 'form_view', $form_id));
     }
 
     /**
@@ -72,11 +77,13 @@ class TrackingBridge {
         $form  = get_post($form_id);
         $title = $form instanceof \WP_Post ? $form->post_title : '';
 
-        do_action('fp_tracking_event', 'form_submit_attempt', [
-            'form_id'     => $form_id,
-            'form_title'  => $title,
+        $params = [
+            'form_id'      => $form_id,
+            'form_title'   => $title,
             'fields_count' => count($form_data),
-        ]);
+            'page_url'     => $this->getRequestPageUrl(),
+        ];
+        do_action('fp_tracking_event', 'form_submit_attempt', $this->enrichEventParams($params, 'form_submit_attempt', $form_id));
     }
 
     /**
@@ -102,9 +109,10 @@ class TrackingBridge {
             'currency'      => 'EUR',
             'event_id'      => $event_id,
             'user_data'     => $user_data,
+            'page_url'      => $this->getRequestPageUrl(),
         ];
 
-        do_action('fp_tracking_event', 'generate_lead', $params);
+        do_action('fp_tracking_event', 'generate_lead', $this->enrichEventParams($params, 'generate_lead', $form_id));
     }
 
     /**
@@ -151,15 +159,17 @@ class TrackingBridge {
         $form  = get_post($form_id);
         $title = $form instanceof \WP_Post ? $form->post_title : '';
 
-        do_action('fp_tracking_event', 'form_payment_started', [
-            'form_id'       => $form_id,
-            'form_title'    => $title,
-            'submission_id' => $submission_id,
-            'payment_provider' => sanitize_text_field($provider),
-            'value'         => $amount,
-            'currency'      => 'EUR',
-            'event_id'      => 'fp_forms_pay_' . $submission_id . '_' . time(),
-        ]);
+        $params = [
+            'form_id'            => $form_id,
+            'form_title'         => $title,
+            'submission_id'      => $submission_id,
+            'payment_provider'   => sanitize_text_field($provider),
+            'value'              => $amount,
+            'currency'           => 'EUR',
+            'event_id'           => 'fp_forms_pay_' . $submission_id . '_' . time(),
+            'page_url'           => $this->getRequestPageUrl(),
+        ];
+        do_action('fp_tracking_event', 'form_payment_started', $this->enrichEventParams($params, 'form_payment_started', $form_id));
     }
 
     /**
@@ -173,13 +183,56 @@ class TrackingBridge {
         $form  = get_post($form_id);
         $title = $form instanceof \WP_Post ? $form->post_title : '';
 
-        do_action('fp_tracking_event', 'form_payment_completed', [
-            'form_id'         => $form_id,
-            'form_title'      => $title,
-            'submission_id'   => $submission_id,
-            'transaction_id'  => isset($payment_data['transaction_id']) ? sanitize_text_field((string) $payment_data['transaction_id']) : '',
-            'payment_status'  => isset($payment_data['payment_status']) ? sanitize_text_field((string) $payment_data['payment_status']) : '',
-            'event_id'        => 'fp_forms_pay_ok_' . $submission_id . '_' . time(),
-        ]);
+        $params = [
+            'form_id'        => $form_id,
+            'form_title'     => $title,
+            'submission_id'  => $submission_id,
+            'transaction_id' => isset($payment_data['transaction_id']) ? sanitize_text_field((string) $payment_data['transaction_id']) : '',
+            'payment_status' => isset($payment_data['payment_status']) ? sanitize_text_field((string) $payment_data['payment_status']) : '',
+            'event_id'       => 'fp_forms_pay_ok_' . $submission_id . '_' . time(),
+            'page_url'       => $this->getRequestPageUrl(),
+        ];
+        do_action('fp_tracking_event', 'form_payment_completed', $this->enrichEventParams($params, 'form_payment_completed', $form_id));
+    }
+
+    /**
+     * Parametri comuni per GA4/GTM/Meta (server-side) + filtro estensibile.
+     *
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    private function enrichEventParams(array $params, string $context, int $form_id): array {
+        $params['fp_source']  = 'fp_forms';
+        $params['form_type'] = isset($params['form_type']) ? (string) $params['form_type'] : 'fp_forms';
+        $params['affiliation'] = (string) get_bloginfo('name');
+
+        $utmKeys = [
+            'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+            'gclid', 'fbclid', 'msclkid', 'ttclid',
+        ];
+        foreach ($utmKeys as $key) {
+            if (! isset($params[ $key ]) && isset($_GET[ $key ])) {
+                $params[ $key ] = sanitize_text_field(wp_unslash((string) $_GET[ $key ]));
+            }
+        }
+
+        /** @var array<string, mixed> $out */
+        $out = apply_filters('fp_forms_tracking_event_params', $params, $context, $form_id);
+
+        return $out;
+    }
+
+    /**
+     * URL completo della richiesta corrente (REST/AJAX inclusi).
+     */
+    private function getRequestPageUrl(): string {
+        if (! isset($_SERVER['HTTP_HOST'], $_SERVER['REQUEST_URI'])) {
+            return '';
+        }
+
+        $scheme = is_ssl() ? 'https' : 'http';
+        $path   = wp_unslash((string) $_SERVER['REQUEST_URI']);
+
+        return esc_url_raw($scheme . '://' . sanitize_text_field((string) $_SERVER['HTTP_HOST']) . $path);
     }
 }

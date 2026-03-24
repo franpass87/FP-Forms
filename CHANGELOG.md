@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.12] - 2026-03-24
+### Changed
+- Analytics `TrackingBridge`: payload arricchito (`affiliation`, `fp_source`, `form_type`, URL pagina completo, UTM/click ID da query string) e filtro `fp_forms_tracking_event_params` per tutti gli eventi server-side.
+
 ## [1.6.11] - 2026-03-23
 ### Added
 - Notice in sezione SMTP: se FP Mail SMTP è installato, avvisa che centralizza la configurazione e link a Impostazioni.
