@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.15] - 2026-03-24
+### Changed
+- Brevo: con FP Tracking e Brevo abilitato, `create_or_update_contact` usa `fp_tracking_brevo_upsert_contact()` (lista `forms` + lingua submission); altrimenti comportamento precedente con `make_request`.
+
 ## [1.6.14] - 2026-03-24
 ### Changed
 - Email HTML (es. conferma con template): prima di `wp_mail`, applicazione di `fp_fpmail_brand_html()` se **FP Mail SMTP** è attivo; email plain text non modificate.

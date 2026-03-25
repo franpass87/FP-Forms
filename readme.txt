@@ -4,7 +4,7 @@ Contributors: franpass87
 Tags: forms, form builder, contact form, landing page, stripe, payments, conditional logic
 Requires at least: 5.8
 Tested up to: 6.6
-Stable tag: 1.6.14
+Stable tag: 1.6.15
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -37,6 +37,9 @@ Richiede PHP 7.4+ e WordPress 5.8+.
 Per i form a pagamento Stripe: configura le chiavi in **FP Forms** > **Impostazioni** e imposta il webhook Stripe su `https://tuosito.com/wp-json/fp-forms/v1/stripe-webhook`.
 
 == Changelog ==
+
+= 1.6.15 = (2026-03-24)
+* Brevo: upsert contatti via FP Tracking quando Brevo è abilitato nel layer; parametro lingua passato dal sync post-submission.
 
 = 1.6.14 = (2026-03-24)
 * Email HTML: con FP Mail SMTP attivo, wrapper branding centralizzato (`fp_fpmail_brand_html`) prima di wp_mail; plain text invariato.

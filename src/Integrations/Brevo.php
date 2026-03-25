@@ -186,7 +186,7 @@ class Brevo {
         $attributes = $this->prepare_contact_attributes( $data, $form );
         
         // Crea/aggiorna contatto
-        $contact_result = $this->create_or_update_contact( $email, $attributes, [ $list_id ] );
+        $contact_result = $this->create_or_update_contact( $email, $attributes, [ $list_id ], $language );
         
         if ( ! $contact_result['success'] ) {
             \FPForms\Core\Logger::error( 'Brevo sync failed', [
@@ -224,11 +224,10 @@ class Brevo {
      * @param string $email Email contatto
      * @param array $attributes Attributi personalizzati
      * @param array $list_ids Liste a cui aggiungere il contatto
+     * @param string $language `it` o `en` per risolvere la lista in FP Tracking se necessario
      * @return array ['success' => bool, 'error' => string|null]
      */
-    public function create_or_update_contact( $email, $attributes = [], $list_ids = [] ) {
-        $endpoint = '/contacts';
-        
+    public function create_or_update_contact( $email, $attributes = [], $list_ids = [], $language = 'it' ) {
         $data = [
             'email' => $email,
             'updateEnabled' => true, // Aggiorna se esiste già
@@ -250,7 +249,29 @@ class Brevo {
             $data['emailBlacklisted'] = false;
             $data['smsBlacklisted'] = false;
         }
-        
+
+        $use_tracking_contacts = function_exists( 'fp_tracking_brevo_upsert_contact' )
+            && function_exists( 'fp_tracking_get_brevo_settings' )
+            && ! empty( fp_tracking_get_brevo_settings()['enabled'] );
+
+        if ( $use_tracking_contacts ) {
+            $lang = strtolower( (string) $language ) === 'en' ? 'en' : 'it';
+            $central = fp_tracking_brevo_upsert_contact( $data, 'forms', $lang );
+            if ( empty( $central['success'] ) ) {
+                return [
+                    'success' => false,
+                    'error' => (string) ( $central['message'] ?? __( 'Brevo contact sync failed', 'fp-forms' ) ),
+                ];
+            }
+
+            return [
+                'success' => true,
+                'error' => null,
+                'contact_id' => $central['contact_id'] ?? null,
+            ];
+        }
+
+        $endpoint = '/contacts';
         $response = $this->make_request( 'POST', $endpoint, $data );
         
         if ( ! $response['success'] ) {
