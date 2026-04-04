@@ -1,5 +1,10 @@
 # CHANGELOG - FP Forms
 
+## [1.6.25] - 2026-04-04
+### Changed
+- Form builder: rimosso **sticky** dalla colonna «Aggiungi campi» e dalla barra «Salva Form» (flusso pagina naturale, niente sovrapposizioni sulle sezioni sotto).
+- Form builder: tipi campo in **due colonne** nella palette destra, padding compatto e colonna leggermente più larga (`260–340px`) per ridurre l’altezza complessiva.
+
 ## [1.6.24] - 2026-04-04
 ### Changed
 - Form builder: passo 1 «Campi del form» a **sinistra**, passo 2 «Aggiungi campi» a **destra** (griglia + ordine DOM per mobile). Testi guida, empty state e icona «Mostra tipi di campo» aggiornati. Classe pannello palette rinominata in `fpforms-builder-panel--palette-sidebar`.
