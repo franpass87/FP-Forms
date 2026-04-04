@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.19] - 2026-04-04
+### Changed
+- Form builder: colonna destra solo palette «Aggiungi campi»; sezione «Aspetto sul sito» spostata in blocco a tutta larghezza sotto la griglia principale e sopra «Comportamento, email e integrazioni».
+
 ## [1.6.18] - 2026-04-04
 ### Changed
 - Form builder admin: layout più chiaro (passi 1–2, titoli «Campi del form» / «Aggiungi campi» / «Aspetto sul sito» / «Comportamento, email e integrazioni»), empty state quando non ci sono campi, barra «Salva» sticky, larghezza max pagina aumentata, selettori colore in righe CSS dedicate, alert coerente per disattivazione email, highlight temporaneo sulla palette dal pulsante sotto l’elenco campi.

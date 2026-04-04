@@ -61,7 +61,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
     <div class="fp-forms-admin__header">
         <div class="fpforms-page-header-content">
             <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php echo esc_html( $fp_forms_builder_heading ); ?></h2>
-            <p class="fpforms-page-header-desc"><?php esc_html_e( 'Compone i campi a sinistra, regola aspetto e notifiche nella colonna a destra e in basso. Salva quando hai finito.', 'fp-forms' ); ?></p>
+            <p class="fpforms-page-header-desc"><?php esc_html_e( 'A sinistra titolo e campi, a destra i tipi da aggiungere; sotto imposti aspetto sul sito, poi notifiche e integrazioni.', 'fp-forms' ); ?></p>
         </div>
         <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">&larr; <?php esc_html_e( 'Torna ai Form', 'fp-forms' ); ?></a>
         <span class="fpforms-page-header-badge">v<?php echo esc_html( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '0' ); ?></span>
@@ -203,7 +203,9 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                     </button>
                 </div>
             </div>
-            
+        </div>
+
+        <div class="fp-builder-appearance-settings">
             <div class="fp-sidebar-section fpforms-builder-panel fpforms-builder-panel--settings">
                 <h3 class="fpforms-builder-panel__title fpforms-builder-panel__title--solo"><?php esc_html_e( 'Aspetto sul sito', 'fp-forms' ); ?></h3>
                 <p class="fpforms-builder-panel__hint"><?php esc_html_e( 'Pulsante di invio, colori, badge di fiducia e redirect.', 'fp-forms' ); ?></p>
@@ -411,7 +413,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                     <label><?php esc_html_e( 'URL Redirect', 'fp-forms' ); ?></label>
                     <input type="url" name="success_redirect_url" value="<?php echo esc_url( $form_settings['success_redirect_url'] ?? '' ); ?>" placeholder="https://example.com/thank-you">
                 </div>
-                
+
             </div>
         </div>
 
