@@ -47,6 +47,10 @@ $default_settings = [
 ];
 
 $form_settings = wp_parse_args( $form_settings, $default_settings );
+
+$fpforms_confirmation_accent = isset( $form_settings['confirmation_accent_color'] ) ? (string) $form_settings['confirmation_accent_color'] : '';
+$fpforms_confirmation_accent_custom = ( $fpforms_confirmation_accent !== '' && preg_match( '/^#[0-9A-Fa-f]{6}$/', $fpforms_confirmation_accent ) );
+$fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fpforms_confirmation_accent : '#667eea';
 ?>
 
 <div class="wrap fp-forms-admin fp-forms-builder">
@@ -57,7 +61,7 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
     <div class="fp-forms-admin__header">
         <div class="fpforms-page-header-content">
             <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php echo esc_html( $fp_forms_builder_heading ); ?></h2>
-            <p class="fpforms-page-header-desc"><?php esc_html_e( 'Costruisci il tuo form con drag & drop.', 'fp-forms' ); ?></p>
+            <p class="fpforms-page-header-desc"><?php esc_html_e( 'Compone i campi a sinistra, regola aspetto e notifiche nella colonna a destra e in basso. Salva quando hai finito.', 'fp-forms' ); ?></p>
         </div>
         <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">&larr; <?php esc_html_e( 'Torna ai Form', 'fp-forms' ); ?></a>
         <span class="fpforms-page-header-badge">v<?php echo esc_html( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '0' ); ?></span>
@@ -86,6 +90,26 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
             </div>
             
             <div class="fp-builder-body">
+                <div class="fp-builder-canvas-head" role="group" aria-label="<?php esc_attr_e( 'Area campi del form', 'fp-forms' ); ?>">
+                    <span class="fp-builder-step-badge" aria-hidden="true">1</span>
+                    <div class="fp-builder-canvas-head__text">
+                        <h3 class="fp-builder-canvas-title"><?php esc_html_e( 'Campi del form', 'fp-forms' ); ?></h3>
+                        <p class="fp-builder-canvas-desc"><?php esc_html_e( 'Trascina l’icona ⋮⋮ per riordinare. Clicca la matita per modificare etichetta, nome tecnico e opzioni.', 'fp-forms' ); ?></p>
+                    </div>
+                </div>
+
+                <div
+                    id="fp-builder-empty-state"
+                    class="fp-builder-empty-state"
+                    role="status"
+                    aria-live="polite"
+                    <?php echo empty( $form_fields ) ? '' : ' hidden aria-hidden="true"'; ?>
+                >
+                    <span class="fp-builder-empty-state__icon dashicons dashicons-welcome-widgets-menus" aria-hidden="true"></span>
+                    <p class="fp-builder-empty-state__title"><?php esc_html_e( 'Nessun campo ancora', 'fp-forms' ); ?></p>
+                    <p class="fp-builder-empty-state__text"><?php esc_html_e( 'Usa i pulsanti «Aggiungi campi» nella colonna a destra. Ogni clic inserisce un campo in fondo alla lista.', 'fp-forms' ); ?></p>
+                </div>
+
                 <div class="fp-fields-container" id="fp-fields-container">
                     <?php if ( ! empty( $form_fields ) ) : ?>
                         <?php foreach ( $form_fields as $index => $field ) : ?>
@@ -93,88 +117,96 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
-                
+
                 <div class="fp-add-field">
-                    <button type="button" class="button" id="fp-add-field-btn">
-                        <?php esc_html_e( '+ Aggiungi Campo', 'fp-forms' ); ?>
+                    <button type="button" class="button button-secondary" id="fp-add-field-btn">
+                        <span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
+                        <?php esc_html_e( 'Mostra tipi di campo', 'fp-forms' ); ?>
                     </button>
                 </div>
             </div>
         </div>
         
         <div class="fp-builder-sidebar">
-            <div class="fp-sidebar-section">
-                <h3><?php esc_html_e( 'Tipi di Campo', 'fp-forms' ); ?></h3>
-                <div class="fp-field-types">
-                <button type="button" class="fp-field-type" data-type="text" data-tooltip="Campo di testo singola linea">
+            <div class="fp-sidebar-section fpforms-builder-panel fpforms-builder-panel--palette">
+                <div class="fpforms-builder-panel__head">
+                    <span class="fp-builder-step-badge fp-builder-step-badge--sidebar" aria-hidden="true">2</span>
+                    <div>
+                        <h3 class="fpforms-builder-panel__title"><?php esc_html_e( 'Aggiungi campi', 'fp-forms' ); ?></h3>
+                        <p class="fpforms-builder-panel__hint"><?php esc_html_e( 'Clicca un tipo: il campo viene aggiunto in coda. Puoi spostarlo dopo con il trascinamento.', 'fp-forms' ); ?></p>
+                    </div>
+                </div>
+                <div class="fp-field-types" id="fp-field-types-palette">
+                <button type="button" class="fp-field-type" data-type="text" data-tooltip="<?php esc_attr_e( 'Campo di testo su una riga', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Campo di testo su una riga', 'fp-forms' ); ?>">
                     <span class="dashicons dashicons-text"></span>
                     <?php esc_html_e( 'Testo', 'fp-forms' ); ?>
                 </button>
-                <button type="button" class="fp-field-type" data-type="fullname" data-tooltip="Nome e cognome (due campi affiancati)">
+                <button type="button" class="fp-field-type" data-type="fullname" data-tooltip="<?php esc_attr_e( 'Nome e cognome su due colonne', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Nome e cognome su due colonne', 'fp-forms' ); ?>">
                     <span class="dashicons dashicons-admin-users"></span>
                     <?php esc_html_e( 'Nome e cognome', 'fp-forms' ); ?>
                 </button>
-                <button type="button" class="fp-field-type" data-type="email" data-tooltip="Email con validazione automatica">
+                <button type="button" class="fp-field-type" data-type="email" data-tooltip="<?php esc_attr_e( 'Indirizzo email con validazione', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Indirizzo email con validazione', 'fp-forms' ); ?>">
                     <span class="dashicons dashicons-email"></span>
                     <?php esc_html_e( 'Email', 'fp-forms' ); ?>
                 </button>
-                    <button type="button" class="fp-field-type" data-type="phone">
+                    <button type="button" class="fp-field-type" data-type="phone" data-tooltip="<?php esc_attr_e( 'Numero di telefono', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Numero di telefono', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-phone"></span>
                         <?php esc_html_e( 'Telefono', 'fp-forms' ); ?>
                     </button>
-                    <button type="button" class="fp-field-type" data-type="number">
+                    <button type="button" class="fp-field-type" data-type="number" data-tooltip="<?php esc_attr_e( 'Solo valori numerici', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Solo valori numerici', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-calculator"></span>
                         <?php esc_html_e( 'Numero', 'fp-forms' ); ?>
                     </button>
-                    <button type="button" class="fp-field-type" data-type="date">
+                    <button type="button" class="fp-field-type" data-type="date" data-tooltip="<?php esc_attr_e( 'Selezione data', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Selezione data', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-calendar"></span>
                         <?php esc_html_e( 'Data', 'fp-forms' ); ?>
                     </button>
-                    <button type="button" class="fp-field-type" data-type="textarea">
+                    <button type="button" class="fp-field-type" data-type="textarea" data-tooltip="<?php esc_attr_e( 'Testo su più righe', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Testo su più righe', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-text-page"></span>
                         <?php esc_html_e( 'Area di Testo', 'fp-forms' ); ?>
                     </button>
-                    <button type="button" class="fp-field-type" data-type="select">
+                    <button type="button" class="fp-field-type" data-type="select" data-tooltip="<?php esc_attr_e( 'Menu a tendina', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Menu a tendina', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-menu-alt"></span>
                         <?php esc_html_e( 'Select', 'fp-forms' ); ?>
                     </button>
-                    <button type="button" class="fp-field-type" data-type="radio">
+                    <button type="button" class="fp-field-type" data-type="radio" data-tooltip="<?php esc_attr_e( 'Scelta singola tra opzioni', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Scelta singola tra opzioni', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-marker"></span>
                         <?php esc_html_e( 'Radio Button', 'fp-forms' ); ?>
                     </button>
-                    <button type="button" class="fp-field-type" data-type="checkbox">
+                    <button type="button" class="fp-field-type" data-type="checkbox" data-tooltip="<?php esc_attr_e( 'Scelta multipla o singola', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Scelta multipla o singola', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-yes"></span>
                         <?php esc_html_e( 'Checkbox', 'fp-forms' ); ?>
                     </button>
-                    <button type="button" class="fp-field-type" data-type="privacy-checkbox" data-tooltip="Checkbox GDPR con link a Privacy Policy">
+                    <button type="button" class="fp-field-type" data-type="privacy-checkbox" data-tooltip="<?php esc_attr_e( 'Consenso GDPR con link alla privacy', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Consenso GDPR con link alla privacy', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-privacy"></span>
                         <?php esc_html_e( 'Privacy Policy', 'fp-forms' ); ?>
                     </button>
-                    <button type="button" class="fp-field-type" data-type="marketing-checkbox" data-tooltip="Checkbox opzionale per consenso marketing">
+                    <button type="button" class="fp-field-type" data-type="marketing-checkbox" data-tooltip="<?php esc_attr_e( 'Consenso marketing facoltativo', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Consenso marketing facoltativo', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-email-alt"></span>
                         <?php esc_html_e( 'Marketing', 'fp-forms' ); ?>
                     </button>
-                    <button type="button" class="fp-field-type" data-type="calculated" data-tooltip="Campo calcolato con formula">
+                    <button type="button" class="fp-field-type" data-type="calculated" data-tooltip="<?php esc_attr_e( 'Valore calcolato da una formula', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Valore calcolato da una formula', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-calculator"></span>
                         <?php esc_html_e( 'Calcolato', 'fp-forms' ); ?>
                     </button>
-                    <button type="button" class="fp-field-type" data-type="recaptcha" data-tooltip="Google reCAPTCHA anti-spam">
+                    <button type="button" class="fp-field-type" data-type="recaptcha" data-tooltip="<?php esc_attr_e( 'Protezione anti-spam Google reCAPTCHA', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Protezione anti-spam Google reCAPTCHA', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-shield"></span>
                         <?php esc_html_e( 'reCAPTCHA', 'fp-forms' ); ?>
                     </button>
-                    <button type="button" class="fp-field-type" data-type="file">
+                    <button type="button" class="fp-field-type" data-type="file" data-tooltip="<?php esc_attr_e( 'Caricamento file da parte dell’utente', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Caricamento file da parte dell’utente', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-upload"></span>
                         <?php esc_html_e( 'Upload File', 'fp-forms' ); ?>
                     </button>
-                    <button type="button" class="fp-field-type fp-field-type-step" data-type="step_break" data-tooltip="Separatore per form multi-step">
+                    <button type="button" class="fp-field-type fp-field-type-step" data-type="step_break" data-tooltip="<?php esc_attr_e( 'Separa il form in più step (con multi-step attivo)', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Separa il form in più step (con multi-step attivo)', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-arrow-right-alt"></span>
                         <?php esc_html_e( 'Nuovo Step', 'fp-forms' ); ?>
                     </button>
                 </div>
             </div>
             
-            <div class="fp-sidebar-section">
-                <h3><?php esc_html_e( 'Impostazioni Form', 'fp-forms' ); ?></h3>
+            <div class="fp-sidebar-section fpforms-builder-panel fpforms-builder-panel--settings">
+                <h3 class="fpforms-builder-panel__title fpforms-builder-panel__title--solo"><?php esc_html_e( 'Aspetto sul sito', 'fp-forms' ); ?></h3>
+                <p class="fpforms-builder-panel__hint"><?php esc_html_e( 'Pulsante di invio, colori, badge di fiducia e redirect.', 'fp-forms' ); ?></p>
                 
                 <h4><?php esc_html_e( 'Badge euristici', 'fp-forms' ); ?></h4>
                 
@@ -264,10 +296,10 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Colore Pulsante', 'fp-forms' ); ?></label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="color" name="submit_button_color" value="<?php echo esc_attr( $form_settings['submit_button_color'] ?? '#3b82f6' ); ?>" style="width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
-                        <input type="text" name="submit_button_color_text" value="<?php echo esc_attr( $form_settings['submit_button_color'] ?? '#3b82f6' ); ?>" placeholder="#3b82f6" style="width: 100px;" readonly>
-                        <button type="button" class="button button-small" onclick="this.previousElementSibling.value = this.previousElementSibling.previousElementSibling.value = '#3b82f6'">Reset</button>
+                    <div class="fpforms-color-row">
+                        <input type="color" class="fpforms-color-row__input" name="submit_button_color" value="<?php echo esc_attr( $form_settings['submit_button_color'] ?? '#3b82f6' ); ?>">
+                        <input type="text" class="fpforms-color-row__hex" name="submit_button_color_text" value="<?php echo esc_attr( $form_settings['submit_button_color'] ?? '#3b82f6' ); ?>" placeholder="#3b82f6" readonly>
+                        <button type="button" class="button button-small fpforms-color-row__reset" data-reset-color="#3b82f6"><?php esc_html_e( 'Reimposta', 'fp-forms' ); ?></button>
                     </div>
                     <small><?php esc_html_e( 'Colore di sfondo del pulsante', 'fp-forms' ); ?></small>
                 </div>
@@ -326,44 +358,44 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                     <small><?php esc_html_e( 'Aggiungi una classe CSS personalizzata al form', 'fp-forms' ); ?></small>
                 </div>
                 
-                <h4><?php esc_html_e( '🎨 Colori Personalizzati', 'fp-forms' ); ?></h4>
+                <h4><?php esc_html_e( 'Colori personalizzati', 'fp-forms' ); ?></h4>
                 
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Colore Bordo Campi', 'fp-forms' ); ?></label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="color" name="custom_border_color" value="<?php echo esc_attr( $form_settings['custom_border_color'] ?? '#d1d5db' ); ?>" style="width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" onchange="this.nextElementSibling.value = this.value">
-                        <input type="text" value="<?php echo esc_attr( $form_settings['custom_border_color'] ?? '#d1d5db' ); ?>" placeholder="#d1d5db" style="width: 100px;" readonly>
-                        <button type="button" class="button button-small" onclick="var inputs = this.parentElement.querySelectorAll('input'); inputs[0].value = inputs[1].value = '#d1d5db';">Reset</button>
+                    <div class="fpforms-color-row">
+                        <input type="color" class="fpforms-color-row__input" name="custom_border_color" value="<?php echo esc_attr( $form_settings['custom_border_color'] ?? '#d1d5db' ); ?>">
+                        <input type="text" class="fpforms-color-row__hex" value="<?php echo esc_attr( $form_settings['custom_border_color'] ?? '#d1d5db' ); ?>" placeholder="#d1d5db" readonly>
+                        <button type="button" class="button button-small fpforms-color-row__reset" data-reset-color="#d1d5db"><?php esc_html_e( 'Reimposta', 'fp-forms' ); ?></button>
                     </div>
                     <small><?php esc_html_e( 'Colore del bordo dei campi input, textarea e select', 'fp-forms' ); ?></small>
                 </div>
                 
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Colore Focus', 'fp-forms' ); ?></label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="color" name="custom_focus_color" value="<?php echo esc_attr( $form_settings['custom_focus_color'] ?? '#2563eb' ); ?>" style="width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" onchange="this.nextElementSibling.value = this.value">
-                        <input type="text" value="<?php echo esc_attr( $form_settings['custom_focus_color'] ?? '#2563eb' ); ?>" placeholder="#2563eb" style="width: 100px;" readonly>
-                        <button type="button" class="button button-small" onclick="var inputs = this.parentElement.querySelectorAll('input'); inputs[0].value = inputs[1].value = '#2563eb';">Reset</button>
+                    <div class="fpforms-color-row">
+                        <input type="color" class="fpforms-color-row__input" name="custom_focus_color" value="<?php echo esc_attr( $form_settings['custom_focus_color'] ?? '#2563eb' ); ?>">
+                        <input type="text" class="fpforms-color-row__hex" value="<?php echo esc_attr( $form_settings['custom_focus_color'] ?? '#2563eb' ); ?>" placeholder="#2563eb" readonly>
+                        <button type="button" class="button button-small fpforms-color-row__reset" data-reset-color="#2563eb"><?php esc_html_e( 'Reimposta', 'fp-forms' ); ?></button>
                     </div>
                     <small><?php esc_html_e( 'Colore del bordo e anello quando un campo è in focus', 'fp-forms' ); ?></small>
                 </div>
                 
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Colore Testo', 'fp-forms' ); ?></label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="color" name="custom_text_color" value="<?php echo esc_attr( $form_settings['custom_text_color'] ?? '#1f2937' ); ?>" style="width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" onchange="this.nextElementSibling.value = this.value">
-                        <input type="text" value="<?php echo esc_attr( $form_settings['custom_text_color'] ?? '#1f2937' ); ?>" placeholder="#1f2937" style="width: 100px;" readonly>
-                        <button type="button" class="button button-small" onclick="var inputs = this.parentElement.querySelectorAll('input'); inputs[0].value = inputs[1].value = '#1f2937';">Reset</button>
+                    <div class="fpforms-color-row">
+                        <input type="color" class="fpforms-color-row__input" name="custom_text_color" value="<?php echo esc_attr( $form_settings['custom_text_color'] ?? '#1f2937' ); ?>">
+                        <input type="text" class="fpforms-color-row__hex" value="<?php echo esc_attr( $form_settings['custom_text_color'] ?? '#1f2937' ); ?>" placeholder="#1f2937" readonly>
+                        <button type="button" class="button button-small fpforms-color-row__reset" data-reset-color="#1f2937"><?php esc_html_e( 'Reimposta', 'fp-forms' ); ?></button>
                     </div>
                     <small><?php esc_html_e( 'Colore del testo dei campi e delle label', 'fp-forms' ); ?></small>
                 </div>
                 
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Colore Sfondo Form', 'fp-forms' ); ?></label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="color" name="custom_background_color" value="<?php echo esc_attr( $form_settings['custom_background_color'] ?? '#ffffff' ); ?>" style="width: 60px; height: 40px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" onchange="this.nextElementSibling.value = this.value">
-                        <input type="text" value="<?php echo esc_attr( $form_settings['custom_background_color'] ?? '#ffffff' ); ?>" placeholder="#ffffff" style="width: 100px;" readonly>
-                        <button type="button" class="button button-small" onclick="var inputs = this.parentElement.querySelectorAll('input'); inputs[0].value = inputs[1].value = '#ffffff';">Reset</button>
+                    <div class="fpforms-color-row">
+                        <input type="color" class="fpforms-color-row__input" name="custom_background_color" value="<?php echo esc_attr( $form_settings['custom_background_color'] ?? '#ffffff' ); ?>">
+                        <input type="text" class="fpforms-color-row__hex" value="<?php echo esc_attr( $form_settings['custom_background_color'] ?? '#ffffff' ); ?>" placeholder="#ffffff" readonly>
+                        <button type="button" class="button button-small fpforms-color-row__reset" data-reset-color="#ffffff"><?php esc_html_e( 'Reimposta', 'fp-forms' ); ?></button>
                     </div>
                     <small><?php esc_html_e( 'Colore di sfondo del contenitore del form', 'fp-forms' ); ?></small>
                 </div>
@@ -384,10 +416,11 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
         </div>
 
         <div class="fp-builder-bottom-settings">
-            <div class="fp-sidebar-section">
-                <h3><?php esc_html_e( 'Impostazioni avanzate', 'fp-forms' ); ?></h3>
+            <div class="fp-sidebar-section fpforms-builder-panel fpforms-builder-panel--advanced">
+                <h3 class="fpforms-builder-panel__title fpforms-builder-panel__title--solo"><?php esc_html_e( 'Comportamento, email e integrazioni', 'fp-forms' ); ?></h3>
+                <p class="fpforms-builder-panel__hint"><?php esc_html_e( 'Messaggio dopo l’invio, notifiche, Brevo, pagamenti e logica condizionale.', 'fp-forms' ); ?></p>
 
-                <h4><?php esc_html_e( 'Impostazioni Avanzate', 'fp-forms' ); ?></h4>
+                <h4><?php esc_html_e( 'Comportamento', 'fp-forms' ); ?></h4>
                 
                 <div class="fp-setting-field">
                     <label>
@@ -436,16 +469,13 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 
                 <h4><?php esc_html_e( 'Notifiche Email', 'fp-forms' ); ?></h4>
                 
-                <div class="fp-setting-field" style="background: #fff3cd; padding: 12px; border-left: 4px solid #ffc107; margin-bottom: 15px;">
-                    <label style="font-weight: 600; color: #856404;">
+                <div class="fp-setting-field fpforms-alert fpforms-alert--warning">
+                    <label class="fpforms-alert__label">
                         <input type="checkbox" name="disable_wordpress_emails" value="1" <?php checked( $form_settings['disable_wordpress_emails'] ?? false, true ); ?>>
-                        <?php esc_html_e( '🚫 Disabilita TUTTE le email WordPress', 'fp-forms' ); ?>
+                        <?php esc_html_e( 'Disabilita tutte le email WordPress da questo form', 'fp-forms' ); ?>
                     </label>
-                    <small style="display: block; margin-top: 8px; color: #856404;">
-                        <?php esc_html_e( '⚠️ Se abilitato, NON verranno inviate email (webmaster, cliente, staff). Usa solo se hai configurato Brevo o altro sistema CRM esterno.', 'fp-forms' ); ?>
-                    </small>
-                    <small style="display: block; margin-top: 4px; color: #856404;">
-                        <?php esc_html_e( '... I dati verranno comunque salvati e gli eventi Brevo/Meta continueranno a funzionare.', 'fp-forms' ); ?>
+                    <small class="fpforms-alert__text">
+                        <?php esc_html_e( 'Se attivo, non partono email a webmaster, cliente né staff. Usalo solo se invii notifiche altrove (es. Brevo o CRM). Gli invii restano salvati e gli eventi di tracciamento configurati continuano a funzionare.', 'fp-forms' ); ?>
                     </small>
                 </div>
                 
@@ -519,11 +549,12 @@ $form_settings = wp_parse_args( $form_settings, $default_settings );
                 
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Colore Accent Email (opzionale)', 'fp-forms' ); ?></label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="color" name="confirmation_accent_color" value="<?php echo esc_attr( $form_settings['confirmation_accent_color'] ?? '' ); ?>" style="width: 50px; height: 34px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
-                        <button type="button" class="button button-small" onclick="this.previousElementSibling.value = '';"><?php esc_html_e( 'Usa default', 'fp-forms' ); ?></button>
+                    <input type="hidden" id="fpforms-confirmation-accent-custom" value="<?php echo $fpforms_confirmation_accent_custom ? '1' : '0'; ?>">
+                    <div class="fpforms-color-row fpforms-color-row--compact">
+                        <input type="color" class="fpforms-color-row__input fpforms-color-row__input--sm" name="confirmation_accent_color" value="<?php echo esc_attr( $fpforms_confirmation_accent_preview ); ?>">
+                        <button type="button" class="button button-small" id="fpforms-confirmation-accent-reset"><?php esc_html_e( 'Usa default globale', 'fp-forms' ); ?></button>
                     </div>
-                    <small><?php esc_html_e( 'Lascia vuoto per usare il colore globale configurato nelle impostazioni plugin.', 'fp-forms' ); ?></small>
+                    <small><?php esc_html_e( 'Lascia il default globale (impostazioni plugin) oppure scegli un colore dedicato per le email di conferma di questo form.', 'fp-forms' ); ?></small>
                 </div>
 
                 <div class="fp-setting-field">

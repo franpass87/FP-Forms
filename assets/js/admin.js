@@ -33,6 +33,66 @@
             this.bindEvents();
             this.initSortable();
             this.initFieldOptionsVisibility();
+            this.initFormBuilderUi();
+        },
+
+        /**
+         * UI dedicata al form builder (empty state, colori, accent email, scroll palette).
+         */
+        initFormBuilderUi: function() {
+            if (!$('#fp-form-builder').length) {
+                return;
+            }
+            this.updateBuilderEmptyState();
+            this.initBuilderColorRows();
+            this.initConfirmationAccentUi();
+        },
+
+        /**
+         * Mostra o nasconde il messaggio "nessun campo" sotto l'area campi.
+         */
+        updateBuilderEmptyState: function() {
+            var $empty = $('#fp-builder-empty-state');
+            if (!$empty.length) {
+                return;
+            }
+            var n = $('#fp-fields-container .fp-field-item').length;
+            if (n === 0) {
+                $empty.removeAttr('hidden').attr('aria-hidden', 'false');
+            } else {
+                $empty.attr('hidden', 'hidden').attr('aria-hidden', 'true');
+            }
+        },
+
+        /**
+         * Sincronizza righe colore (anteprima hex) e pulsanti reimposta nel builder.
+         */
+        initBuilderColorRows: function() {
+            $(document).on('input', '#fp-form-builder .fpforms-color-row__input', function() {
+                $(this).closest('.fpforms-color-row').find('.fpforms-color-row__hex').val(this.value);
+            });
+            $(document).on('click', '#fp-form-builder .fpforms-color-row__reset', function(e) {
+                e.preventDefault();
+                var raw = this.getAttribute('data-reset-color') || '';
+                var hex = /^#[0-9A-Fa-f]{6}$/.test(raw) ? raw : '#000000';
+                var $row = $(this).closest('.fpforms-color-row');
+                $row.find('.fpforms-color-row__input').val(hex);
+                $row.find('.fpforms-color-row__hex').val(hex);
+            });
+        },
+
+        /**
+         * Accent email: distingue "default globale" (stringa vuota) da colore personalizzato.
+         */
+        initConfirmationAccentUi: function() {
+            $(document).on('click', '#fpforms-confirmation-accent-reset', function(e) {
+                e.preventDefault();
+                $('#fpforms-confirmation-accent-custom').val('0');
+                $('input[name="confirmation_accent_color"]').val('#667eea');
+            });
+            $(document).on('input', '#fp-form-builder input[name="confirmation_accent_color"]', function() {
+                $('#fpforms-confirmation-accent-custom').val('1');
+            });
         },
         
         /**
@@ -48,6 +108,7 @@
             $(document).on('click', '.fp-field-type', this.addField);
             $(document).on('click', '.fp-field-edit', this.toggleFieldEdit);
             $(document).on('click', '.fp-field-delete', this.deleteField);
+            $(document).on('click', '#fp-add-field-btn', this.scrollToFieldPalette);
             $(document).on('submit', '#fp-form-builder', this.saveForm);
             $(document).on('input', '.fp-field-input-label', this.updateFieldPreview);
             $(document).on('change', '.fp-field-type', this.toggleFieldOptions);
@@ -90,6 +151,7 @@
                 if ($.fn.sortable) {
                     $('#fp-fields-container').sortable({
                         handle: '.fp-field-drag',
+                        items: '> .fp-field-item',
                         placeholder: 'fp-field-placeholder',
                         axis: 'y',
                         opacity: 0.8
@@ -247,6 +309,25 @@
             
             // Mostra opzioni specifiche in base al tipo
             FPFormsAdmin.showFieldOptions($newField, type);
+            FPFormsAdmin.updateBuilderEmptyState();
+        },
+
+        /**
+         * Porta l'utente alla palette tipi di campo (utile su mobile o canvas lungo).
+         */
+        scrollToFieldPalette: function(e) {
+            e.preventDefault();
+            var $palette = $('#fp-field-types-palette');
+            var $side = $('.fp-builder-sidebar');
+            if ($palette.length && $palette[0].scrollIntoView) {
+                $palette[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else if ($side.length && $side[0].scrollIntoView) {
+                $side[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            $palette.addClass('fpforms-palette-highlight');
+            window.setTimeout(function() {
+                $palette.removeClass('fpforms-palette-highlight');
+            }, 1600);
         },
         
         /**
@@ -408,6 +489,7 @@
                 onConfirm: function() {
                     $field.fadeOut(function() {
                         $(this).remove();
+                        FPFormsAdmin.updateBuilderEmptyState();
                     });
                 }
             });
@@ -612,7 +694,13 @@
                 notification_message: $('textarea[name="notification_message"]').val(),
                 confirmation_enabled: $('input[name="confirmation_enabled"]').is(':checked'),
                 confirmation_template: $('input[name="confirmation_template"]:checked').val() || '',
-                confirmation_accent_color: $('input[name="confirmation_accent_color"]').val() || '',
+                confirmation_accent_color: (function() {
+                    var $flag = $('#fpforms-confirmation-accent-custom');
+                    if ($flag.length) {
+                        return $flag.val() === '1' ? ($('input[name="confirmation_accent_color"]').val() || '') : '';
+                    }
+                    return $('input[name="confirmation_accent_color"]').val() || '';
+                })(),
                 confirmation_footer_info: $('textarea[name="confirmation_footer_info"]').val() || '',
                 confirmation_subject: $('input[name="confirmation_subject"]').val(),
                 confirmation_message: $('textarea[name="confirmation_message"]').val(),
@@ -1162,16 +1250,20 @@
             $(document).off('input', 'input[name="submit_button_color"]');
             $(document).off('input', 'input[name="submit_button_color_text"]');
             
-            // Sync color picker → text input
+            // Sync color picker → text input (builder: .fpforms-color-row)
             $(document).on('input', 'input[name="submit_button_color"]', function() {
-                $(this).next('input[name="submit_button_color_text"]').val(this.value);
+                var $row = $(this).closest('.fpforms-color-row');
+                var $hex = $row.length ? $row.find('input[name="submit_button_color_text"]') : $(this).next('input[name="submit_button_color_text"]');
+                $hex.val(this.value);
             });
             
             // Sync text input → color picker (validato)
             $(document).on('input', 'input[name="submit_button_color_text"]', function() {
                 var color = this.value;
                 if (/^#[0-9A-F]{6}$/i.test(color)) {
-                    $(this).prev('input[name="submit_button_color"]').val(color);
+                    var $row = $(this).closest('.fpforms-color-row');
+                    var $c = $row.length ? $row.find('input[name="submit_button_color"]') : $(this).prev('input[name="submit_button_color"]');
+                    $c.val(color);
                 }
             });
         },

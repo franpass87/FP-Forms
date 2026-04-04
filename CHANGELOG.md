@@ -1,15 +1,11 @@
 # CHANGELOG - FP Forms
 
-## [1.6.17] - 2026-04-04
-### Added
-- **Tracking / GTM**: sulla landing Stripe `?fp_forms_success=1&submission_id=&form_id=`, replay **solo dataLayer** di `form_payment_completed` (stesso `event_id` salvato al webhook; `fp_skip_server_dispatch` verso FP Marketing Tracking Layer). Validazione submission + transazione `completed`; meta `fp_forms_pcc_ty_*` anti-refresh. Filtro `fp_forms_allow_payment_completed_datalayer_replay`.
-
+## [1.6.18] - 2026-04-04
 ### Changed
-- Uninstall: rimozione opzioni `fp_forms_pcc_*` (payload replay).
-
-## [1.6.16] - 2026-04-04
-### Changed
-- Tracking: evento `form_payment_completed` arricchito con `value`, `currency`, `payment_provider`; webhook Stripe passa `amount_total` (centesimi), `amount_in_cents`, `currency` per allineamento a GA4/Meta nel catalogo FP Tracking.
+- Form builder admin: layout più chiaro (passi 1–2, titoli «Campi del form» / «Aggiungi campi» / «Aspetto sul sito» / «Comportamento, email e integrazioni»), empty state quando non ci sono campi, barra «Salva» sticky, larghezza max pagina aumentata, selettori colore in righe CSS dedicate, alert coerente per disattivazione email, highlight temporaneo sulla palette dal pulsante sotto l’elenco campi.
+### Fixed
+- `admin.css`: rimossi blocchi CSS duplicati/corrotti dopo la sezione Accessibilità.
+- Salvataggio colore accent email conferma: flag esplicito «custom vs default globale» (evita invio involontario dell’hex di anteprima quando si usa il default).
 
 ## [1.6.15] - 2026-03-24
 ### Changed
