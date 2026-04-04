@@ -68,9 +68,8 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
     </div>
     
     <form id="fp-form-builder" class="fp-builder-container" method="post" action="" onsubmit="return false;">
-        <input type="hidden" name="form_id" id="form_id" value="<?php echo esc_attr( $form_id ); ?>">
-        
         <div class="fp-builder-form-meta">
+            <input type="hidden" name="form_id" id="form_id" value="<?php echo esc_attr( $form_id ); ?>">
             <div class="fp-builder-header">
                 <div class="fp-form-info">
                     <input type="text" 
@@ -90,8 +89,9 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
             </div>
         </div>
 
-        <div class="fp-builder-fields-hub">
-            <div class="fp-builder-body">
+        <div class="fp-builder-workspace">
+            <div class="fp-builder-fields-hub">
+                <div class="fp-builder-body">
                 <div class="fp-builder-canvas-head" role="group" aria-label="<?php esc_attr_e( 'Area campi del form', 'fp-forms' ); ?>">
                     <span class="fp-builder-step-badge" aria-hidden="true">1</span>
                     <div class="fp-builder-canvas-head__text">
@@ -126,10 +126,10 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                         <?php esc_html_e( 'Mostra tipi di campo', 'fp-forms' ); ?>
                     </button>
                 </div>
+                </div>
             </div>
-        </div>
 
-        <div class="fp-builder-palette-column" id="fp-builder-field-palette">
+            <div class="fp-builder-palette-column" id="fp-builder-field-palette">
             <div class="fp-sidebar-section fpforms-builder-panel fpforms-builder-panel--palette-sidebar">
                 <div class="fpforms-builder-panel__head">
                     <span class="fp-builder-step-badge fp-builder-step-badge--sidebar" aria-hidden="true">2</span>
@@ -205,6 +205,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                     </button>
                 </div>
             </div>
+        </div>
         </div>
 
         <div class="fp-builder-appearance-settings">

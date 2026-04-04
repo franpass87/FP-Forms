@@ -1,5 +1,10 @@
 # CHANGELOG - FP Forms
 
+## [1.6.26] - 2026-04-04
+### Fixed
+- Form builder: allineamento in alto delle due card (campi + palette) tramite wrapper `.fp-builder-workspace` con griglia dedicata; il form principale è a colonna singola così le sezioni sotto non interferiscono con le colonne.
+- Form builder: `input#form_id` spostato dentro `.fp-builder-form-meta` per non essere figlio diretto della griglia del form (evita slot griglia fantasma che sfalsavano la colonna destra).
+
 ## [1.6.25] - 2026-04-04
 ### Changed
 - Form builder: rimosso **sticky** dalla colonna «Aggiungi campi» e dalla barra «Salva Form» (flusso pagina naturale, niente sovrapposizioni sulle sezioni sotto).

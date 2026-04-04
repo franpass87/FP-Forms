@@ -545,18 +545,24 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
    ============================================ */
 .fp-builder-container {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
-    grid-template-rows: auto auto;
+    grid-template-columns: 1fr;
     gap: var(--fp-spacing-lg);
     margin-top: var(--fp-spacing-lg);
     align-items: start;
     isolation: isolate;
 }
 
-/* Riga 1: titolo e descrizione */
+/* Due colonne (campi + palette) isolate dal resto del form: allineamento in alto garantito */
+.fp-builder-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+    gap: var(--fp-spacing-lg);
+    align-items: start;
+    min-width: 0;
+}
+
+/* Titolo e descrizione */
 .fp-builder-form-meta {
-    grid-column: 1 / -1;
-    grid-row: 1;
     min-width: 0;
     background: var(--fp-color-surface);
     border: 1px solid var(--fp-color-border);
@@ -565,11 +571,10 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     box-shadow: var(--fp-shadow-md);
 }
 
-/* Riga 2 colonna 2: tipi di campo (passo 2), flusso normale — niente sticky sopra le sezioni sotto */
+/* Tipi di campo (passo 2) — colonna destra del workspace */
 .fp-builder-palette-column {
-    grid-column: 2 / 3;
-    grid-row: 2;
     min-width: 0;
+    width: 100%;
     background: var(--fp-color-surface);
     border: 1px solid var(--fp-color-border);
     border-radius: var(--fp-radius-lg);
@@ -579,15 +584,13 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     align-self: start;
 }
 
-/* Riga 2 colonna 1: elenco campi (passo 1) */
+/* Elenco campi (passo 1) — colonna sinistra del workspace */
 .fp-builder-fields-hub {
-    grid-column: 1 / 2;
-    grid-row: 2;
     min-width: 0;
+    width: 100%;
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    align-self: start;
 }
 
 /* width: 100% qui annullava il centraggio (flex item a tutta colonna). */
@@ -605,7 +608,6 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
 
 .fp-builder-appearance-settings,
 .fp-builder-bottom-settings {
-    grid-column: 1 / -1;
     background: var(--fp-color-surface);
     border: 1px solid var(--fp-color-border);
     border-radius: var(--fp-radius-lg);
@@ -615,8 +617,6 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
 }
 
 .fp-builder-actions {
-    grid-column: 1 / -1;
-    grid-row: auto;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1227,9 +1227,8 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
    Responsive
    ============================================ */
 @media screen and (max-width: 1200px) {
-    .fp-builder-container {
+    .fp-builder-workspace {
         grid-template-columns: 1fr;
-        grid-template-rows: auto;
     }
 
     .fp-builder-form-meta,
@@ -1237,8 +1236,6 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     .fp-builder-fields-hub,
     .fp-builder-appearance-settings,
     .fp-builder-bottom-settings {
-        grid-column: 1 / -1;
-        grid-row: auto;
         max-width: 100%;
     }
 
