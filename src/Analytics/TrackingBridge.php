@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FPForms\Analytics;
 
+use FPForms\Support\FormConsentExtractor;
 use function absint;
 use function add_action;
 use function apply_filters;
@@ -116,6 +117,30 @@ class TrackingBridge {
         $title   = $form instanceof \WP_Post ? $form->post_title : '';
         $event_id = 'fp_forms_' . $submission_id . '_' . time();
 
+        /** @var array{has_privacy_field:bool,has_marketing_field:bool,privacy_accepted:?bool,marketing_opt_in:?bool} $consent */
+        $consent = FormConsentExtractor::analyze($form_id, $data);
+
+        /**
+         * Consensi form (privacy / marketing) dopo salvataggio: per integrazioni FP Privacy, CRM, ecc.
+         *
+         * @param int   $submission_id
+         * @param int   $form_id
+         * @param array $data    Dati submission sanitizzati
+         * @param array $consent Output di {@see FormConsentExtractor::analyze()}
+         */
+        do_action('fp_forms_consent_after_submit', $submission_id, $form_id, $data, $consent);
+
+        // Opzionale: allinea la categoria marketing del cookie banner (FP Privacy + FP Tracking) al consenso esplicito sul form.
+        if ($consent['marketing_opt_in'] === true
+            && apply_filters('fp_forms_fire_fp_consent_update_for_marketing_opt_in', false, $form_id, $submission_id, $data, $consent)
+        ) {
+            $revision = (int) get_option('fp_privacy_policy_revision', 0);
+            if ($revision < 1) {
+                $revision = (int) get_option('fp_privacy_revision', 0);
+            }
+            do_action('fp_consent_update', ['marketing' => true], 'fp_forms_marketing_opt_in', $revision);
+        }
+
         // Extract user data for server-side (Meta CAPI / GA4 MP)
         $user_data = $this->extract_user_data($data);
 
@@ -129,6 +154,13 @@ class TrackingBridge {
             'user_data'     => $user_data,
             'page_url'      => $this->getRequestPageUrl(),
         ];
+
+        if ($consent['has_privacy_field']) {
+            $params['fp_forms_privacy_policy'] = $consent['privacy_accepted'] === true ? 'accepted' : 'not_accepted';
+        }
+        if ($consent['has_marketing_field']) {
+            $params['marketing_consent'] = $consent['marketing_opt_in'] === true ? 'granted' : 'denied';
+        }
 
         do_action('fp_tracking_event', 'generate_lead', $this->enrichEventParams($params, 'generate_lead', $form_id));
     }

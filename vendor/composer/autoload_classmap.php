@@ -42,6 +42,7 @@ return array(
     'FPForms\\Security\\AntiSpam' => $baseDir . '/src/Security/AntiSpam.php',
     'FPForms\\Security\\ReCaptcha' => $baseDir . '/src/Security/ReCaptcha.php',
     'FPForms\\Submissions\\Manager' => $baseDir . '/src/Submissions/Manager.php',
+    'FPForms\\Support\\FormConsentExtractor' => $baseDir . '/src/Support/FormConsentExtractor.php',
     'FPForms\\Templates\\Library' => $baseDir . '/src/Templates/Library.php',
     'FPForms\\Validators\\Validator' => $baseDir . '/src/Validators/Validator.php',
     'FPForms\\Versioning\\FormHistory' => $baseDir . '/src/Versioning/FormHistory.php',

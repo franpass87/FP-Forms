@@ -65,6 +65,7 @@ class ComposerStaticInit8f784f0db15d0ab802ba1283d7529161
         'FPForms\\Security\\AntiSpam' => __DIR__ . '/../..' . '/src/Security/AntiSpam.php',
         'FPForms\\Security\\ReCaptcha' => __DIR__ . '/../..' . '/src/Security/ReCaptcha.php',
         'FPForms\\Submissions\\Manager' => __DIR__ . '/../..' . '/src/Submissions/Manager.php',
+        'FPForms\\Support\\FormConsentExtractor' => __DIR__ . '/../..' . '/src/Support/FormConsentExtractor.php',
         'FPForms\\Templates\\Library' => __DIR__ . '/../..' . '/src/Templates/Library.php',
         'FPForms\\Validators\\Validator' => __DIR__ . '/../..' . '/src/Validators/Validator.php',
         'FPForms\\Versioning\\FormHistory' => __DIR__ . '/../..' . '/src/Versioning/FormHistory.php',

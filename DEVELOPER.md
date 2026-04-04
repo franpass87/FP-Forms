@@ -98,6 +98,9 @@ do_action( 'fp_forms_before_save_submission', $form_id, $data );
 // Dopo il salvataggio submission
 do_action( 'fp_forms_after_save_submission', $submission_id, $form_id, $data );
 
+// Consensi privacy/marketing (analisi campi dedicati), subito prima di generate_lead / integrazioni tracking
+do_action( 'fp_forms_consent_after_submit', $submission_id, $form_id, $data, $consent );
+
 // Prima dell'eliminazione submission
 do_action( 'fp_forms_before_delete_submission', $submission_id );
 
@@ -132,6 +135,12 @@ apply_filters( 'fp_forms_submission_data', $data, $form_id );
 
 // Modifica errori di validazione
 apply_filters( 'fp_forms_validation_errors', $errors, $form_id, $data );
+
+// Brevo: se false, ignora il campo marketing e sincronizza come prima (default true = rispetta opt-in)
+apply_filters( 'fp_forms_brevo_sync_respects_marketing_checkbox', true, $form_id, $data, $consent );
+
+// Se true, dopo opt-in marketing sul form chiama do_action( 'fp_consent_update', [ 'marketing' => true ], ... ) per FP Privacy + Tracking Layer (default false)
+apply_filters( 'fp_forms_fire_fp_consent_update_for_marketing_opt_in', false, $form_id, $submission_id, $data, $consent );
 
 // Modifica destinatari email
 apply_filters( 'fp_forms_notification_recipients', $to, $form_id, $data );

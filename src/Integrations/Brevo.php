@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace FPForms\Integrations;
 
+use FPForms\Support\FormConsentExtractor;
+
 /**
  * Brevo (ex Sendinblue) Integration
  * API v3 - Contacts & Events Tracking
@@ -167,6 +169,19 @@ class Brevo {
             \FPForms\Core\Logger::warning( 'Brevo sync skipped: no list ID', [
                 'form_id' => $form_id,
                 'submission_id' => $submission_id,
+            ] );
+            return;
+        }
+
+        $consent = FormConsentExtractor::analyze( $form_id, $data );
+        if ( apply_filters( 'fp_forms_brevo_sync_respects_marketing_checkbox', true, $form_id, $data, $consent )
+            && $consent['has_marketing_field']
+            && $consent['marketing_opt_in'] !== true
+        ) {
+            \FPForms\Core\Logger::info( 'Brevo sync skipped: marketing opt-in not granted', [
+                'form_id'         => $form_id,
+                'submission_id'   => $submission_id,
+                'marketing_opt_in' => $consent['marketing_opt_in'],
             ] );
             return;
         }

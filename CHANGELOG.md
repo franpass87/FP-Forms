@@ -1,5 +1,14 @@
 # CHANGELOG - FP Forms
 
+## [1.6.34] - 2026-04-04
+### Added
+- Integrazione consensi **FP Marketing Tracking Layer** / **FP Privacy**: classe `FPForms\Support\FormConsentExtractor` analizza campi `privacy-checkbox` e `marketing-checkbox`; su `generate_lead` vengono passati `fp_forms_privacy_policy` (`accepted`/`not_accepted`) e `marketing_consent` (`granted`/`denied`) se i rispettivi campi sono nel form.
+- Hook `fp_forms_consent_after_submit` (`$submission_id`, `$form_id`, `$data`, `$consent`) per integrazioni esterne (es. audit FP Privacy).
+- Filtro `fp_forms_fire_fp_consent_update_for_marketing_opt_in` (default **false**): se `true`, dopo opt-in marketing sul form viene emesso `fp_consent_update` con `['marketing' => true]` e evento `fp_forms_marketing_opt_in` (allineamento a `ConsentBridge` del Tracking Layer).
+
+### Changed
+- **Brevo**: se il form include un campo marketing e l’utente non lo spunta, la sincronizzazione contatto/lista non parte (GDPR/opt-in). Filtro `fp_forms_brevo_sync_respects_marketing_checkbox` (default `true`) per disattivare il blocco e ripristinare il comportamento precedente.
+
 ## [1.6.33] - 2026-04-04
 ### Added
 - Badge euristici: **12 nuovi preset** (chiavi `rated-49`, `daily-handled`, `secure-payments`, `gift-guide`, `slots-today`, `satisfaction-guarantee`, `easy-unsubscribe`, `real-human-reply`, `quick-form`, `no-credit-card`, `honest-pricing`, `clear-steps`) distribuiti su gruppi esistenti + **Attrito ridotto** e **Trasparenza**; whitelist salvataggio in `Manager`, rendering frontend in `form.php`, voci `Translator` (en/de/fr/es) e voce `GDPR Compliant`.
