@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.39] - 2026-04-04
+### Changed
+- Form builder: sezione **Pulsante Submit** in griglia a **2 colonne** (testo, colore, icona e classe CSS a tutta larghezza; dimensione/stile/allineamento/larghezza affiancati); sotto 640px una colonna.
+
 ## [1.6.38] - 2026-04-04
 ### Added
 - **Badge euristici**: 12 nuovi preset (`joined-this-month`, `five-star-reviews`, `sector-certified`, `official-partner`, `free-consult-15`, `spots-limited-week`, `refund-30-days`, `no-data-resale`, `callback-2h`, `italian-support`, `start-with-email`, `no-hidden-fees`) nei gruppi esistenti; whitelist salvataggio in `Manager`, rendering in `form.php`, voci `Translator` (en/de/fr/es).

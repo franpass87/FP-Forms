@@ -378,12 +378,13 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                 
                 <h4><?php esc_html_e( 'Pulsante Submit', 'fp-forms' ); ?></h4>
                 
-                <div class="fp-setting-field">
+                <div class="fpforms-builder-fields-grid fpforms-builder-fields-grid--submit">
+                <div class="fp-setting-field fpforms-grid-span-2">
                     <label><?php esc_html_e( 'Testo Pulsante', 'fp-forms' ); ?></label>
                     <input type="text" name="submit_button_text" value="<?php echo esc_attr( $form_settings['submit_button_text'] ); ?>" placeholder="<?php esc_attr_e( 'Invia', 'fp-forms' ); ?>">
                 </div>
                 
-                <div class="fp-setting-field">
+                <div class="fp-setting-field fpforms-grid-span-2">
                     <label><?php esc_html_e( 'Colore Pulsante', 'fp-forms' ); ?></label>
                     <div class="fpforms-color-row">
                         <input type="color" class="fpforms-color-row__input" name="submit_button_color" value="<?php echo esc_attr( $form_settings['submit_button_color'] ?? '#3b82f6' ); ?>">
@@ -428,7 +429,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                     </select>
                 </div>
                 
-                <div class="fp-setting-field">
+                <div class="fp-setting-field fpforms-grid-span-2">
                     <label><?php esc_html_e( 'Icona Pulsante (opzionale)', 'fp-forms' ); ?></label>
                     <select name="submit_button_icon">
                         <option value="" <?php selected( $form_settings['submit_button_icon'] ?? '', '' ); ?>><?php esc_html_e( 'Nessuna icona', 'fp-forms' ); ?></option>
@@ -441,11 +442,12 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                     <small><?php esc_html_e( 'Icona mostrata accanto al testo', 'fp-forms' ); ?></small>
                 </div>
                 
-                <div class="fp-setting-field">
+                <div class="fp-setting-field fpforms-grid-span-2">
                     <label><?php esc_html_e( 'Classe CSS Custom', 'fp-forms' ); ?></label>
                     <input type="text" name="custom_css_class" value="<?php echo esc_attr( $form_settings['custom_css_class'] ?? '' ); ?>" placeholder="my-custom-class">
                     <small><?php esc_html_e( 'Aggiungi una classe CSS personalizzata al form', 'fp-forms' ); ?></small>
                 </div>
+                </div><!-- .fpforms-builder-fields-grid--submit -->
                 
                 <h4><?php esc_html_e( 'Colori personalizzati', 'fp-forms' ); ?></h4>
                 
