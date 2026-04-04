@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.21] - 2026-04-04
+### Changed
+- Form builder: colonna destra solo elenco campi (drag & drop); palette «Aggiungi campi» spostata in blocco a tutta larghezza sotto la riga titolo/campi, prima di «Aspetto sul sito». Griglia tipi campo adattiva su larghezza; pulsante «Mostra tipi di campo» scrolla al blocco palette.
+
 ## [1.6.20] - 2026-04-04
 ### Changed
 - Form builder: descrizione in header allineata al layout (solo tipi campo a destra, aspetto e avanzate sotto); palette senza bordo/padding separatori superflui nella sidebar.

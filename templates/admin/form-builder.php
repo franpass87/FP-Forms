@@ -61,7 +61,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
     <div class="fp-forms-admin__header">
         <div class="fpforms-page-header-content">
             <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php echo esc_html( $fp_forms_builder_heading ); ?></h2>
-            <p class="fpforms-page-header-desc"><?php esc_html_e( 'A sinistra struttura e campi; a destra solo i tipi di campo da aggiungere. Sotto: aspetto sul sito, poi comportamento, email e integrazioni.', 'fp-forms' ); ?></p>
+            <p class="fpforms-page-header-desc"><?php esc_html_e( 'A sinistra titolo e descrizione; a destra l’elenco campi da riordinare. Sotto: aggiungi tipi di campo, poi aspetto sul sito e infine comportamento, email e integrazioni.', 'fp-forms' ); ?></p>
         </div>
         <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">&larr; <?php esc_html_e( 'Torna ai Form', 'fp-forms' ); ?></a>
         <span class="fpforms-page-header-badge">v<?php echo esc_html( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '0' ); ?></span>
@@ -88,7 +88,9 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                               class="fp-textarea-large"><?php echo esc_textarea( $form_description ); ?></textarea>
                 </div>
             </div>
-            
+        </div>
+
+        <div class="fp-builder-sidebar fp-builder-sidebar--fields-only">
             <div class="fp-builder-body">
                 <div class="fp-builder-canvas-head" role="group" aria-label="<?php esc_attr_e( 'Area campi del form', 'fp-forms' ); ?>">
                     <span class="fp-builder-step-badge" aria-hidden="true">1</span>
@@ -107,7 +109,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                 >
                     <span class="fp-builder-empty-state__icon dashicons dashicons-welcome-widgets-menus" aria-hidden="true"></span>
                     <p class="fp-builder-empty-state__title"><?php esc_html_e( 'Nessun campo ancora', 'fp-forms' ); ?></p>
-                    <p class="fp-builder-empty-state__text"><?php esc_html_e( 'Usa i pulsanti «Aggiungi campi» nella colonna a destra. Ogni clic inserisce un campo in fondo alla lista.', 'fp-forms' ); ?></p>
+                    <p class="fp-builder-empty-state__text"><?php esc_html_e( 'Usa la sezione «Aggiungi campi» qui sotto: ogni clic inserisce un campo in fondo a questo elenco.', 'fp-forms' ); ?></p>
                 </div>
 
                 <div class="fp-fields-container" id="fp-fields-container">
@@ -120,20 +122,20 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
 
                 <div class="fp-add-field">
                     <button type="button" class="button button-secondary" id="fp-add-field-btn">
-                        <span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
+                        <span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
                         <?php esc_html_e( 'Mostra tipi di campo', 'fp-forms' ); ?>
                     </button>
                 </div>
             </div>
         </div>
-        
-        <div class="fp-builder-sidebar">
-            <div class="fp-sidebar-section fpforms-builder-panel fpforms-builder-panel--palette">
+
+        <div class="fp-builder-palette-settings" id="fp-builder-field-palette">
+            <div class="fp-sidebar-section fpforms-builder-panel fpforms-builder-panel--palette-wide">
                 <div class="fpforms-builder-panel__head">
                     <span class="fp-builder-step-badge fp-builder-step-badge--sidebar" aria-hidden="true">2</span>
                     <div>
                         <h3 class="fpforms-builder-panel__title"><?php esc_html_e( 'Aggiungi campi', 'fp-forms' ); ?></h3>
-                        <p class="fpforms-builder-panel__hint"><?php esc_html_e( 'Clicca un tipo: il campo viene aggiunto in coda. Puoi spostarlo dopo con il trascinamento.', 'fp-forms' ); ?></p>
+                        <p class="fpforms-builder-panel__hint"><?php esc_html_e( 'Clicca un tipo: il campo viene aggiunto in coda all’elenco a destra. Puoi riordinarlo con il trascinamento.', 'fp-forms' ); ?></p>
                     </div>
                 </div>
                 <div class="fp-field-types" id="fp-field-types-palette">

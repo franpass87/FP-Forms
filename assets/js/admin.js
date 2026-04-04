@@ -317,17 +317,18 @@
          */
         scrollToFieldPalette: function(e) {
             e.preventDefault();
+            var $wrap = $('#fp-builder-field-palette');
             var $palette = $('#fp-field-types-palette');
-            var $side = $('.fp-builder-sidebar');
-            if ($palette.length && $palette[0].scrollIntoView) {
-                $palette[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            } else if ($side.length && $side[0].scrollIntoView) {
-                $side[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            var scrollEl = $wrap.length ? $wrap[0] : ($palette.length ? $palette[0] : null);
+            if (scrollEl && scrollEl.scrollIntoView) {
+                scrollEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-            $palette.addClass('fpforms-palette-highlight');
-            window.setTimeout(function() {
-                $palette.removeClass('fpforms-palette-highlight');
-            }, 1600);
+            if ($palette.length) {
+                $palette.addClass('fpforms-palette-highlight');
+                window.setTimeout(function() {
+                    $palette.removeClass('fpforms-palette-highlight');
+                }, 1600);
+            }
         },
         
         /**

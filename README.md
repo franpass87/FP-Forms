@@ -5,7 +5,7 @@ Form builder professionale per WordPress, progettato per creare form di prenotaz
 ## 🚀 Caratteristiche
 
 ### Core Features
-- **Form Builder Drag & Drop** - Crea form personalizzati con facilità; interfaccia admin con sezioni guidate (palette a destra, aspetto e avanzate sotto), empty state e salvataggio in evidenza
+- **Form Builder Drag & Drop** - Crea form personalizzati con facilità; interfaccia admin con titolo a sinistra, elenco campi a destra, palette tipi e aspetto/avanzate in blocchi sotto, empty state e salvataggio in evidenza
 - **Campi Multipli** - Testo, email, telefono, textarea, select, radio, checkbox, data, numero, **file upload** 🆕
 - **Gestione Submissions** - Visualizza e gestisci tutte le submissions ricevute
 - **Export Submissions** 🆕 - Export CSV e Excel con filtri avanzati

@@ -574,6 +574,7 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     top: 32px;
 }
 
+.fp-builder-palette-settings,
 .fp-builder-appearance-settings,
 .fp-builder-bottom-settings {
     grid-column: 1 / -1;
@@ -598,6 +599,10 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
 /* Form Info */
 .fp-form-info {
     margin-bottom: var(--fp-spacing-xl);
+}
+
+.fp-builder-main .fp-form-info {
+    margin-bottom: 0;
 }
 
 .fp-input-large {
@@ -1203,6 +1208,7 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     }
 
     .fp-builder-main,
+    .fp-builder-palette-settings,
     .fp-builder-appearance-settings,
     .fp-builder-bottom-settings {
         grid-column: 1 / -1;
@@ -1218,6 +1224,10 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     }
     
     .fp-field-types {
+        grid-template-columns: 1fr;
+    }
+
+    .fpforms-builder-panel--palette-wide .fp-field-types {
         grid-template-columns: 1fr;
     }
     
@@ -1384,10 +1394,15 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
     color: var(--fp-color-muted);
 }
 
-.fpforms-builder-panel--palette {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
+/* Palette tipi campo: blocco a tutta larghezza sotto elenco drag */
+.fpforms-builder-panel--palette-wide .fp-field-types {
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+}
+
+@media screen and (max-width: 600px) {
+    .fpforms-builder-panel--palette-wide .fp-field-types {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .fpforms-builder-panel--settings .fpforms-builder-panel__hint,
