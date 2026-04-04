@@ -445,16 +445,44 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-admin {
     line-height: 1.5;
 }
 
+/* Gruppi euristici in griglia (meno altezza verticale nel builder) */
+.fp-heuristic-groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+    gap: 12px 14px;
+    align-items: start;
+}
+
 .fp-heuristic-group {
     margin-bottom: 12px;
     padding-bottom: 12px;
     border-bottom: 1px solid #e5e7eb;
 }
 
+.fp-heuristic-groups-grid .fp-heuristic-group {
+    margin-bottom: 0;
+    padding: 10px 12px 12px;
+    border-bottom: none;
+    background: var(--fpdms-bg-light);
+    border: 1px solid var(--fpdms-border);
+    border-radius: var(--fp-radius-md);
+    min-width: 0;
+}
+
 .fp-heuristic-group:last-of-type {
     margin-bottom: 0;
     padding-bottom: 0;
     border-bottom: none;
+}
+
+.fp-heuristic-groups-grid .fp-heuristic-group:last-of-type {
+    padding-bottom: 12px;
+}
+
+.fp-heuristic-groups-grid .fp-heuristic-group-label {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
 }
 
 .fp-heuristic-group-label {

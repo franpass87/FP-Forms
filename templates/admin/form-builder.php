@@ -290,10 +290,12 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                         ],
                     ];
                     
-                    $selected_badges = isset( $form_settings['trust_badges'] ) && is_array( $form_settings['trust_badges'] ) 
-                        ? $form_settings['trust_badges'] 
+                    $selected_badges = isset( $form_settings['trust_badges'] ) && is_array( $form_settings['trust_badges'] )
+                        ? $form_settings['trust_badges']
                         : [];
-                    
+                    ?>
+                    <div class="fp-heuristic-groups-grid">
+                    <?php
                     foreach ( $badge_groups as $group_key => $group ) :
                         $tooltip = isset( $group['tooltip'] ) ? $group['tooltip'] : '';
                     ?>
@@ -310,6 +312,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                             <?php endforeach; ?>
                         </div>
                     <?php endforeach; ?>
+                    </div>
                 </div>
                 
                 <h4><?php esc_html_e( 'Pulsante Submit', 'fp-forms' ); ?></h4>

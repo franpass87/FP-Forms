@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.30] - 2026-04-04
+### Changed
+- Form builder: sezione **Badge euristici** in **griglia responsive** (`repeat(auto-fill, minmax(...))`) con card per gruppo, per ridurre l’ingombro verticale.
+
 ## [1.6.29] - 2026-04-04
 ### Fixed
 - Form builder: rimossa la barra verticale blu che si sovrapponeva alla prima lettera dei titoli `h4` (es. «Badge euristici»): coesistenza tra `h4::before` di `.fp-sidebar-section` e il nuovo padding del design system senza `padding-left`.
