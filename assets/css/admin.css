@@ -1386,6 +1386,8 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
 
 .fpforms-builder-panel--palette {
     margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
 }
 
 .fpforms-builder-panel--settings .fpforms-builder-panel__hint,

@@ -1,8 +1,12 @@
 # CHANGELOG - FP Forms
 
+## [1.6.20] - 2026-04-04
+### Changed
+- Form builder: descrizione in header allineata al layout (solo tipi campo a destra, aspetto e avanzate sotto); palette senza bordo/padding separatori superflui nella sidebar.
+
 ## [1.6.19] - 2026-04-04
 ### Changed
-- Form builder: colonna destra solo palette «Aggiungi campi»; sezione «Aspetto sul sito» spostata in blocco a tutta larghezza sotto la griglia principale e sopra «Comportamento, email e integrazioni».
+- Form builder: colonna destra solo palette «Aggiungi campi»; sezione «Aspetto sul sito» in blocco a tutta larghezza sotto la griglia principale e sopra «Comportamento, email e integrazioni».
 
 ## [1.6.18] - 2026-04-04
 ### Changed

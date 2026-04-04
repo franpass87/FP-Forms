@@ -4,7 +4,7 @@ Contributors: franpass87
 Tags: forms, form builder, contact form, landing page, stripe, payments, conditional logic
 Requires at least: 5.8
 Tested up to: 6.6
-Stable tag: 1.6.19
+Stable tag: 1.6.20
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,17 +38,11 @@ Per i form a pagamento Stripe: configura le chiavi in **FP Forms** > **Impostazi
 
 == Changelog ==
 
+= 1.6.20 = (2026-04-04)
+* Form builder: copy header e stile palette sidebar (layout già in v1.6.19).
+
 = 1.6.19 = (2026-04-04)
-* Form builder: sidebar solo tipi campo; «Aspetto sul sito» in sezione larga sotto, prima di email/integrazioni.
-
-= 1.6.18 = (2026-04-04)
-* Admin form builder: UX/UI più chiara (sezioni numerate, empty state, sticky salva, palette evidenziata, CSS colori); fix CSS duplicato; accent email conferma: salvataggio default globale vs colore dedicato.
-
-= 1.6.17 = (2026-04-04)
-* Tracking / GTM: sulla pagina di ritorno da Stripe (`fp_forms_success`), evento `form_payment_completed` anche nel dataLayer con lo stesso `event_id` del webhook; niente secondo invio server-side (FP Marketing Tracking Layer).
-
-= 1.6.16 = (2026-04-04)
-* Tracking: `form_payment_completed` con value/currency da webhook Stripe (centesimi).
+* Form builder: sidebar solo tipi campo; «Aspetto sul sito» a tutta larghezza sopra email/integrazioni.
 
 = 1.6.15 = (2026-03-24)
 * Brevo: upsert contatti via FP Tracking quando Brevo è abilitato nel layer; parametro lingua passato dal sync post-submission.
