@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.28] - 2026-04-04
+### Changed
+- Form builder admin: allineamento al **design system FP** su tutte le sezioni — banner pagina (gradiente senza box-shadow, tipografia e badge), card con header grigio (`fpforms-builder-section`), barre titolo a tutta larghezza su area campi e palette, etichette `h4` in stile uppercase, campi con bordo/focus token FP, CTA Salva e «Mostra tipi di campo» con stile pulsanti FP, card template email con stato selezionato coerente.
+
 ## [1.6.27] - 2026-04-04
 ### Fixed
 - Admin: contenuto FP non deve più coprire il menu WordPress a sinistra — `#wpbody-content` senza `float` che spingeva fuori l’area, `overflow-x: hidden` su `#wpcontent` / `#wpbody-content`, padding orizzontale spostato su `.wrap.fp-forms-admin` con `max-width: min(..., 100%)`.

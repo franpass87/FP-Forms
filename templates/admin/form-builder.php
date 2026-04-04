@@ -58,33 +58,47 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
     $fp_forms_builder_heading = $is_new ? __( 'Nuovo Form', 'fp-forms' ) : __( 'Modifica Form', 'fp-forms' );
     ?>
     <h1 class="screen-reader-text"><?php echo esc_html( $fp_forms_builder_heading ); ?></h1>
-    <div class="fp-forms-admin__header">
+    <div class="fp-forms-admin__header fpforms-page-header">
         <div class="fpforms-page-header-content">
-            <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php echo esc_html( $fp_forms_builder_heading ); ?></h2>
+            <h2 class="fp-forms-page-header-title" aria-hidden="true">
+                <span class="dashicons dashicons-feedback" aria-hidden="true"></span>
+                <?php echo esc_html( $fp_forms_builder_heading ); ?>
+            </h2>
             <p class="fpforms-page-header-desc"><?php esc_html_e( 'In alto titolo e descrizione. Sotto: a sinistra componi e riordina i campi (passo 1), a destra aggiungi i tipi di campo (passo 2). Più in basso: aspetto sul sito e impostazioni avanzate.', 'fp-forms' ); ?></p>
         </div>
-        <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">&larr; <?php esc_html_e( 'Torna ai Form', 'fp-forms' ); ?></a>
-        <span class="fpforms-page-header-badge">v<?php echo esc_html( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '0' ); ?></span>
+        <div class="fpforms-page-header-actions">
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button fpforms-btn fpforms-btn-header-ghost">&larr; <?php esc_html_e( 'Torna ai Form', 'fp-forms' ); ?></a>
+            <span class="fpforms-page-header-badge">v<?php echo esc_html( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '0' ); ?></span>
+        </div>
     </div>
     
     <form id="fp-form-builder" class="fp-builder-container" method="post" action="" onsubmit="return false;">
-        <div class="fp-builder-form-meta">
+        <div class="fp-builder-form-meta fpforms-builder-section">
             <input type="hidden" name="form_id" id="form_id" value="<?php echo esc_attr( $form_id ); ?>">
-            <div class="fp-builder-header">
-                <div class="fp-form-info">
-                    <input type="text" 
-                           name="form_title" 
-                           id="form_title" 
-                           placeholder="<?php esc_html_e( 'Titolo del form', 'fp-forms' ); ?>" 
-                           value="<?php echo esc_attr( $form_title ); ?>"
-                           class="fp-input-large"
-                           required>
-                    
-                    <textarea name="form_description" 
-                              id="form_description" 
-                              placeholder="<?php esc_html_e( 'Descrizione (opzionale)', 'fp-forms' ); ?>"
-                              rows="2"
-                              class="fp-textarea-large"><?php echo esc_textarea( $form_description ); ?></textarea>
+            <div class="fpforms-builder-section__head">
+                <span class="fpforms-builder-section__icon dashicons dashicons-edit-page" aria-hidden="true"></span>
+                <div>
+                    <h3 class="fpforms-builder-section__title"><?php esc_html_e( 'Titolo e descrizione', 'fp-forms' ); ?></h3>
+                    <p class="fpforms-builder-section__subtitle"><?php esc_html_e( 'Nome del form e testo di supporto (opzionale) visibili in questa schermata.', 'fp-forms' ); ?></p>
+                </div>
+            </div>
+            <div class="fpforms-builder-section__body">
+                <div class="fp-builder-header">
+                    <div class="fp-form-info">
+                        <input type="text"
+                               name="form_title"
+                               id="form_title"
+                               placeholder="<?php esc_html_e( 'Titolo del form', 'fp-forms' ); ?>"
+                               value="<?php echo esc_attr( $form_title ); ?>"
+                               class="fp-input-large"
+                               required>
+
+                        <textarea name="form_description"
+                                  id="form_description"
+                                  placeholder="<?php esc_html_e( 'Descrizione (opzionale)', 'fp-forms' ); ?>"
+                                  rows="2"
+                                  class="fp-textarea-large"><?php echo esc_textarea( $form_description ); ?></textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -121,7 +135,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                 </div>
 
                 <div class="fp-add-field">
-                    <button type="button" class="button button-secondary" id="fp-add-field-btn">
+                    <button type="button" class="button button-secondary fpforms-btn fpforms-btn-secondary" id="fp-add-field-btn">
                         <span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
                         <?php esc_html_e( 'Mostra tipi di campo', 'fp-forms' ); ?>
                     </button>
@@ -208,11 +222,17 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
         </div>
         </div>
 
-        <div class="fp-builder-appearance-settings">
+        <div class="fp-builder-appearance-settings fpforms-builder-section">
+            <div class="fpforms-builder-section__head">
+                <span class="fpforms-builder-section__icon dashicons dashicons-admin-appearance" aria-hidden="true"></span>
+                <div>
+                    <h3 class="fpforms-builder-section__title"><?php esc_html_e( 'Aspetto sul sito', 'fp-forms' ); ?></h3>
+                    <p class="fpforms-builder-section__subtitle"><?php esc_html_e( 'Pulsante di invio, colori, badge di fiducia e redirect.', 'fp-forms' ); ?></p>
+                </div>
+            </div>
+            <div class="fpforms-builder-section__body">
             <div class="fp-sidebar-section fpforms-builder-panel fpforms-builder-panel--settings">
-                <h3 class="fpforms-builder-panel__title fpforms-builder-panel__title--solo"><?php esc_html_e( 'Aspetto sul sito', 'fp-forms' ); ?></h3>
-                <p class="fpforms-builder-panel__hint"><?php esc_html_e( 'Pulsante di invio, colori, badge di fiducia e redirect.', 'fp-forms' ); ?></p>
-                
+
                 <h4><?php esc_html_e( 'Badge euristici', 'fp-forms' ); ?></h4>
                 
                 <div class="fp-setting-field fp-heuristic-badges">
@@ -416,14 +436,21 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                     <label><?php esc_html_e( 'URL Redirect', 'fp-forms' ); ?></label>
                     <input type="url" name="success_redirect_url" value="<?php echo esc_url( $form_settings['success_redirect_url'] ?? '' ); ?>" placeholder="https://example.com/thank-you">
                 </div>
-                
+
+            </div>
             </div>
         </div>
 
-        <div class="fp-builder-bottom-settings">
+        <div class="fp-builder-bottom-settings fpforms-builder-section">
+            <div class="fpforms-builder-section__head">
+                <span class="fpforms-builder-section__icon dashicons dashicons-admin-settings" aria-hidden="true"></span>
+                <div>
+                    <h3 class="fpforms-builder-section__title"><?php esc_html_e( 'Comportamento, email e integrazioni', 'fp-forms' ); ?></h3>
+                    <p class="fpforms-builder-section__subtitle"><?php esc_html_e( 'Messaggio dopo l’invio, notifiche, Brevo, pagamenti e logica condizionale.', 'fp-forms' ); ?></p>
+                </div>
+            </div>
+            <div class="fpforms-builder-section__body">
             <div class="fp-sidebar-section fpforms-builder-panel fpforms-builder-panel--advanced">
-                <h3 class="fpforms-builder-panel__title fpforms-builder-panel__title--solo"><?php esc_html_e( 'Comportamento, email e integrazioni', 'fp-forms' ); ?></h3>
-                <p class="fpforms-builder-panel__hint"><?php esc_html_e( 'Messaggio dopo l’invio, notifiche, Brevo, pagamenti e logica condizionale.', 'fp-forms' ); ?></p>
 
                 <h4><?php esc_html_e( 'Comportamento', 'fp-forms' ); ?></h4>
                 
@@ -644,10 +671,12 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                 }
                 ?>
             </div>
+            </div>
         </div>
 
         <div class="fp-builder-actions">
-            <button type="submit" class="button button-primary button-large">
+            <button type="submit" class="button button-primary button-large fpforms-btn fpforms-btn-primary">
+                <span class="dashicons dashicons-saved" aria-hidden="true"></span>
                 <?php esc_html_e( 'Salva Form', 'fp-forms' ); ?>
             </button>
         </div>
