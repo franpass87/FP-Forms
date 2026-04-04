@@ -77,22 +77,35 @@ body.fp-forms-admin-shell {
     background: var(--fp-color-background);
 }
 
+/*
+ * Evita che il contenuto FP esca dall’area #wpcontent e copra il menu admin (float+griglie larghe).
+ * Padding orizzontale solo su .wrap.fp-forms-admin, non su #wpbody-content (rispetta margin-left di #wpcontent).
+ */
+body.fp-forms-admin-shell #wpcontent {
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
 body.fp-forms-admin-shell #wpbody-content {
+    float: none;
+    clear: both;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     margin: 0;
-    padding: var(--fp-spacing-lg) clamp(16px, 4vw, 32px) 48px;
+    padding: 0 0 65px;
+    overflow-x: hidden;
 }
 
 /* Notice admin: flusso DOM naturale; NO flex+order su #wpbody-content (fp-admin-ui-design-system.mdc) */
-body.toplevel_page_fp-forms #wpbody-content > .wrap.fp-forms-admin,
-body[class*="fp-forms_page_"] #wpbody-content > .wrap.fp-forms-admin {
-    margin-top: 12px;
-}
-
-body.fp-forms-admin-shell #wpbody-content > .wrap {
-    margin: 0 auto;
-    max-width: 1200px;
+body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-admin {
+    margin: 12px auto 0;
+    max-width: min(1200px, 100%);
     width: 100%;
-    padding: 0;
+    padding-left: clamp(12px, 2vw, 28px);
+    padding-right: clamp(12px, 2vw, 28px);
+    padding-bottom: 48px;
+    box-sizing: border-box;
 }
 
 /* ============================================
@@ -1300,7 +1313,7 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
    Form Builder — canvas, empty state, pannelli
    ============================================ */
 body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
-    max-width: 1440px;
+    max-width: min(1440px, 100%);
 }
 
 .fp-builder-canvas-head {

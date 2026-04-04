@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.27] - 2026-04-04
+### Fixed
+- Admin: contenuto FP non deve più coprire il menu WordPress a sinistra — `#wpbody-content` senza `float` che spingeva fuori l’area, `overflow-x: hidden` su `#wpcontent` / `#wpbody-content`, padding orizzontale spostato su `.wrap.fp-forms-admin` con `max-width: min(..., 100%)`.
+
 ## [1.6.26] - 2026-04-04
 ### Fixed
 - Form builder: allineamento in alto delle due card (campi + palette) tramite wrapper `.fp-builder-workspace` con griglia dedicata; il form principale è a colonna singola così le sezioni sotto non interferiscono con le colonne.
