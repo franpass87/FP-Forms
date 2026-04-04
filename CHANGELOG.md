@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.38] - 2026-04-04
+### Added
+- **Badge euristici**: 12 nuovi preset (`joined-this-month`, `five-star-reviews`, `sector-certified`, `official-partner`, `free-consult-15`, `spots-limited-week`, `refund-30-days`, `no-data-resale`, `callback-2h`, `italian-support`, `start-with-email`, `no-hidden-fees`) nei gruppi esistenti; whitelist salvataggio in `Manager`, rendering in `form.php`, voci `Translator` (en/de/fr/es).
+
 ## [1.6.37] - 2026-04-04
 ### Changed
 - Form builder: anteprima template email **nel textarea** (webmaster, conferma, staff) quando il messaggio salvato è vuoto; al salvataggio resta template automatico finché l’utente non modifica il testo (`data-fpforms-email-auto-preview` + `admin.js` `getEmailMessageForSave`). Rimosso blocco `<pre>` separato.

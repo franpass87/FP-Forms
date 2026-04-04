@@ -186,6 +186,9 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.38 - 2026-04-04
+- Aggiunti 12 badge euristici opzionali nel form builder (stessi gruppi bias cognitivi), con traduzioni en/de/fr/es.
+
 ### 1.6.37 - 2026-04-04
 - Form builder: anteprima template automatico **dentro** i textarea messaggio; salvataggio come vuoto (template automatico) finché non modifichi il contenuto.
 

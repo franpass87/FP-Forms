@@ -274,6 +274,8 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                                 'trusted' => [ 'icon' => '⭐', 'text' => __( '1000+ Clienti Soddisfatti', 'fp-forms' ) ],
                                 'rated-49' => [ 'icon' => '⭐', 'text' => __( '4,9/5 da recensioni verificate', 'fp-forms' ) ],
                                 'daily-handled' => [ 'icon' => '📈', 'text' => __( 'Richieste gestite ogni giorno', 'fp-forms' ) ],
+                                'joined-this-month' => [ 'icon' => '📣', 'text' => __( 'Oltre 200 richieste questo mese', 'fp-forms' ) ],
+                                'five-star-reviews' => [ 'icon' => '⭐', 'text' => __( '500+ recensioni a 5 stelle', 'fp-forms' ) ],
                             ],
                         ],
                         'autorita' => [
@@ -283,6 +285,8 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                                 'gdpr-compliant' => [ 'icon' => '✓', 'text' => __( 'GDPR Compliant', 'fp-forms' ) ],
                                 'ssl-secure' => [ 'icon' => '🔐', 'text' => __( 'Connessione Sicura SSL', 'fp-forms' ) ],
                                 'secure-payments' => [ 'icon' => '💳', 'text' => __( 'Pagamenti sicuri', 'fp-forms' ) ],
+                                'sector-certified' => [ 'icon' => '🏆', 'text' => __( 'Certificazioni di settore riconosciute', 'fp-forms' ) ],
+                                'official-partner' => [ 'icon' => '🤝', 'text' => __( 'Partner ufficiale', 'fp-forms' ) ],
                             ],
                         ],
                         'reciprocita' => [
@@ -291,6 +295,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                             'badges' => [
                                 'free-quote' => [ 'icon' => '💰', 'text' => __( 'Preventivo Gratuito', 'fp-forms' ) ],
                                 'gift-guide' => [ 'icon' => '📘', 'text' => __( 'Guida omaggio in PDF', 'fp-forms' ) ],
+                                'free-consult-15' => [ 'icon' => '📞', 'text' => __( '15 minuti di consulenza gratuita', 'fp-forms' ) ],
                             ],
                         ],
                         'urgenza' => [
@@ -300,6 +305,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                                 'instant-response' => [ 'icon' => '⚡', 'text' => __( 'Risposta Immediata', 'fp-forms' ) ],
                                 'quick-reply' => [ 'icon' => '💬', 'text' => __( 'Risposta Entro 24h', 'fp-forms' ) ],
                                 'slots-today' => [ 'icon' => '📅', 'text' => __( 'Disponibilità limitata oggi', 'fp-forms' ) ],
+                                'spots-limited-week' => [ 'icon' => '⏳', 'text' => __( 'Posti limitati questa settimana', 'fp-forms' ) ],
                             ],
                         ],
                         'riduzione-rischio' => [
@@ -311,6 +317,8 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                                 'privacy-first' => [ 'icon' => '👤', 'text' => __( 'Privacy Garantita', 'fp-forms' ) ],
                                 'satisfaction-guarantee' => [ 'icon' => '↩️', 'text' => __( 'Garanzia soddisfatti o rimborsati', 'fp-forms' ) ],
                                 'easy-unsubscribe' => [ 'icon' => '✉️', 'text' => __( 'Disiscrizione in un clic', 'fp-forms' ) ],
+                                'refund-30-days' => [ 'icon' => '🛡️', 'text' => __( '30 giorni soddisfatti o rimborsati', 'fp-forms' ) ],
+                                'no-data-resale' => [ 'icon' => '📵', 'text' => __( 'I tuoi dati non vengono rivenduti', 'fp-forms' ) ],
                             ],
                         ],
                         'impegno' => [
@@ -319,6 +327,8 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                             'badges' => [
                                 'support' => [ 'icon' => '🎯', 'text' => __( 'Supporto Dedicato', 'fp-forms' ) ],
                                 'real-human-reply' => [ 'icon' => '👋', 'text' => __( 'Risposta da persone reali, non bot', 'fp-forms' ) ],
+                                'callback-2h' => [ 'icon' => '🔔', 'text' => __( 'Ti richiamiamo entro 2 ore', 'fp-forms' ) ],
+                                'italian-support' => [ 'icon' => '🗣️', 'text' => __( 'Team di supporto in italiano', 'fp-forms' ) ],
                             ],
                         ],
                         'attrito-ridotto' => [
@@ -327,6 +337,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                             'badges' => [
                                 'quick-form' => [ 'icon' => '⏱️', 'text' => __( 'Compila in meno di 1 minuto', 'fp-forms' ) ],
                                 'no-credit-card' => [ 'icon' => '🆓', 'text' => __( 'Nessuna carta richiesta', 'fp-forms' ) ],
+                                'start-with-email' => [ 'icon' => '👉', 'text' => __( "Ti basta inserire l'email", 'fp-forms' ) ],
                             ],
                         ],
                         'trasparenza' => [
@@ -335,6 +346,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                             'badges' => [
                                 'honest-pricing' => [ 'icon' => '🏷️', 'text' => __( 'Prezzi chiari, zero sorprese', 'fp-forms' ) ],
                                 'clear-steps' => [ 'icon' => '📋', 'text' => __( 'Processo trasparente in 3 passi', 'fp-forms' ) ],
+                                'no-hidden-fees' => [ 'icon' => '🧾', 'text' => __( 'Nessun costo nascosto', 'fp-forms' ) ],
                             ],
                         ],
                     ];

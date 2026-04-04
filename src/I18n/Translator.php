@@ -353,6 +353,78 @@ class Translator {
                 'fr' => 'Processus transparent en 3 étapes',
                 'es' => 'Proceso transparente en 3 pasos',
             ],
+            'Oltre 200 richieste questo mese' => [
+                'en' => '200+ requests this month',
+                'de' => 'Über 200 Anfragen diesen Monat',
+                'fr' => 'Plus de 200 demandes ce mois-ci',
+                'es' => 'Más de 200 solicitudes este mes',
+            ],
+            '500+ recensioni a 5 stelle' => [
+                'en' => '500+ five-star reviews',
+                'de' => '500+ Fünf-Sterne-Bewertungen',
+                'fr' => '500+ avis 5 étoiles',
+                'es' => '500+ reseñas de 5 estrellas',
+            ],
+            'Certificazioni di settore riconosciute' => [
+                'en' => 'Recognized industry certifications',
+                'de' => 'Anerkannte Branchenzertifizierungen',
+                'fr' => 'Certifications sectorielles reconnues',
+                'es' => 'Certificaciones sectoriales reconocidas',
+            ],
+            'Partner ufficiale' => [
+                'en' => 'Official partner',
+                'de' => 'Offizieller Partner',
+                'fr' => 'Partenaire officiel',
+                'es' => 'Socio oficial',
+            ],
+            '15 minuti di consulenza gratuita' => [
+                'en' => '15 minutes free consultation',
+                'de' => '15 Minuten kostenlose Beratung',
+                'fr' => '15 minutes de consultation gratuite',
+                'es' => '15 minutos de consulta gratuita',
+            ],
+            'Posti limitati questa settimana' => [
+                'en' => 'Limited spots this week',
+                'de' => 'Begrenzte Plätze diese Woche',
+                'fr' => 'Places limitées cette semaine',
+                'es' => 'Plazas limitadas esta semana',
+            ],
+            '30 giorni soddisfatti o rimborsati' => [
+                'en' => '30-day satisfaction or money-back',
+                'de' => '30 Tage Zufriedenheit oder Geld zurück',
+                'fr' => '30 jours satisfait ou remboursé',
+                'es' => '30 días satisfecho o reembolso',
+            ],
+            'I tuoi dati non vengono rivenduti' => [
+                'en' => 'Your data is never resold',
+                'de' => 'Ihre Daten werden nicht weiterverkauft',
+                'fr' => 'Vos données ne sont jamais revendues',
+                'es' => 'Tus datos no se revenden',
+            ],
+            'Ti richiamiamo entro 2 ore' => [
+                'en' => 'We call you back within 2 hours',
+                'de' => 'Wir rufen innerhalb von 2 Stunden zurück',
+                'fr' => 'Rappel sous 2 heures',
+                'es' => 'Te llamamos en 2 horas',
+            ],
+            'Team di supporto in italiano' => [
+                'en' => 'Italian-speaking support team',
+                'de' => 'Support-Team auf Italienisch',
+                'fr' => 'Équipe support en italien',
+                'es' => 'Equipo de soporte en italiano',
+            ],
+            "Ti basta inserire l'email" => [
+                'en' => 'Just enter your email to get started',
+                'de' => 'Nur E-Mail eingeben – mehr brauchen Sie nicht',
+                'fr' => 'Il suffit de saisir votre e-mail',
+                'es' => 'Solo necesitas introducir tu email',
+            ],
+            'Nessun costo nascosto' => [
+                'en' => 'No hidden fees',
+                'de' => 'Keine versteckten Kosten',
+                'fr' => 'Aucun frais caché',
+                'es' => 'Sin costes ocultos',
+            ],
 
             // -------------------------------------------------
             //  Messaggi generici

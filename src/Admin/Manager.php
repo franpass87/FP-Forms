@@ -1439,6 +1439,18 @@ class Manager {
                 'no-credit-card',
                 'honest-pricing',
                 'clear-steps',
+                'joined-this-month',
+                'five-star-reviews',
+                'sector-certified',
+                'official-partner',
+                'free-consult-15',
+                'spots-limited-week',
+                'refund-30-days',
+                'no-data-resale',
+                'callback-2h',
+                'italian-support',
+                'start-with-email',
+                'no-hidden-fees',
             ];
             
             $sanitized['trust_badges'] = array_values( array_intersect( $settings['trust_badges'], $allowed_badges ) );

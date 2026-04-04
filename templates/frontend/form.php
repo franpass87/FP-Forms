@@ -92,6 +92,18 @@ $badges_config = [
     'no-credit-card' => [ 'icon' => '🆓', 'text' => __( 'Nessuna carta richiesta', 'fp-forms' ) ],
     'honest-pricing' => [ 'icon' => '🏷️', 'text' => __( 'Prezzi chiari, zero sorprese', 'fp-forms' ) ],
     'clear-steps' => [ 'icon' => '📋', 'text' => __( 'Processo trasparente in 3 passi', 'fp-forms' ) ],
+    'joined-this-month' => [ 'icon' => '📣', 'text' => __( 'Oltre 200 richieste questo mese', 'fp-forms' ) ],
+    'five-star-reviews' => [ 'icon' => '⭐', 'text' => __( '500+ recensioni a 5 stelle', 'fp-forms' ) ],
+    'sector-certified' => [ 'icon' => '🏆', 'text' => __( 'Certificazioni di settore riconosciute', 'fp-forms' ) ],
+    'official-partner' => [ 'icon' => '🤝', 'text' => __( 'Partner ufficiale', 'fp-forms' ) ],
+    'free-consult-15' => [ 'icon' => '📞', 'text' => __( '15 minuti di consulenza gratuita', 'fp-forms' ) ],
+    'spots-limited-week' => [ 'icon' => '⏳', 'text' => __( 'Posti limitati questa settimana', 'fp-forms' ) ],
+    'refund-30-days' => [ 'icon' => '🛡️', 'text' => __( '30 giorni soddisfatti o rimborsati', 'fp-forms' ) ],
+    'no-data-resale' => [ 'icon' => '📵', 'text' => __( 'I tuoi dati non vengono rivenduti', 'fp-forms' ) ],
+    'callback-2h' => [ 'icon' => '🔔', 'text' => __( 'Ti richiamiamo entro 2 ore', 'fp-forms' ) ],
+    'italian-support' => [ 'icon' => '🗣️', 'text' => __( 'Team di supporto in italiano', 'fp-forms' ) ],
+    'start-with-email' => [ 'icon' => '👉', 'text' => __( "Ti basta inserire l'email", 'fp-forms' ) ],
+    'no-hidden-fees' => [ 'icon' => '🧾', 'text' => __( 'Nessun costo nascosto', 'fp-forms' ) ],
 ];
 
 // Check se ci sono campi file
