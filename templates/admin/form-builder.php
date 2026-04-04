@@ -48,6 +48,26 @@ $default_settings = [
 
 $form_settings = wp_parse_args( $form_settings, $default_settings );
 
+$fpforms_auto_email_previews = [
+    'notification' => '',
+    'staff'        => '',
+    'confirmation' => '',
+];
+if ( class_exists( '\FPForms\Plugin', false ) ) {
+    $fpforms_plugin_inst = \FPForms\Plugin::instance();
+    if ( isset( $fpforms_plugin_inst->email ) && $fpforms_plugin_inst->email instanceof \FPForms\Email\Manager ) {
+        $fpforms_preview_form = [
+            'id'       => (int) $form_id,
+            'title'    => $form_title !== '' ? $form_title : __( 'Il tuo form', 'fp-forms' ),
+            'fields'   => is_array( $form_fields ) ? $form_fields : [],
+            'settings' => $form_settings,
+        ];
+        $fpforms_auto_email_previews['notification'] = $fpforms_plugin_inst->email->get_default_notification_message_preview( $fpforms_preview_form );
+        $fpforms_auto_email_previews['staff']        = $fpforms_plugin_inst->email->get_default_staff_notification_message_preview( $fpforms_preview_form );
+        $fpforms_auto_email_previews['confirmation'] = $fpforms_plugin_inst->email->get_default_confirmation_message_preview( $fpforms_preview_form );
+    }
+}
+
 $fpforms_confirmation_accent = isset( $form_settings['confirmation_accent_color'] ) ? (string) $form_settings['confirmation_accent_color'] : '';
 $fpforms_confirmation_accent_custom = ( $fpforms_confirmation_accent !== '' && preg_match( '/^#[0-9A-Fa-f]{6}$/', $fpforms_confirmation_accent ) );
 $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fpforms_confirmation_accent : '#667eea';
@@ -546,6 +566,12 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Messaggio Email Webmaster (opzionale)', 'fp-forms' ); ?></label>
                     <textarea name="notification_message" rows="8" placeholder="<?php esc_attr_e( "Lascia vuoto per un'email chiara con riepilogo dati e dettagli invio.", 'fp-forms' ); ?>"><?php echo esc_textarea( $form_settings['notification_message'] ?? '' ); ?></textarea>
+                    <?php if ( trim( (string) ( $form_settings['notification_message'] ?? '' ) ) === '' && $fpforms_auto_email_previews['notification'] !== '' ) : ?>
+                    <div class="fpforms-email-auto-preview-wrap" role="region" aria-label="<?php esc_attr_e( 'Anteprima email webmaster', 'fp-forms' ); ?>">
+                        <span class="fpforms-email-auto-preview__label"><?php esc_html_e( 'Anteprima template automatico (stesso testo inviato quando il campo sopra è vuoto)', 'fp-forms' ); ?></span>
+                        <pre class="fpforms-email-auto-preview" tabindex="0"><?php echo esc_html( $fpforms_auto_email_previews['notification'] ); ?></pre>
+                    </div>
+                    <?php endif; ?>
                     <small><?php esc_html_e( 'Scrivi un testo semplice e diretto per chi riceve l\'email. Lascia vuoto per il template automatico. Tag disponibili: {nome}, {email}, {form_title}, {site_name}, {date}, {time}.', 'fp-forms' ); ?></small>
                 </div>
                 
@@ -623,6 +649,15 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Messaggio Email Conferma', 'fp-forms' ); ?></label>
                     <textarea name="confirmation_message" rows="5" placeholder="<?php esc_attr_e( 'Lascia vuoto per usare il template automatico con saluto personalizzato, riepilogo dati e firma.', 'fp-forms' ); ?>"><?php echo esc_textarea( $form_settings['confirmation_message'] ); ?></textarea>
+                    <?php if ( trim( (string) ( $form_settings['confirmation_message'] ?? '' ) ) === '' && $fpforms_auto_email_previews['confirmation'] !== '' ) : ?>
+                    <div class="fpforms-email-auto-preview-wrap" role="region" aria-label="<?php esc_attr_e( 'Anteprima email di conferma', 'fp-forms' ); ?>">
+                        <?php if ( ! empty( $form_settings['confirmation_template'] ) ) : ?>
+                        <p class="fpforms-email-auto-preview__note"><?php esc_html_e( 'Con un template HTML selezionato, l\'email al cliente usa il layout grafico; il testo qui sotto è quello usato in modalità Plain Text o se inserisci un messaggio personalizzato che disattiva l\'HTML.', 'fp-forms' ); ?></p>
+                        <?php endif; ?>
+                        <span class="fpforms-email-auto-preview__label"><?php esc_html_e( 'Anteprima template automatico plain text (quando applicabile)', 'fp-forms' ); ?></span>
+                        <pre class="fpforms-email-auto-preview" tabindex="0"><?php echo esc_html( $fpforms_auto_email_previews['confirmation'] ); ?></pre>
+                    </div>
+                    <?php endif; ?>
                     <small><?php esc_html_e( 'Sovrascrive il contenuto del template HTML. Lascia vuoto per il template automatico. Tag disponibili: {form_title}, {site_name}, {date}', 'fp-forms' ); ?></small>
                 </div>
                 
@@ -651,6 +686,12 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Messaggio Email Staff (opzionale)', 'fp-forms' ); ?></label>
                     <textarea name="staff_notification_message" rows="5" placeholder="<?php esc_attr_e( 'Lascia vuoto per un template staff operativo con checklist e link admin.', 'fp-forms' ); ?>"><?php echo esc_textarea( $form_settings['staff_notification_message'] ?? '' ); ?></textarea>
+                    <?php if ( trim( (string) ( $form_settings['staff_notification_message'] ?? '' ) ) === '' && $fpforms_auto_email_previews['staff'] !== '' ) : ?>
+                    <div class="fpforms-email-auto-preview-wrap" role="region" aria-label="<?php esc_attr_e( 'Anteprima email staff', 'fp-forms' ); ?>">
+                        <span class="fpforms-email-auto-preview__label"><?php esc_html_e( 'Anteprima template automatico (stesso testo inviato quando il campo sopra è vuoto)', 'fp-forms' ); ?></span>
+                        <pre class="fpforms-email-auto-preview" tabindex="0"><?php echo esc_html( $fpforms_auto_email_previews['staff'] ); ?></pre>
+                    </div>
+                    <?php endif; ?>
                     <small><?php esc_html_e( 'Usa frasi brevi e orientate all\'azione (es. "Richiamare entro 2 ore"). Lascia vuoto per il template staff automatico. Tag disponibili: {nome}, {email}, {form_title}, {site_name}, {date}, {time}.', 'fp-forms' ); ?></small>
                 </div>
                 

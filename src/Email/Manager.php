@@ -251,7 +251,7 @@ class Manager {
     /**
      * Costruisce il messaggio di notifica
      */
-    private function build_notification_message( $form, $data, $submission_id ) {
+    private function build_notification_message( $form, $data, $submission_id, bool $admin_preview = false ) {
         $site_name = get_bloginfo( 'name' );
         $lines = [];
 
@@ -304,6 +304,12 @@ class Manager {
             }
 
             $lines[] = '';
+        } elseif ( $admin_preview ) {
+            $lines[] = __( 'DETTAGLI INVIO', 'fp-forms' );
+            $lines[] = str_repeat( '-', 50 );
+            $lines[] = __( 'Data:', 'fp-forms' ) . ' ' . __( "(data e ora effettive dell'invio)", 'fp-forms' );
+            $lines[] = __( 'IP:', 'fp-forms' ) . ' ' . __( '(indirizzo del visitatore)', 'fp-forms' );
+            $lines[] = '';
         }
 
         // Link admin
@@ -322,7 +328,7 @@ class Manager {
     /**
      * Costruisce il messaggio di notifica per lo staff con focus operativo.
      */
-    private function build_staff_notification_message( $form, $data, $submission_id ) {
+    private function build_staff_notification_message( $form, $data, $submission_id, bool $admin_preview = false ) {
         $site_name = get_bloginfo( 'name' );
         $lines = [];
 
@@ -367,6 +373,12 @@ class Manager {
             $lines[] = str_repeat( '-', 50 );
             $lines[] = __( 'Data:', 'fp-forms' ) . ' ' . date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $submission->created_at ) );
             $lines[] = __( 'IP:', 'fp-forms' ) . ' ' . $submission->user_ip;
+            $lines[] = '';
+        } elseif ( $admin_preview ) {
+            $lines[] = __( 'DETTAGLI INVIO', 'fp-forms' );
+            $lines[] = str_repeat( '-', 50 );
+            $lines[] = __( 'Data:', 'fp-forms' ) . ' ' . __( "(data e ora effettive dell'invio)", 'fp-forms' );
+            $lines[] = __( 'IP:', 'fp-forms' ) . ' ' . __( '(indirizzo del visitatore)', 'fp-forms' );
             $lines[] = '';
         }
 
@@ -432,6 +444,85 @@ class Manager {
         $lines[] = get_bloginfo( 'url' );
 
         return implode( "\n", $lines );
+    }
+
+    /**
+     * Anteprima admin del corpo notifica webmaster quando il messaggio personalizzato è vuoto.
+     *
+     * @param array<string, mixed> $form Form con chiavi id, title, fields.
+     * @return string Testo plain text come in produzione (dati di esempio).
+     */
+    public function get_default_notification_message_preview( array $form ): string {
+        $data = $this->sample_data_for_auto_template_preview( $form );
+        return $this->build_notification_message( $form, $data, 0, true );
+    }
+
+    /**
+     * Anteprima admin del corpo notifica staff quando il messaggio personalizzato è vuoto.
+     *
+     * @param array<string, mixed> $form Form con chiavi id, title, fields.
+     * @return string Testo plain text come in produzione (dati di esempio).
+     */
+    public function get_default_staff_notification_message_preview( array $form ): string {
+        $data = $this->sample_data_for_auto_template_preview( $form );
+        return $this->build_staff_notification_message( $form, $data, 0, true );
+    }
+
+    /**
+     * Anteprima admin del corpo conferma plain text quando il messaggio personalizzato è vuoto.
+     *
+     * @param array<string, mixed> $form Form con chiavi title, fields.
+     * @return string Testo plain text come in produzione (dati di esempio).
+     */
+    public function get_default_confirmation_message_preview( array $form ): string {
+        $data = $this->sample_data_for_auto_template_preview( $form );
+        return $this->build_confirmation_message( $form, $data );
+    }
+
+    /**
+     * Dati fittizi per generare anteprime coerenti con get_field_display_value().
+     *
+     * @param array<string, mixed> $form Form con fields.
+     * @return array<string, string>
+     */
+    private function sample_data_for_auto_template_preview( array $form ): array {
+        $data  = [];
+        $fields = isset( $form['fields'] ) && is_array( $form['fields'] ) ? $form['fields'] : [];
+        foreach ( $fields as $field ) {
+            if ( ! is_array( $field ) ) {
+                continue;
+            }
+            $field_type = $field['type'] ?? '';
+            if ( in_array( $field_type, [ 'hidden', 'honeypot', 'recaptcha', 'step_break', 'privacy-checkbox', 'marketing-checkbox' ], true ) ) {
+                continue;
+            }
+            $name = isset( $field['name'] ) ? (string) $field['name'] : '';
+            if ( $name === '' ) {
+                continue;
+            }
+            if ( $field_type === 'fullname' ) {
+                $data[ $name . '_nome' ]    = __( 'Mario', 'fp-forms' );
+                $data[ $name . '_cognome' ] = __( 'Rossi', 'fp-forms' );
+                continue;
+            }
+            if ( $field_type === 'email' ) {
+                $data[ $name ] = 'cliente@esempio.it';
+                continue;
+            }
+            if ( in_array( $field_type, [ 'tel', 'phone' ], true ) ) {
+                $data[ $name ] = '+39 333 1234567';
+                continue;
+            }
+            $label = isset( $field['label'] ) && is_string( $field['label'] ) && trim( $field['label'] ) !== ''
+                ? trim( $field['label'] )
+                : $name;
+            $data[ $name ] = sprintf(
+                /* translators: %s: field label or name */
+                __( 'Esempio: %s', 'fp-forms' ),
+                $label
+            );
+        }
+        return $data;
     }
 
     /**

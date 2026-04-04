@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.36] - 2026-04-04
+### Added
+- Form builder (Notifiche email): **anteprima read-only** sotto le textarea vuote (webmaster, conferma plain text, staff) con il testo generato dal template automatico; dati campi di esempio e blocco «DETTAGLI INVIO» con segnaposto in anteprima admin. Metodi `Email\Manager::get_default_*_message_preview()` e `sample_data_for_auto_template_preview()`.
+
 ## [1.6.35] - 2026-04-04
 ### Removed
 - Form builder: pulsante **«Mostra tipi di campo»** sotto l’elenco campi — ridondante con la palette **Aggiungi campi** sempre visibile a destra; rimossi handler JS `scrollToFieldPalette`, stili `.fp-add-field` / highlight palette.
