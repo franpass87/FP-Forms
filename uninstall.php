@@ -59,6 +59,9 @@ function fp_forms_uninstall_cleanup() {
     // 4. Delete all transients
     $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_fp_forms_%'" );
     $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_fp_forms_%'" );
+
+    // Opzioni replay tracking pagamento (dataLayer landing success Stripe)
+    $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'fp_forms_pcc_%'" );
     
     // 5. Delete uploaded files (GDPR - remove user data)
     $upload_dir = wp_upload_dir();

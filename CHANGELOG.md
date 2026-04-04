@@ -1,5 +1,12 @@
 # CHANGELOG - FP Forms
 
+## [1.6.17] - 2026-04-04
+### Added
+- **Tracking / GTM**: sulla landing Stripe `?fp_forms_success=1&submission_id=&form_id=`, replay **solo dataLayer** di `form_payment_completed` (stesso `event_id` salvato al webhook; `fp_skip_server_dispatch` verso FP Marketing Tracking Layer). Validazione submission + transazione `completed`; meta `fp_forms_pcc_ty_*` anti-refresh. Filtro `fp_forms_allow_payment_completed_datalayer_replay`.
+
+### Changed
+- Uninstall: rimozione opzioni `fp_forms_pcc_*` (payload replay).
+
 ## [1.6.16] - 2026-04-04
 ### Changed
 - Tracking: evento `form_payment_completed` arricchito con `value`, `currency`, `payment_provider`; webhook Stripe passa `amount_total` (centesimi), `amount_in_cents`, `currency` per allineamento a GA4/Meta nel catalogo FP Tracking.

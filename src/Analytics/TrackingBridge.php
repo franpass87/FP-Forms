@@ -4,20 +4,28 @@ declare(strict_types=1);
 
 namespace FPForms\Analytics;
 
+use function absint;
 use function add_action;
 use function apply_filters;
 use function array_filter;
 use function count;
+use function delete_option;
 use function do_action;
 use function esc_url_raw;
 use function get_bloginfo;
+use function get_option;
 use function get_post;
 use function in_array;
+use function is_admin;
 use function is_ssl;
 use function sanitize_email;
 use function sanitize_text_field;
 use function strtolower;
 use function time;
+use function update_option;
+use function wp_doing_ajax;
+use function wp_doing_cron;
+use function wp_json_encode;
 use function wp_unslash;
 
 /**
@@ -27,8 +35,16 @@ use function wp_unslash;
  * Replaces Analytics\Tracking (GTM/GA4) and Integrations\MetaPixel.
  * The fp-tracking.js file handles client-side form interaction events
  * (form_view, form_start, form_progress, form_abandon) via DOM events.
+ *
+ * Pagamenti (webhook): `form_payment_completed` viene accodato lato server senza browser;
+ * alla landing `?fp_forms_success=1` viene ripetuto solo il push dataLayer (stesso `event_id`,
+ * `fp_skip_server_dispatch`) se la transazione risulta `completed`.
  */
 class TrackingBridge {
+
+    private const REPLAY_PAYLOAD_OPTION_PREFIX = 'fp_forms_pcc_r_';
+
+    private const REPLAY_TY_SENT_OPTION_PREFIX = 'fp_forms_pcc_ty_';
 
     public function __construct() {
         // Submission completata
@@ -45,6 +61,8 @@ class TrackingBridge {
 
         // Pagamento completato (webhook provider)
         add_action('fp_forms_payment_completed', [$this, 'on_payment_completed'], 10, 3);
+
+        add_action('template_redirect', [$this, 'maybeReplayPaymentCompletedForDatalayer'], 5);
     }
 
     /**
@@ -204,7 +222,132 @@ class TrackingBridge {
             'event_id'         => 'fp_forms_pay_ok_' . $submission_id . '_' . time(),
             'page_url'         => $this->getRequestPageUrl(),
         ];
-        do_action('fp_tracking_event', 'form_payment_completed', $this->enrichEventParams($params, 'form_payment_completed', $form_id));
+        $enriched = $this->enrichEventParams($params, 'form_payment_completed', $form_id);
+        $this->persistPaymentCompletedReplayPayload($submission_id, $form_id, $enriched);
+        do_action('fp_tracking_event', 'form_payment_completed', $enriched);
+    }
+
+    /**
+     * Landing post-Stripe (`?fp_forms_success=1&submission_id=&form_id=`): replica `form_payment_completed`
+     * nel dataLayer per GTM con lo stesso `event_id` del webhook, senza secondo invio server-side (FP Tracking).
+     */
+    public function maybeReplayPaymentCompletedForDatalayer(): void {
+        if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
+            return;
+        }
+        if (defined('REST_REQUEST') && REST_REQUEST) {
+            return;
+        }
+        if (! isset($_GET['fp_forms_success'], $_GET['submission_id'], $_GET['form_id'])) {
+            return;
+        }
+        if ((string) wp_unslash((string) $_GET['fp_forms_success']) !== '1') {
+            return;
+        }
+
+        $submission_id = absint((string) $_GET['submission_id']);
+        $form_id       = absint((string) $_GET['form_id']);
+        if ($submission_id <= 0 || $form_id <= 0) {
+            return;
+        }
+
+        if (! apply_filters('fp_forms_allow_payment_completed_datalayer_replay', true, $submission_id, $form_id)) {
+            return;
+        }
+
+        if ((string) get_option(self::replayTySentOptionKey($submission_id), '') === '1') {
+            return;
+        }
+
+        $db = \FPForms\Plugin::instance()->database;
+        $row = $db->get_submission($submission_id);
+        if (! $row || (int) $row->form_id !== $form_id) {
+            return;
+        }
+
+        if (! $this->submissionHasCompletedTransaction($submission_id)) {
+            return;
+        }
+
+        $payload_key = self::replayPayloadOptionKey($submission_id);
+        $raw         = get_option($payload_key, '');
+        if (! is_string($raw) || $raw === '') {
+            return;
+        }
+
+        $decoded = json_decode($raw, true);
+        if (! is_array($decoded) || empty($decoded['params']) || ! is_array($decoded['params'])) {
+            return;
+        }
+
+        /** @var array<string, mixed> $params */
+        $params = $decoded['params'];
+        if (! empty($decoded['event_id'])) {
+            $params['event_id'] = (string) $decoded['event_id'];
+        }
+
+        $params['page_url']                = $this->getRequestPageUrl();
+        $params['fp_skip_server_dispatch'] = true;
+
+        do_action('fp_tracking_event', 'form_payment_completed', $params);
+
+        update_option(self::replayTySentOptionKey($submission_id), '1', false);
+        delete_option($payload_key);
+    }
+
+    /**
+     * Salva payload arricchito per replay dataLayer sulla landing di successo pagamento.
+     *
+     * @param array<string, mixed> $enriched
+     */
+    private function persistPaymentCompletedReplayPayload(int $submission_id, int $form_id, array $enriched): void {
+        if ($submission_id <= 0 || $form_id <= 0) {
+            return;
+        }
+
+        $db = \FPForms\Plugin::instance()->database;
+        $row = $db->get_submission($submission_id);
+        if (! $row || (int) $row->form_id !== $form_id) {
+            return;
+        }
+
+        $json = wp_json_encode(
+            [
+                'event_id' => (string) ($enriched['event_id'] ?? ''),
+                'params'   => $enriched,
+            ],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
+        if ($json === false) {
+            return;
+        }
+
+        update_option(self::replayPayloadOptionKey($submission_id), $json, false);
+    }
+
+    private function submissionHasCompletedTransaction(int $submission_id): bool {
+        $payments = \FPForms\Plugin::instance()->payments;
+        if (! $payments instanceof \FPForms\Integrations\PaymentManager) {
+            return false;
+        }
+
+        foreach ($payments->get_transactions_by_submission($submission_id) as $tx) {
+            if (isset($tx->status) && (string) $tx->status === 'completed') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function replayPayloadOptionKey(int $submission_id): string
+    {
+        return self::REPLAY_PAYLOAD_OPTION_PREFIX . $submission_id;
+    }
+
+    private static function replayTySentOptionKey(int $submission_id): string
+    {
+        return self::REPLAY_TY_SENT_OPTION_PREFIX . $submission_id;
     }
 
     /**

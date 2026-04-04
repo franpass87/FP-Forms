@@ -186,6 +186,9 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.17 - 2026-04-04
+- Tracking: sulla pagina di ritorno da Stripe (`fp_forms_success`), evento `form_payment_completed` anche nel dataLayer (GTM) con stesso `event_id` del webhook, senza doppio invio server-side (richiede FP Marketing Tracking Layer con supporto `fp_skip_server_dispatch`).
+
 ### 1.6.13 - 2026-03-24
 - Brevo: chiarito che le email del form restano su WordPress; evento Track opzionale con checklist allineata agli altri plugin FP.
 
