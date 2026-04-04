@@ -591,15 +591,22 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-admin {
     margin-top: var(--fp-spacing-lg);
     align-items: start;
     isolation: isolate;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Due colonne (campi + palette) isolate dal resto del form: allineamento in alto garantito */
 .fp-builder-workspace {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+    /* Seconda colonna: max min(340px, 100%) evita overflow oltre il contenitore (stesso limite del box sopra) */
+    grid-template-columns: minmax(0, 1fr) minmax(0, min(340px, 100%));
     gap: var(--fp-spacing-lg);
     align-items: start;
     min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Titolo e descrizione */
@@ -639,6 +646,8 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-admin {
     flex: 0 1 720px;
     width: min(100%, 720px);
     max-width: 720px;
+    /* Flex default min-width:auto usa il min-content (~720px) e può far “sforare” la griglia → palette oltre il wrap */
+    min-width: 0;
     box-sizing: border-box;
     background: var(--fp-color-surface);
     border: 1px solid var(--fp-color-border);

@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.31] - 2026-04-04
+### Fixed
+- Form builder: la colonna **Aggiungi campi** non deve più uscire oltre il bordo destro del contenitore (come il box «Titolo e descrizione»): `min-width: 0` su `.fp-builder-body` (flex evitava il restringimento della griglia), griglia workspace `minmax(0, min(340px, 100%))`, `width/max-width: 100%` su workspace e form.
+
 ## [1.6.30] - 2026-04-04
 ### Changed
 - Form builder: sezione **Badge euristici** in **griglia responsive** (`repeat(auto-fill, minmax(...))`) con card per gruppo, per ridurre l’ingombro verticale.
