@@ -1,5 +1,10 @@
 # CHANGELOG - FP Forms
 
+## [1.6.23] - 2026-04-04
+### Fixed
+- Form builder: area «Campi del form» davvero centrata nella colonna (`width: 100%` sul flex child impediva il centraggio); barra «Salva Form» allineata al centro.
+- Form builder: stacking esplicito (`isolation: isolate` sul container, palette `z-index: 10`, hub campi `0`) più contenimento orizzontale (`overflow-x: hidden`, `max-width: 100%` sui tipi campo) così i click sui tipi campo non vengono intercettati dalla colonna elenco.
+
 ## [1.6.22] - 2026-04-04
 ### Changed
 - Form builder: layout a griglia — in alto titolo/descrizione; sotto **sinistra** palette «Aggiungi campi» (passo 2), **centro** elenco «Campi del form» (passo 1) con contenuto centrato; sotto ancora aspetto e impostazioni avanzate. Rimosso il blocco palette a tutta larghezza.
