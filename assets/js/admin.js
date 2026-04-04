@@ -46,6 +46,41 @@
             this.updateBuilderEmptyState();
             this.initBuilderColorRows();
             this.initConfirmationAccentUi();
+            this.initEmailAutoPreviewFields();
+        },
+
+        /**
+         * Messaggi email con anteprima template nel textarea: al primo input si considera personalizzato.
+         */
+        initEmailAutoPreviewFields: function() {
+            if (!$('#fp-form-builder').length) {
+                return;
+            }
+            var sel = '#fp-form-builder textarea[name="notification_message"], #fp-form-builder textarea[name="confirmation_message"], #fp-form-builder textarea[name="staff_notification_message"]';
+            $(document).on('input', sel, function() {
+                var $t = $(this);
+                if ($t.attr('data-fpforms-email-auto-preview') === '1') {
+                    $t.attr('data-fpforms-email-auto-preview', '0');
+                    $t.removeClass('fpforms-email-message--auto-preview');
+                }
+            });
+        },
+
+        /**
+         * Valore da inviare al salvataggio: stringa vuota se l'utente non ha toccato l'anteprima automatica.
+         *
+         * @param {string} fieldName name del textarea (es. notification_message)
+         * @returns {string}
+         */
+        getEmailMessageForSave: function(fieldName) {
+            var $ta = $('#fp-form-builder textarea[name="' + fieldName + '"]');
+            if (!$ta.length) {
+                return '';
+            }
+            if ($ta.attr('data-fpforms-email-auto-preview') === '1') {
+                return '';
+            }
+            return $ta.val() || '';
         },
 
         /**
@@ -672,7 +707,7 @@
                 disable_wordpress_emails: $('input[name="disable_wordpress_emails"]').is(':checked'),
                 notification_email: $('input[name="notification_email"]').val(),
                 notification_subject: $('input[name="notification_subject"]').val(),
-                notification_message: $('textarea[name="notification_message"]').val(),
+                notification_message: FPFormsAdmin.getEmailMessageForSave('notification_message'),
                 confirmation_enabled: $('input[name="confirmation_enabled"]').is(':checked'),
                 confirmation_template: $('input[name="confirmation_template"]:checked').val() || '',
                 confirmation_accent_color: (function() {
@@ -684,12 +719,12 @@
                 })(),
                 confirmation_footer_info: $('textarea[name="confirmation_footer_info"]').val() || '',
                 confirmation_subject: $('input[name="confirmation_subject"]').val(),
-                confirmation_message: $('textarea[name="confirmation_message"]').val(),
+                confirmation_message: FPFormsAdmin.getEmailMessageForSave('confirmation_message'),
                 // Staff notifications (v1.2)
                 staff_notifications_enabled: $('input[name="staff_notifications_enabled"]').is(':checked'),
                 staff_emails: $('textarea[name="staff_emails"]').val(),
                 staff_notification_subject: $('input[name="staff_notification_subject"]').val(),
-                staff_notification_message: $('textarea[name="staff_notification_message"]').val(),
+                staff_notification_message: FPFormsAdmin.getEmailMessageForSave('staff_notification_message'),
                 // Brevo integration (v1.2)
                 brevo_enabled: $('input[name="brevo_enabled"]').is(':checked'),
                 brevo_list_id: $('input[name="brevo_list_id"]').val(),

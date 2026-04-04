@@ -1560,39 +1560,19 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
     outline: none;
 }
 
-/* Anteprima template email automatico (builder) */
-.fp-forms-builder .fpforms-email-auto-preview-wrap {
-    margin-top: 10px;
-}
-
-.fp-forms-builder .fpforms-email-auto-preview__label {
-    display: block;
+/* Template email automatico mostrato nel textarea (builder): stile finché non viene modificato */
+.fp-forms-builder textarea.fpforms-email-message--auto-preview[data-fpforms-email-auto-preview="1"] {
+    background: var(--fpdms-surface-alt, #f6f7f9);
+    font-family: Consolas, Monaco, "Courier New", monospace;
     font-size: 12px;
-    font-weight: 600;
-    color: var(--fpdms-text-muted, #50575e);
-    margin-bottom: 6px;
+    line-height: 1.45;
 }
 
-.fp-forms-builder .fpforms-email-auto-preview__note {
+.fp-forms-builder .fpforms-email-html-note {
     margin: 0 0 8px;
     font-size: 12px;
     color: var(--fpdms-text-muted, #50575e);
     line-height: 1.45;
-}
-
-.fp-forms-builder .fpforms-email-auto-preview {
-    margin: 0;
-    padding: 10px 12px;
-    background: var(--fpdms-surface-alt, #f6f7f9);
-    border: 1px solid var(--fpdms-border);
-    border-radius: var(--fp-radius-md);
-    font-family: Consolas, Monaco, "Courier New", monospace;
-    font-size: 12px;
-    line-height: 1.45;
-    white-space: pre-wrap;
-    word-break: break-word;
-    max-height: 280px;
-    overflow-y: auto;
 }
 
 .fp-forms-builder .fp-input-large,

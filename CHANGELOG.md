@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.37] - 2026-04-04
+### Changed
+- Form builder: anteprima template email **nel textarea** (webmaster, conferma, staff) quando il messaggio salvato è vuoto; al salvataggio resta template automatico finché l’utente non modifica il testo (`data-fpforms-email-auto-preview` + `admin.js` `getEmailMessageForSave`). Rimosso blocco `<pre>` separato.
+
 ## [1.6.36] - 2026-04-04
 ### Added
 - Form builder (Notifiche email): **anteprima read-only** sotto le textarea vuote (webmaster, conferma plain text, staff) con il testo generato dal template automatico; dati campi di esempio e blocco «DETTAGLI INVIO» con segnaposto in anteprima admin. Metodi `Email\Manager::get_default_*_message_preview()` e `sample_data_for_auto_template_preview()`.

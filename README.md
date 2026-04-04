@@ -186,6 +186,9 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.37 - 2026-04-04
+- Form builder: anteprima template automatico **dentro** i textarea messaggio; salvataggio come vuoto (template automatico) finché non modifichi il contenuto.
+
 ### 1.6.36 - 2026-04-04
 - Form builder: anteprima read-only del template email automatico quando i campi messaggio (webmaster, conferma plain text, staff) sono vuoti.
 
