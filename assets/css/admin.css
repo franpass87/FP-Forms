@@ -1535,8 +1535,9 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
     margin-bottom: var(--fp-spacing-md);
 }
 
-/* Pulsante Submit: due colonne per ridurre altezza verticale */
-.fp-forms-builder .fpforms-builder-fields-grid--submit {
+/* Pulsante Submit e Colori personalizzati: griglia a 2 colonne (meno scroll verticale) */
+.fp-forms-builder .fpforms-builder-fields-grid--submit,
+.fp-forms-builder .fpforms-builder-fields-grid--colors {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--fp-spacing-md);
@@ -1544,7 +1545,8 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
     align-items: start;
 }
 
-.fp-forms-builder .fpforms-builder-fields-grid--submit > .fp-setting-field {
+.fp-forms-builder .fpforms-builder-fields-grid--submit > .fp-setting-field,
+.fp-forms-builder .fpforms-builder-fields-grid--colors > .fp-setting-field {
     margin-bottom: 0;
 }
 
@@ -1553,7 +1555,8 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
 }
 
 @media (max-width: 640px) {
-    .fp-forms-builder .fpforms-builder-fields-grid--submit {
+    .fp-forms-builder .fpforms-builder-fields-grid--submit,
+    .fp-forms-builder .fpforms-builder-fields-grid--colors {
         grid-template-columns: 1fr;
     }
 

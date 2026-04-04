@@ -451,6 +451,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                 
                 <h4><?php esc_html_e( 'Colori personalizzati', 'fp-forms' ); ?></h4>
                 
+                <div class="fpforms-builder-fields-grid fpforms-builder-fields-grid--colors">
                 <div class="fp-setting-field">
                     <label><?php esc_html_e( 'Colore Bordo Campi', 'fp-forms' ); ?></label>
                     <div class="fpforms-color-row">
@@ -490,6 +491,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                     </div>
                     <small><?php esc_html_e( 'Colore di sfondo del contenitore del form', 'fp-forms' ); ?></small>
                 </div>
+                </div><!-- .fpforms-builder-fields-grid--colors -->
                 
                 <div class="fp-setting-field">
                     <label>

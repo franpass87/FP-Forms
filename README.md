@@ -186,6 +186,9 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.40 - 2026-04-04
+- Form builder: griglia a due colonne anche per i quattro colori personalizzati del form.
+
 ### 1.6.39 - 2026-04-04
 - Form builder: layout a griglia su due colonne per la sezione Pulsante Submit.
 

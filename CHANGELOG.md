@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.40] - 2026-04-04
+### Changed
+- Form builder: sezione **Colori personalizzati** in griglia **2×2** (bordo/focus | testo/sfondo), stessi breakpoint della sezione Pulsante Submit.
+
 ## [1.6.39] - 2026-04-04
 ### Changed
 - Form builder: sezione **Pulsante Submit** in griglia a **2 colonne** (testo, colore, icona e classe CSS a tutta larghezza; dimensione/stile/allineamento/larghezza affiancati); sotto 640px una colonna.
