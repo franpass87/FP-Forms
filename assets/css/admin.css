@@ -904,23 +904,6 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-admin {
 }
 
 /* ============================================
-   Add Field Button
-   ============================================ */
-.fp-add-field {
-    text-align: center;
-    padding: var(--fp-spacing-lg);
-    background: var(--fp-color-background);
-    border: 2px dashed var(--fp-color-border);
-    border-radius: var(--fp-radius-md);
-}
-
-#fp-add-field-btn {
-    font-size: 15px;
-    padding: 12px 24px;
-    border-radius: var(--fp-radius-md);
-}
-
-/* ============================================
    Sidebar
    ============================================ */
 .fp-sidebar-section {
@@ -1619,21 +1602,6 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
     transform: translateY(-1px);
 }
 
-.fp-forms-builder .fpforms-btn-secondary.button {
-    border: 2px solid var(--fpdms-primary);
-    color: var(--fpdms-primary);
-    background: #fff;
-    border-radius: var(--fp-radius-md);
-    font-weight: 600;
-    box-shadow: var(--fp-shadow-sm);
-}
-
-.fp-forms-builder .fpforms-btn-secondary.button:hover {
-    background: var(--fpdms-bg-light);
-    color: var(--fpdms-primary-dark);
-    border-color: var(--fpdms-primary-dark);
-}
-
 .fp-forms-builder .fp-template-card {
     border-color: var(--fpdms-border);
     border-radius: var(--fp-radius-md);
@@ -1803,20 +1771,6 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
     margin-top: -4px;
 }
 
-.fpforms-palette-highlight {
-    animation: fpforms-palette-pulse 1.5s ease;
-    border-radius: var(--fp-radius-md);
-}
-
-@keyframes fpforms-palette-pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.45);
-    }
-    100% {
-        box-shadow: 0 0 0 12px rgba(102, 126, 234, 0);
-    }
-}
-
 .fpforms-color-row {
     display: flex;
     flex-wrap: wrap;
@@ -1874,11 +1828,6 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
     line-height: 1.5;
     color: var(--fpdms-warning-text);
     font-style: normal;
-}
-
-.fp-add-field .button .dashicons {
-    margin-right: 4px;
-    vertical-align: text-bottom;
 }
 
 .fp-forms-builder .fp-builder-actions {

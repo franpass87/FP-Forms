@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.35] - 2026-04-04
+### Removed
+- Form builder: pulsante **«Mostra tipi di campo»** sotto l’elenco campi — ridondante con la palette **Aggiungi campi** sempre visibile a destra; rimossi handler JS `scrollToFieldPalette`, stili `.fp-add-field` / highlight palette.
+
 ## [1.6.34] - 2026-04-04
 ### Added
 - Integrazione consensi **FP Marketing Tracking Layer** / **FP Privacy**: classe `FPForms\Support\FormConsentExtractor` analizza campi `privacy-checkbox` e `marketing-checkbox`; su `generate_lead` vengono passati `fp_forms_privacy_policy` (`accepted`/`not_accepted`) e `marketing_consent` (`granted`/`denied`) se i rispettivi campi sono nel form.

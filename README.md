@@ -64,7 +64,7 @@ Per dettagli completi vedi [DESIGN-SYSTEM-FP.md](DESIGN-SYSTEM-FP.md)
 
 1. Vai su **FP Forms** > **Nuovo Form**
 2. Inserisci il titolo del form
-3. Aggiungi i campi cliccando sui tipi di campo nella sidebar
+3. Aggiungi i campi cliccando sui tipi nella colonna **Aggiungi campi** a destra
 4. Configura ogni campo (etichetta, nome, placeholder, ecc.)
 5. Configura le impostazioni email nella sidebar
 6. Clicca su **Salva Form**

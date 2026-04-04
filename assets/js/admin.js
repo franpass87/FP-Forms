@@ -108,7 +108,6 @@
             $(document).on('click', '.fp-field-type', this.addField);
             $(document).on('click', '.fp-field-edit', this.toggleFieldEdit);
             $(document).on('click', '.fp-field-delete', this.deleteField);
-            $(document).on('click', '#fp-add-field-btn', this.scrollToFieldPalette);
             $(document).on('submit', '#fp-form-builder', this.saveForm);
             $(document).on('input', '.fp-field-input-label', this.updateFieldPreview);
             $(document).on('change', '.fp-field-type', this.toggleFieldOptions);
@@ -312,25 +311,6 @@
             FPFormsAdmin.updateBuilderEmptyState();
         },
 
-        /**
-         * Porta l'utente alla palette tipi di campo (colonna destra; utile su mobile o canvas lungo).
-         */
-        scrollToFieldPalette: function(e) {
-            e.preventDefault();
-            var $wrap = $('#fp-builder-field-palette');
-            var $palette = $('#fp-field-types-palette');
-            var scrollEl = $wrap.length ? $wrap[0] : ($palette.length ? $palette[0] : null);
-            if (scrollEl && scrollEl.scrollIntoView) {
-                scrollEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-            if ($palette.length) {
-                $palette.addClass('fpforms-palette-highlight');
-                window.setTimeout(function() {
-                    $palette.removeClass('fpforms-palette-highlight');
-                }, 1600);
-            }
-        },
-        
         /**
          * Ottiene defaults per tipo di campo
          */

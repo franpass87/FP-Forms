@@ -133,13 +133,6 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
-
-                <div class="fp-add-field">
-                    <button type="button" class="button button-secondary fpforms-btn fpforms-btn-secondary" id="fp-add-field-btn">
-                        <span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
-                        <?php esc_html_e( 'Mostra tipi di campo', 'fp-forms' ); ?>
-                    </button>
-                </div>
                 </div>
             </div>
 
