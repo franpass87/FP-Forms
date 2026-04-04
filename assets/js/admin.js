@@ -313,7 +313,7 @@
         },
 
         /**
-         * Porta l'utente alla palette tipi di campo (utile su mobile o canvas lungo).
+         * Porta l'utente alla palette tipi di campo (colonna destra; utile su mobile o canvas lungo).
          */
         scrollToFieldPalette: function(e) {
             e.preventDefault();

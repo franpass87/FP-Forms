@@ -545,12 +545,12 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
    ============================================ */
 .fp-builder-container {
     display: grid;
-    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
     grid-template-rows: auto auto;
     gap: var(--fp-spacing-lg);
     margin-top: var(--fp-spacing-lg);
     align-items: start;
-    /* Stacking unificato: la colonna palette deve restare sopra eventuali sbordi della colonna campi. */
+    /* Stacking: la palette (destra) sopra eventuali sbordi della colonna campi (sinistra). */
     isolation: isolate;
 }
 
@@ -566,9 +566,9 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     box-shadow: var(--fp-shadow-md);
 }
 
-/* Riga 2 colonna 1: tipi di campo (passo 2) */
+/* Riga 2 colonna 2: tipi di campo (passo 2) */
 .fp-builder-palette-column {
-    grid-column: 1 / 2;
+    grid-column: 2 / 3;
     grid-row: 2;
     min-width: 0;
     background: var(--fp-color-surface);
@@ -585,9 +585,9 @@ body.fp-forms-admin-shell #wpbody-content > .wrap {
     z-index: 10;
 }
 
-/* Riga 2 colonna 2: elenco campi centrato (passo 1) */
+/* Riga 2 colonna 1: elenco campi (passo 1) */
 .fp-builder-fields-hub {
-    grid-column: 2 / 3;
+    grid-column: 1 / 2;
     grid-row: 2;
     min-width: 0;
     display: flex;
@@ -1440,8 +1440,8 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
     color: var(--fp-color-muted);
 }
 
-/* Palette nella colonna sinistra: un tipo per riga */
-.fpforms-builder-panel--palette-left .fp-field-types {
+/* Palette nella colonna destra: un tipo per riga */
+.fpforms-builder-panel--palette-sidebar .fp-field-types {
     grid-template-columns: 1fr;
     min-width: 0;
 }

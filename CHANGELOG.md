@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.24] - 2026-04-04
+### Changed
+- Form builder: passo 1 «Campi del form» a **sinistra**, passo 2 «Aggiungi campi» a **destra** (griglia + ordine DOM per mobile). Testi guida, empty state e icona «Mostra tipi di campo» aggiornati. Classe pannello palette rinominata in `fpforms-builder-panel--palette-sidebar`.
+
 ## [1.6.23] - 2026-04-04
 ### Fixed
 - Form builder: area «Campi del form» davvero centrata nella colonna (`width: 100%` sul flex child impediva il centraggio); barra «Salva Form» allineata al centro.

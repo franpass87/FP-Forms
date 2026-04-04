@@ -61,7 +61,7 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
     <div class="fp-forms-admin__header">
         <div class="fpforms-page-header-content">
             <h2 class="fp-forms-page-header-title" aria-hidden="true"><?php echo esc_html( $fp_forms_builder_heading ); ?></h2>
-            <p class="fpforms-page-header-desc"><?php esc_html_e( 'In alto titolo e descrizione. Sotto: a sinistra aggiungi i tipi di campo (passo 2), al centro componi e riordina l’elenco (passo 1). Più in basso: aspetto sul sito e impostazioni avanzate.', 'fp-forms' ); ?></p>
+            <p class="fpforms-page-header-desc"><?php esc_html_e( 'In alto titolo e descrizione. Sotto: a sinistra componi e riordina i campi (passo 1), a destra aggiungi i tipi di campo (passo 2). Più in basso: aspetto sul sito e impostazioni avanzate.', 'fp-forms' ); ?></p>
         </div>
         <a href="<?php echo esc_url( admin_url( 'admin.php?page=fp-forms' ) ); ?>" class="button">&larr; <?php esc_html_e( 'Torna ai Form', 'fp-forms' ); ?></a>
         <span class="fpforms-page-header-badge">v<?php echo esc_html( defined( 'FP_FORMS_VERSION' ) ? FP_FORMS_VERSION : '0' ); ?></span>
@@ -90,13 +90,52 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
             </div>
         </div>
 
+        <div class="fp-builder-fields-hub">
+            <div class="fp-builder-body">
+                <div class="fp-builder-canvas-head" role="group" aria-label="<?php esc_attr_e( 'Area campi del form', 'fp-forms' ); ?>">
+                    <span class="fp-builder-step-badge" aria-hidden="true">1</span>
+                    <div class="fp-builder-canvas-head__text">
+                        <h3 class="fp-builder-canvas-title"><?php esc_html_e( 'Campi del form', 'fp-forms' ); ?></h3>
+                        <p class="fp-builder-canvas-desc"><?php esc_html_e( 'Trascina l’icona ⋮⋮ per riordinare. Clicca la matita per modificare etichetta, nome tecnico e opzioni.', 'fp-forms' ); ?></p>
+                    </div>
+                </div>
+
+                <div
+                    id="fp-builder-empty-state"
+                    class="fp-builder-empty-state"
+                    role="status"
+                    aria-live="polite"
+                    <?php echo empty( $form_fields ) ? '' : ' hidden aria-hidden="true"'; ?>
+                >
+                    <span class="fp-builder-empty-state__icon dashicons dashicons-welcome-widgets-menus" aria-hidden="true"></span>
+                    <p class="fp-builder-empty-state__title"><?php esc_html_e( 'Nessun campo ancora', 'fp-forms' ); ?></p>
+                    <p class="fp-builder-empty-state__text"><?php esc_html_e( 'A destra, in «Aggiungi campi», scegli un tipo: ogni clic inserisce un campo qui.', 'fp-forms' ); ?></p>
+                </div>
+
+                <div class="fp-fields-container" id="fp-fields-container">
+                    <?php if ( ! empty( $form_fields ) ) : ?>
+                        <?php foreach ( $form_fields as $index => $field ) : ?>
+                            <?php include FP_FORMS_PLUGIN_DIR . 'templates/admin/partials/field-item.php'; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+
+                <div class="fp-add-field">
+                    <button type="button" class="button button-secondary" id="fp-add-field-btn">
+                        <span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
+                        <?php esc_html_e( 'Mostra tipi di campo', 'fp-forms' ); ?>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="fp-builder-palette-column" id="fp-builder-field-palette">
-            <div class="fp-sidebar-section fpforms-builder-panel fpforms-builder-panel--palette-left">
+            <div class="fp-sidebar-section fpforms-builder-panel fpforms-builder-panel--palette-sidebar">
                 <div class="fpforms-builder-panel__head">
                     <span class="fp-builder-step-badge fp-builder-step-badge--sidebar" aria-hidden="true">2</span>
                     <div>
                         <h3 class="fpforms-builder-panel__title"><?php esc_html_e( 'Aggiungi campi', 'fp-forms' ); ?></h3>
-                        <p class="fpforms-builder-panel__hint"><?php esc_html_e( 'Clicca un tipo: il campo viene aggiunto nell’elenco centrale. Puoi riordinarlo trascinando.', 'fp-forms' ); ?></p>
+                        <p class="fpforms-builder-panel__hint"><?php esc_html_e( 'Clicca un tipo: il campo viene aggiunto nell’elenco a sinistra. Puoi riordinarlo trascinando.', 'fp-forms' ); ?></p>
                     </div>
                 </div>
                 <div class="fp-field-types" id="fp-field-types-palette">
@@ -163,45 +202,6 @@ $fpforms_confirmation_accent_preview = $fpforms_confirmation_accent_custom ? $fp
                     <button type="button" class="fp-field-type fp-field-type-step" data-type="step_break" data-tooltip="<?php esc_attr_e( 'Separa il form in più step (con multi-step attivo)', 'fp-forms' ); ?>" title="<?php esc_attr_e( 'Separa il form in più step (con multi-step attivo)', 'fp-forms' ); ?>">
                         <span class="dashicons dashicons-arrow-right-alt"></span>
                         <?php esc_html_e( 'Nuovo Step', 'fp-forms' ); ?>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="fp-builder-fields-hub">
-            <div class="fp-builder-body">
-                <div class="fp-builder-canvas-head" role="group" aria-label="<?php esc_attr_e( 'Area campi del form', 'fp-forms' ); ?>">
-                    <span class="fp-builder-step-badge" aria-hidden="true">1</span>
-                    <div class="fp-builder-canvas-head__text">
-                        <h3 class="fp-builder-canvas-title"><?php esc_html_e( 'Campi del form', 'fp-forms' ); ?></h3>
-                        <p class="fp-builder-canvas-desc"><?php esc_html_e( 'Trascina l’icona ⋮⋮ per riordinare. Clicca la matita per modificare etichetta, nome tecnico e opzioni.', 'fp-forms' ); ?></p>
-                    </div>
-                </div>
-
-                <div
-                    id="fp-builder-empty-state"
-                    class="fp-builder-empty-state"
-                    role="status"
-                    aria-live="polite"
-                    <?php echo empty( $form_fields ) ? '' : ' hidden aria-hidden="true"'; ?>
-                >
-                    <span class="fp-builder-empty-state__icon dashicons dashicons-welcome-widgets-menus" aria-hidden="true"></span>
-                    <p class="fp-builder-empty-state__title"><?php esc_html_e( 'Nessun campo ancora', 'fp-forms' ); ?></p>
-                    <p class="fp-builder-empty-state__text"><?php esc_html_e( 'Sulla sinistra scegli un tipo in «Aggiungi campi»: ogni clic inserisce un campo qui.', 'fp-forms' ); ?></p>
-                </div>
-
-                <div class="fp-fields-container" id="fp-fields-container">
-                    <?php if ( ! empty( $form_fields ) ) : ?>
-                        <?php foreach ( $form_fields as $index => $field ) : ?>
-                            <?php include FP_FORMS_PLUGIN_DIR . 'templates/admin/partials/field-item.php'; ?>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
-
-                <div class="fp-add-field">
-                    <button type="button" class="button button-secondary" id="fp-add-field-btn">
-                        <span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>
-                        <?php esc_html_e( 'Mostra tipi di campo', 'fp-forms' ); ?>
                     </button>
                 </div>
             </div>
