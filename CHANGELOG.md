@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.29] - 2026-04-04
+### Fixed
+- Form builder: rimossa la barra verticale blu che si sovrapponeva alla prima lettera dei titoli `h4` (es. «Badge euristici»): coesistenza tra `h4::before` di `.fp-sidebar-section` e il nuovo padding del design system senza `padding-left`.
+
 ## [1.6.28] - 2026-04-04
 ### Changed
 - Form builder admin: allineamento al **design system FP** su tutte le sezioni — banner pagina (gradiente senza box-shadow, tipografia e badge), card con header grigio (`fpforms-builder-section`), barre titolo a tutta larghezza su area campi e palette, etichette `h4` in stile uppercase, campi con bordo/focus token FP, CTA Salva e «Mostra tipi di campo» con stile pulsanti FP, card template email con stato selezionato coerente.

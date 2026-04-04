@@ -1486,6 +1486,13 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
     margin-top: 0;
 }
 
+/* Niente barra ::before ereditata da .fp-sidebar-section h4 (padding-left azzerato dal design card → sovrappone la prima lettera) */
+.fp-forms-builder .fpforms-builder-panel--settings h4::before,
+.fp-forms-builder .fpforms-builder-panel--advanced h4::before {
+    content: none;
+    display: none;
+}
+
 /* Campi impostazioni */
 .fp-forms-builder .fp-setting-field {
     margin-bottom: var(--fp-spacing-md);
