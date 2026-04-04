@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.16] - 2026-04-04
+### Changed
+- Tracking: evento `form_payment_completed` arricchito con `value`, `currency`, `payment_provider`; webhook Stripe passa `amount_total` (centesimi), `amount_in_cents`, `currency` per allineamento a GA4/Meta nel catalogo FP Tracking.
+
 ## [1.6.15] - 2026-03-24
 ### Changed
 - Brevo: con FP Tracking e Brevo abilitato, `create_or_update_contact` usa `fp_tracking_brevo_upsert_contact()` (lista `forms` + lingua submission); altrimenti comportamento precedente con `make_request`.

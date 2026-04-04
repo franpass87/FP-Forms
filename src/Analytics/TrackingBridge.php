@@ -183,14 +183,26 @@ class TrackingBridge {
         $form  = get_post($form_id);
         $title = $form instanceof \WP_Post ? $form->post_title : '';
 
+        $currency = isset($payment_data['currency']) ? strtoupper(sanitize_text_field((string) $payment_data['currency'])) : 'EUR';
+        $value    = 0.0;
+        if (isset($payment_data['amount_total']) && is_numeric($payment_data['amount_total'])) {
+            $raw = (float) $payment_data['amount_total'];
+            $value = ! empty($payment_data['amount_in_cents']) ? round($raw / 100, 2) : $raw;
+        } elseif (isset($payment_data['value']) && is_numeric($payment_data['value'])) {
+            $value = (float) $payment_data['value'];
+        }
+
         $params = [
-            'form_id'        => $form_id,
-            'form_title'     => $title,
-            'submission_id'  => $submission_id,
-            'transaction_id' => isset($payment_data['transaction_id']) ? sanitize_text_field((string) $payment_data['transaction_id']) : '',
-            'payment_status' => isset($payment_data['payment_status']) ? sanitize_text_field((string) $payment_data['payment_status']) : '',
-            'event_id'       => 'fp_forms_pay_ok_' . $submission_id . '_' . time(),
-            'page_url'       => $this->getRequestPageUrl(),
+            'form_id'          => $form_id,
+            'form_title'       => $title,
+            'submission_id'    => $submission_id,
+            'transaction_id'   => isset($payment_data['transaction_id']) ? sanitize_text_field((string) $payment_data['transaction_id']) : '',
+            'payment_status'   => isset($payment_data['payment_status']) ? sanitize_text_field((string) $payment_data['payment_status']) : '',
+            'payment_provider' => isset($payment_data['payment_provider']) ? sanitize_text_field((string) $payment_data['payment_provider']) : '',
+            'value'            => $value,
+            'currency'         => $currency !== '' ? $currency : 'EUR',
+            'event_id'         => 'fp_forms_pay_ok_' . $submission_id . '_' . time(),
+            'page_url'         => $this->getRequestPageUrl(),
         ];
         do_action('fp_tracking_event', 'form_payment_completed', $this->enrichEventParams($params, 'form_payment_completed', $form_id));
     }

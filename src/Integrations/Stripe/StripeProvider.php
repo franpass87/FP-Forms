@@ -65,8 +65,12 @@ class StripeProvider {
                     $db->update_submission_status( $submission_id, 'unread' );
                 }
                 do_action( 'fp_forms_payment_completed', $submission_id, (int) ( $session->metadata->form_id ?? 0 ), [
-                    'transaction_id' => $session->id,
-                    'payment_status' => $session->payment_status ?? 'paid',
+                    'transaction_id'   => $session->id,
+                    'payment_status'   => $session->payment_status ?? 'paid',
+                    'amount_total'     => isset( $session->amount_total ) ? (int) $session->amount_total : 0,
+                    'amount_in_cents'  => true,
+                    'currency'         => isset( $session->currency ) ? (string) $session->currency : 'EUR',
+                    'payment_provider' => 'stripe',
                 ] );
             }
         }
