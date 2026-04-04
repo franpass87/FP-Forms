@@ -1416,10 +1416,29 @@ class Manager {
         
         // Trust badges (whitelist array)
         if ( isset( $settings['trust_badges'] ) && is_array( $settings['trust_badges'] ) ) {
-            $allowed_badges = [ 
-                'instant-response', 'data-secure', 'no-spam', 'gdpr-compliant', 
-                'ssl-secure', 'quick-reply', 'free-quote', 'trusted', 
-                'support', 'privacy-first' 
+            $allowed_badges = [
+                'instant-response',
+                'data-secure',
+                'no-spam',
+                'gdpr-compliant',
+                'ssl-secure',
+                'quick-reply',
+                'free-quote',
+                'trusted',
+                'support',
+                'privacy-first',
+                'rated-49',
+                'daily-handled',
+                'secure-payments',
+                'gift-guide',
+                'slots-today',
+                'satisfaction-guarantee',
+                'easy-unsubscribe',
+                'real-human-reply',
+                'quick-form',
+                'no-credit-card',
+                'honest-pricing',
+                'clear-steps',
             ];
             
             $sanitized['trust_badges'] = array_values( array_intersect( $settings['trust_badges'], $allowed_badges ) );

@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.33] - 2026-04-04
+### Added
+- Badge euristici: **12 nuovi preset** (chiavi `rated-49`, `daily-handled`, `secure-payments`, `gift-guide`, `slots-today`, `satisfaction-guarantee`, `easy-unsubscribe`, `real-human-reply`, `quick-form`, `no-credit-card`, `honest-pricing`, `clear-steps`) distribuiti su gruppi esistenti + **Attrito ridotto** e **Trasparenza**; whitelist salvataggio in `Manager`, rendering frontend in `form.php`, voci `Translator` (en/de/fr/es) e voce `GDPR Compliant`.
+
 ## [1.6.32] - 2026-04-04
 ### Fixed
 - Form builder: colonna **Aggiungi campi** ancora oltre il wrap — workspace passato da **grid a flex** (`flex: 1 1 0%` sul hub, palette `flex: 0 1 340px` + `max-width: min(340px,100%)`), `overflow-x: clip` sul workspace; rimossi **margin orizzontali negativi** sulle testate passo 1/2 (resta solo bleed in alto); ombra palette senza spread orizzontale. Breakpoint ≤1200px: colonna unica in flex.

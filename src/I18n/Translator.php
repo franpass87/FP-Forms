@@ -275,6 +275,84 @@ class Translator {
                 'fr' => 'Confidentialité garantie',
                 'es' => 'Privacidad garantizada',
             ],
+            'GDPR Compliant' => [
+                'en' => 'GDPR Compliant',
+                'de' => 'DSGVO-konform',
+                'fr' => 'Conforme au RGPD',
+                'es' => 'Cumple el RGPD',
+            ],
+            '4,9/5 da recensioni verificate' => [
+                'en' => '4.9/5 from verified reviews',
+                'de' => '4,9/5 aus verifizierten Bewertungen',
+                'fr' => '4,9/5 d’avis vérifiés',
+                'es' => '4,9/5 en reseñas verificadas',
+            ],
+            'Richieste gestite ogni giorno' => [
+                'en' => 'Requests handled every day',
+                'de' => 'Täglich bearbeitete Anfragen',
+                'fr' => 'Demandes traitées chaque jour',
+                'es' => 'Solicitudes atendidas cada día',
+            ],
+            'Pagamenti sicuri' => [
+                'en' => 'Secure payments',
+                'de' => 'Sichere Zahlungen',
+                'fr' => 'Paiements sécurisés',
+                'es' => 'Pagos seguros',
+            ],
+            'Guida omaggio in PDF' => [
+                'en' => 'Free PDF guide',
+                'de' => 'Kostenloser PDF-Leitfaden',
+                'fr' => 'Guide PDF offert',
+                'es' => 'Guía PDF de regalo',
+            ],
+            'Disponibilità limitata oggi' => [
+                'en' => 'Limited availability today',
+                'de' => 'Begrenzte Verfügbarkeit heute',
+                'fr' => 'Disponibilité limitée aujourd’hui',
+                'es' => 'Disponibilidad limitada hoy',
+            ],
+            'Garanzia soddisfatti o rimborsati' => [
+                'en' => 'Satisfaction or money-back guarantee',
+                'de' => 'Zufriedenheits- oder Geld-zurück-Garantie',
+                'fr' => 'Satisfait ou remboursé',
+                'es' => 'Garantía de satisfacción o reembolso',
+            ],
+            'Disiscrizione in un clic' => [
+                'en' => 'One-click unsubscribe',
+                'de' => 'Abmeldung mit einem Klick',
+                'fr' => 'Désinscription en un clic',
+                'es' => 'Baja en un clic',
+            ],
+            'Risposta da persone reali, non bot' => [
+                'en' => 'Replies from real people, not bots',
+                'de' => 'Antworten von echten Menschen, keine Bots',
+                'fr' => 'Réponses par de vraies personnes, pas des robots',
+                'es' => 'Respuestas de personas reales, no bots',
+            ],
+            'Compila in meno di 1 minuto' => [
+                'en' => 'Complete in under 1 minute',
+                'de' => 'In unter 1 Minute ausfüllen',
+                'fr' => 'Remplir en moins d’1 minute',
+                'es' => 'Completa en menos de 1 minuto',
+            ],
+            'Nessuna carta richiesta' => [
+                'en' => 'No card required',
+                'de' => 'Keine Karte erforderlich',
+                'fr' => 'Aucune carte requise',
+                'es' => 'Sin tarjeta requerida',
+            ],
+            'Prezzi chiari, zero sorprese' => [
+                'en' => 'Clear pricing, no surprises',
+                'de' => 'Klare Preise, keine Überraschungen',
+                'fr' => 'Prix clairs, zéro surprise',
+                'es' => 'Precios claros, sin sorpresas',
+            ],
+            'Processo trasparente in 3 passi' => [
+                'en' => 'Transparent process in 3 steps',
+                'de' => 'Transparenter Ablauf in 3 Schritten',
+                'fr' => 'Processus transparent en 3 étapes',
+                'es' => 'Proceso transparente en 3 pasos',
+            ],
 
             // -------------------------------------------------
             //  Messaggi generici
