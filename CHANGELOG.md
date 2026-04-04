@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.32] - 2026-04-04
+### Fixed
+- Form builder: colonna **Aggiungi campi** ancora oltre il wrap — workspace passato da **grid a flex** (`flex: 1 1 0%` sul hub, palette `flex: 0 1 340px` + `max-width: min(340px,100%)`), `overflow-x: clip` sul workspace; rimossi **margin orizzontali negativi** sulle testate passo 1/2 (resta solo bleed in alto); ombra palette senza spread orizzontale. Breakpoint ≤1200px: colonna unica in flex.
+
 ## [1.6.31] - 2026-04-04
 ### Fixed
 - Form builder: la colonna **Aggiungi campi** non deve più uscire oltre il bordo destro del contenitore (come il box «Titolo e descrizione»): `min-width: 0` su `.fp-builder-body` (flex evitava il restringimento della griglia), griglia workspace `minmax(0, min(340px, 100%))`, `width/max-width: 100%` su workspace e form.

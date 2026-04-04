@@ -596,17 +596,19 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-admin {
     box-sizing: border-box;
 }
 
-/* Due colonne (campi + palette) isolate dal resto del form: allineamento in alto garantito */
+/* Due colonne (campi + palette): flex + min-width:0 sulla catena evita overflow oltre il wrap (griglia + min-content poteva sforare) */
 .fp-builder-workspace {
-    display: grid;
-    /* Seconda colonna: max min(340px, 100%) evita overflow oltre il contenitore (stesso limite del box sopra) */
-    grid-template-columns: minmax(0, 1fr) minmax(0, min(340px, 100%));
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: flex-start;
     gap: var(--fp-spacing-lg);
-    align-items: start;
     min-width: 0;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-x: clip;
 }
 
 /* Titolo e descrizione */
@@ -621,21 +623,26 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-admin {
 
 /* Tipi di campo (passo 2) — colonna destra del workspace */
 .fp-builder-palette-column {
+    flex: 0 1 340px;
     min-width: 0;
-    width: 100%;
+    width: min(340px, 100%);
+    max-width: min(340px, 100%);
     background: var(--fp-color-surface);
     border: 1px solid var(--fp-color-border);
     border-radius: var(--fp-radius-lg);
     padding: var(--fp-spacing-lg);
-    box-shadow: var(--fp-shadow-md);
+    /* Ombra senza spread orizzontale: meno “sbordo” visivo oltre il bordo del contenitore */
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
     overflow-x: hidden;
-    align-self: start;
+    align-self: flex-start;
+    box-sizing: border-box;
 }
 
 /* Elenco campi (passo 1) — colonna sinistra del workspace */
 .fp-builder-fields-hub {
+    flex: 1 1 0%;
     min-width: 0;
-    width: 100%;
+    width: auto;
     display: flex;
     justify-content: center;
     align-items: flex-start;
@@ -1278,7 +1285,9 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-admin {
    ============================================ */
 @media screen and (max-width: 1200px) {
     .fp-builder-workspace {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        overflow-x: visible;
     }
 
     .fp-builder-form-meta,
@@ -1290,7 +1299,15 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-admin {
     }
 
     .fp-builder-fields-hub {
+        flex: 1 1 auto;
+        width: 100%;
         justify-content: stretch;
+    }
+
+    .fp-builder-palette-column {
+        flex: 1 1 auto;
+        width: 100%;
+        max-width: none;
     }
 
     .fp-builder-fields-hub .fp-builder-body {
@@ -1482,9 +1499,9 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
     padding: 0;
 }
 
-/* Workspace: barra titolo a tutta larghezza sui pannelli */
+/* Workspace: barra titolo full-bleed solo in alto (niente margin negativi orizzontali → evita overflow oltre il card/wrap) */
 .fp-forms-builder .fp-builder-body > .fp-builder-canvas-head {
-    margin: calc(-1 * var(--fp-spacing-lg)) calc(-1 * var(--fp-spacing-lg)) var(--fp-spacing-md);
+    margin: calc(-1 * var(--fp-spacing-lg)) 0 var(--fp-spacing-md);
     padding: var(--fp-spacing-md) var(--fp-spacing-lg);
     border-radius: var(--fp-radius-lg) var(--fp-radius-lg) 0 0;
     border: none;
@@ -1493,7 +1510,7 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
 }
 
 .fp-forms-builder .fp-builder-palette-column .fpforms-builder-panel--palette-sidebar > .fpforms-builder-panel__head {
-    margin: calc(-1 * var(--fp-spacing-lg)) calc(-1 * var(--fp-spacing-lg)) var(--fp-spacing-md);
+    margin: calc(-1 * var(--fp-spacing-lg)) 0 var(--fp-spacing-md);
     padding: var(--fp-spacing-md) var(--fp-spacing-lg);
     border-radius: var(--fp-radius-lg) var(--fp-radius-lg) 0 0;
     border: none;
