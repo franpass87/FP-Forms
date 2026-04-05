@@ -186,6 +186,9 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.41 - 2026-04-05
+- Menu admin: posizione voce allineata allo schema FP (56.x), vicino agli altri plugin FP.
+
 ### 1.6.40 - 2026-04-04
 - Form builder: griglia a due colonne anche per i quattro colori personalizzati del form.
 

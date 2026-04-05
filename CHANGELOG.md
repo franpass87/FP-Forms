@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.41] - 2026-04-05
+### Changed
+- Menu admin: posizione top-level allineata allo schema FP `'56.16'` (gruppo plugin FP tra Pagamenti e Marketing WooCommerce).
+
 ## [1.6.40] - 2026-04-04
 ### Changed
 - Form builder: sezione **Colori personalizzati** in griglia **2×2** (bordo/focus | testo/sfondo), stessi breakpoint della sezione Pulsante Submit.

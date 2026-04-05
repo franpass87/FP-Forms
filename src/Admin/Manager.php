@@ -53,7 +53,7 @@ class Manager {
             'fp-forms',
             [ $this, 'render_forms_page' ],
             'dashicons-feedback',
-            30
+            '56.16'
         );
         
         // Sottomenu: Tutti i form
