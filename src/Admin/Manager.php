@@ -791,75 +791,127 @@ class Manager {
      * AJAX: Ottiene dettagli submission
      */
     public function ajax_get_submission_details() {
-        check_ajax_referer( 'fp_forms_admin', 'nonce' );
-        
-        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
-            wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ] );
+        if ( ! check_ajax_referer( 'fp_forms_admin', 'nonce', false ) ) {
+            wp_send_json_error(
+                [
+                    'message' => __( 'Verifica di sicurezza non riuscita. Ricarica la pagina e riprova.', 'fp-forms' ),
+                ],
+                403
+            );
         }
-        
-        $submission_id = isset( $_POST['submission_id'] ) ? intval( $_POST['submission_id'] ) : 0;
-        
-        if ( ! $submission_id ) {
+
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() && ! \FPForms\Core\Capabilities::can_view_submissions() ) {
+            wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ], 403 );
+        }
+
+        $submission_id = isset( $_POST['submission_id'] ) ? (int) $_POST['submission_id'] : 0;
+
+        if ( $submission_id <= 0 ) {
             wp_send_json_error( [ 'message' => __( 'Submission non valida.', 'fp-forms' ) ] );
         }
-        
+
         $submission = \FPForms\Plugin::instance()->submissions->get_submission( $submission_id );
-        
+
         if ( ! $submission ) {
             wp_send_json_error( [ 'message' => __( 'Submission non trovata.', 'fp-forms' ) ] );
         }
-        
-        // Ottieni file allegati
-        $files = \FPForms\Plugin::instance()->submissions->get_submission_files( $submission_id );
-        
-        // Ottieni form per nomi campi
-        $form = \FPForms\Plugin::instance()->forms->get_form( $submission->form_id );
 
-        if ( ! $form || ! is_array( $form ) ) {
+        try {
+            $html = $this->build_submission_details_html( $submission, $submission_id );
+        } catch ( \Throwable $e ) {
+            \FPForms\Core\Logger::error(
+                'ajax_get_submission_details failed',
+                [
+                    'message' => $e->getMessage(),
+                    'file'    => $e->getFile(),
+                    'line'    => $e->getLine(),
+                ]
+            );
+            wp_send_json_error(
+                [
+                    'message' => __( 'Impossibile generare i dettagli della submission. Se il problema persiste, contatta l\'amministratore.', 'fp-forms' ),
+                ],
+                500
+            );
+        }
+
+        wp_send_json_success( [ 'html' => $html ] );
+    }
+
+    /**
+     * Costruisce l'HTML del modale dettaglio submission (usato dall'AJAX admin).
+     *
+     * @param object $submission Oggetto submission con proprietà data (array), created_at, status, user_ip, form_id.
+     * @param int    $submission_id ID submission.
+     * @return string Markup HTML escaped.
+     */
+    private function build_submission_details_html( object $submission, int $submission_id ): string {
+        $files = \FPForms\Plugin::instance()->submissions->get_submission_files( $submission_id );
+
+        $form = \FPForms\Plugin::instance()->forms->get_form( (int) $submission->form_id );
+
+        if ( ! is_array( $form ) ) {
             $form = [ 'fields' => [], 'title' => __( 'Form eliminato', 'fp-forms' ) ];
         }
-        
-        // Formatta HTML
-        $html = '<div class="fp-submission-details">';
+
+        $form_fields = $form['fields'] ?? [];
+        if ( ! is_array( $form_fields ) ) {
+            $form_fields = [];
+        }
+
+        $data = $submission->data ?? [];
+        if ( ! is_array( $data ) ) {
+            $data = [];
+        }
+
+        $created = isset( $submission->created_at ) ? (string) $submission->created_at : '';
+        $user_ip = isset( $submission->user_ip ) ? (string) $submission->user_ip : '';
+        $status  = isset( $submission->status ) ? (string) $submission->status : '';
+
+        $html  = '<div class="fp-submission-details">';
         $html .= '<div class="fp-submission-meta-grid">';
-        $html .= '<div class="fp-submission-meta-card"><span class="fp-submission-meta-label">' . esc_html__( 'Data', 'fp-forms' ) . '</span><strong class="fp-submission-meta-value">' . esc_html( \FPForms\Helpers\Helper::format_date( $submission->created_at ) ) . '</strong></div>';
-        $html .= '<div class="fp-submission-meta-card"><span class="fp-submission-meta-label">' . esc_html__( 'Stato', 'fp-forms' ) . '</span><strong class="fp-submission-meta-value">' . ( $submission->status === 'read' ? esc_html__( 'Letta', 'fp-forms' ) : esc_html__( 'Non letta', 'fp-forms' ) ) . '</strong></div>';
-        $html .= '<div class="fp-submission-meta-card"><span class="fp-submission-meta-label">' . esc_html__( 'IP', 'fp-forms' ) . '</span><strong class="fp-submission-meta-value">' . esc_html( $submission->user_ip ) . '</strong></div>';
+        $html .= '<div class="fp-submission-meta-card"><span class="fp-submission-meta-label">' . esc_html__( 'Data', 'fp-forms' ) . '</span><strong class="fp-submission-meta-value">' . esc_html( \FPForms\Helpers\Helper::format_date( $created ) ) . '</strong></div>';
+        $html .= '<div class="fp-submission-meta-card"><span class="fp-submission-meta-label">' . esc_html__( 'Stato', 'fp-forms' ) . '</span><strong class="fp-submission-meta-value">' . ( $status === 'read' ? esc_html__( 'Letta', 'fp-forms' ) : esc_html__( 'Non letta', 'fp-forms' ) ) . '</strong></div>';
+        $html .= '<div class="fp-submission-meta-card"><span class="fp-submission-meta-label">' . esc_html__( 'IP', 'fp-forms' ) . '</span><strong class="fp-submission-meta-value">' . esc_html( $user_ip ) . '</strong></div>';
         $html .= '</div>';
 
-        // Dati form
         $html .= '<div class="fp-submission-data-list">';
         $fullname_bases = [];
-        foreach ( $form['fields'] as $f ) {
+        foreach ( $form_fields as $f ) {
             if ( isset( $f['type'] ) && $f['type'] === 'fullname' && ! empty( $f['name'] ) ) {
-                $fullname_bases[ $f['name'] ] = $f['label'];
+                $fullname_bases[ (string) $f['name'] ] = isset( $f['label'] ) ? (string) $f['label'] : '';
             }
         }
         $shown_keys = [];
-        foreach ( $submission->data as $key => $value ) {
+        foreach ( $data as $key => $value ) {
             if ( in_array( $key, $shown_keys, true ) ) {
                 continue;
             }
-            $clean = str_replace( 'fp_field_', '', $key );
-            $is_nome = preg_match( '/^(.+)_nome$/', $clean, $m ) && isset( $fullname_bases[ $m[1] ] );
-            $is_cognome = preg_match( '/^(.+)_cognome$/', $clean, $m ) && isset( $fullname_bases[ $m[1] ] );
+            $key_str = (string) $key;
+            $clean   = str_replace( 'fp_field_', '', $key_str );
+            $m       = [];
+            $is_nome = (bool) preg_match( '/^(.+)_nome$/', $clean, $m ) && isset( $fullname_bases[ $m[1] ] );
+            $m2      = [];
+            $is_cognome = (bool) preg_match( '/^(.+)_cognome$/', $clean, $m2 ) && isset( $fullname_bases[ $m2[1] ] );
             if ( $is_nome || $is_cognome ) {
-                $base = $m[1];
+                $match = $is_nome ? $m : $m2;
+                $base  = $match[1];
                 $label = $fullname_bases[ $base ];
-                $key_nome = $base . '_nome';
+                $key_nome    = $base . '_nome';
                 $key_cognome = $base . '_cognome';
-                $val_nome = isset( $submission->data[ $key_nome ] ) ? ( is_array( $submission->data[ $key_nome ] ) ? implode( ', ', $submission->data[ $key_nome ] ) : $submission->data[ $key_nome ] ) : '';
-                $val_cognome = isset( $submission->data[ $key_cognome ] ) ? ( is_array( $submission->data[ $key_cognome ] ) ? implode( ', ', $submission->data[ $key_cognome ] ) : $submission->data[ $key_cognome ] ) : '';
-                $combined = trim( $val_nome . ' ' . $val_cognome );
-                $html .= '<div class="fp-submission-data-row"><span class="fp-submission-data-key">' . esc_html( $label ) . '</span><span class="fp-submission-data-value">' . esc_html( $combined ) . '</span></div>';
+                $val_nome    = isset( $data[ $key_nome ] ) ? ( is_array( $data[ $key_nome ] ) ? implode( ', ', $data[ $key_nome ] ) : (string) $data[ $key_nome ] ) : '';
+                $val_cognome = isset( $data[ $key_cognome ] ) ? ( is_array( $data[ $key_cognome ] ) ? implode( ', ', $data[ $key_cognome ] ) : (string) $data[ $key_cognome ] ) : '';
+                $combined    = trim( $val_nome . ' ' . $val_cognome );
+                $html       .= '<div class="fp-submission-data-row"><span class="fp-submission-data-key">' . esc_html( $label ) . '</span><span class="fp-submission-data-value">' . esc_html( $combined ) . '</span></div>';
                 $shown_keys[] = $key_nome;
                 $shown_keys[] = $key_cognome;
                 continue;
             }
-            $field_label = $key;
-            foreach ( $form['fields'] as $field ) {
-                if ( $field['name'] === $clean ) {
-                    $field_label = $field['label'];
+            $field_label = $key_str;
+            foreach ( $form_fields as $field ) {
+                $fname = isset( $field['name'] ) ? (string) $field['name'] : '';
+                if ( $fname === $clean ) {
+                    $field_label = isset( $field['label'] ) ? (string) $field['label'] : $fname;
                     break;
                 }
             }
@@ -869,26 +921,28 @@ class Manager {
             $html .= '<div class="fp-submission-data-row"><span class="fp-submission-data-key">' . esc_html( $field_label ) . '</span><span class="fp-submission-data-value">' . esc_html( (string) $value ) . '</span></div>';
         }
         $html .= '</div>';
-        
-        // File allegati
+
         if ( ! empty( $files ) ) {
             $html .= '<h4 class="fp-submission-files-title">' . esc_html__( 'File Allegati', 'fp-forms' ) . '</h4>';
             $html .= '<div class="fp-submission-files">';
-            
+
             foreach ( $files as $file ) {
+                $url  = isset( $file->file_url ) ? (string) $file->file_url : '';
+                $name = isset( $file->file_name ) ? (string) $file->file_name : '';
+                $size = isset( $file->file_size ) ? (int) $file->file_size : 0;
                 $html .= '<div class="fp-file-item">';
                 $html .= '<span class="dashicons dashicons-media-default"></span> ';
-                $html .= '<a href="' . esc_url( $file->file_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $file->file_name ) . '</a>';
-                $html .= ' <small>(' . \FPForms\Helpers\Helper::format_bytes( $file->file_size ) . ')</small>';
+                $html .= '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $name ) . '</a>';
+                $html .= ' <small>(' . esc_html( \FPForms\Helpers\Helper::format_bytes( $size ) ) . ')</small>';
                 $html .= '</div>';
             }
-            
+
             $html .= '</div>';
         }
-        
+
         $html .= '</div>';
-        
-        wp_send_json_success( [ 'html' => $html ] );
+
+        return $html;
     }
     
     /**

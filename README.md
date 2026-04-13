@@ -186,6 +186,9 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.42 - 2026-04-13
+- Fix modale dettaglio submission (AJAX admin): nonce scaduto con messaggio chiaro, errori server mostrati in modale, hardening PHP su campi/file allegati; permesso anche con `view_fp_forms_submissions`.
+
 ### 1.6.41 - 2026-04-05
 - Menu admin: posizione voce allineata allo schema FP (56.x), vicino agli altri plugin FP.
 

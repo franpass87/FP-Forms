@@ -810,20 +810,26 @@
             $.ajax({
                 url: fpFormsAdmin.ajaxurl,
                 type: 'POST',
+                dataType: 'json',
                 data: {
                     action: 'fp_forms_get_submission_details',
                     nonce: fpFormsAdmin.nonce,
                     submission_id: submissionId
                 },
                 success: function(response) {
-                    if (response.success) {
+                    if (response && response.success && response.data && typeof response.data.html === 'string') {
                         $('#fp-submission-details').html(response.data.html);
-                    } else {
-                        $('#fp-submission-details').html('<p>Errore nel caricare i dettagli.</p>');
+                        return;
                     }
+                    var msg = (response && response.data && response.data.message) ? response.data.message : 'Errore nel caricare i dettagli.';
+                    $('#fp-submission-details').html('<p>' + $('<div/>').text(msg).html() + '</p>');
                 },
-                error: function() {
-                    $('#fp-submission-details').html('<p>Errore nel caricare i dettagli.</p>');
+                error: function(xhr) {
+                    var msg = 'Errore nel caricare i dettagli.';
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                        msg = xhr.responseJSON.data.message;
+                    }
+                    $('#fp-submission-details').html('<p>' + $('<div/>').text(msg).html() + '</p>');
                 }
             });
         },

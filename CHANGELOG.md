@@ -1,5 +1,10 @@
 # CHANGELOG - FP Forms
 
+## [1.6.42] - 2026-04-13
+### Fixed
+- Admin **Submissions** → «Visualizza»: risposta AJAX affidabile se il nonce è scaduto o non valido (`check_ajax_referer` senza `wp_die(-1)`), messaggio utente esplicito; modale mostra il testo restituito dal server in caso di errore (`admin.js`).
+- Dettaglio submission: gestione errori con `try/catch`, log tramite `Logger::error`, campi form/dati e file allegati normalizzati per evitare fatal su dati anomali; permesso lettura allineato a `can_manage_forms` **oppure** `can_view_submissions`.
+
 ## [1.6.41] - 2026-04-05
 ### Changed
 - Menu admin: posizione top-level allineata allo schema FP `'56.16'` (gruppo plugin FP tra Pagamenti e Marketing WooCommerce).
