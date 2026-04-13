@@ -4,7 +4,7 @@ Contributors: franpass87
 Tags: forms, form builder, contact form, landing page, stripe, payments, conditional logic
 Requires at least: 5.8
 Tested up to: 6.6
-Stable tag: 1.6.42
+Stable tag: 1.6.43
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,8 +38,11 @@ Per i form a pagamento Stripe: configura le chiavi in **FP Forms** > **Impostazi
 
 == Changelog ==
 
+= 1.6.43 = (2026-04-13)
+* Email plain text: con FP Mail SMTP attivo applicazione del branding (fp_fpmail_brand_html) su conferma automatica e notifiche senza template HTML.
+
 = 1.6.42 = (2026-04-13)
-* Fix modale «Visualizza» submission in admin (nonce/JSON, messaggi errore, robustezza dati).
+* Admin Submissions: modale dettaglio e AJAX più robusti (nonce, errori, permessi lettura).
 
 = 1.6.41 = (2026-04-05)
 * Menu admin: voce FP Forms raggruppata con gli altri plugin FP (posizione 56.16).

@@ -1,5 +1,9 @@
 # CHANGELOG - FP Forms
 
+## [1.6.43] - 2026-04-13
+### Fixed
+- Email **text/plain** (conferma utente predefinita, notifiche webmaster/staff senza template HTML): con **FP Mail SMTP** attivo il corpo viene convertito in HTML sicuro e wrappato con `fp_fpmail_brand_html()`, così il layout branding si applica come per le mail già in HTML.
+
 ## [1.6.42] - 2026-04-13
 ### Fixed
 - Admin **Submissions** → «Visualizza»: risposta AJAX affidabile se il nonce è scaduto o non valido (`check_ajax_referer` senza `wp_die(-1)`), messaggio utente esplicito; modale mostra il testo restituito dal server in caso di errore (`admin.js`).

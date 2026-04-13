@@ -600,6 +600,77 @@ class Manager {
         $flat = is_array( $headers ) ? implode( "\n", $headers ) : (string) $headers;
         return (bool) preg_match( '/Content-Type:\s*text\/html/i', $flat );
     }
+
+    /**
+     * Normalizza gli header di wp_mail in un array di righe non vuote.
+     *
+     * @param array<int, string>|string $headers Header passati a wp_mail.
+     * @return array<int, string>
+     */
+    private function normalize_email_headers_to_array( $headers ): array {
+        if ( is_array( $headers ) ) {
+            return array_values(
+                array_filter(
+                    array_map( 'trim', $headers ),
+                    static function ( $h ) {
+                        return $h !== '';
+                    }
+                )
+            );
+        }
+        if ( is_string( $headers ) && $headers !== '' ) {
+            $lines = preg_split( '/\r\n|\r|\n/', $headers );
+            if ( ! is_array( $lines ) ) {
+                return [];
+            }
+            return array_values(
+                array_filter(
+                    array_map( 'trim', $lines ),
+                    static function ( $h ) {
+                        return $h !== '';
+                    }
+                )
+            );
+        }
+        return [];
+    }
+
+    /**
+     * Imposta o sostituisce la riga Content-Type negli header.
+     *
+     * @param array<int, string> $headers Header già normalizzati.
+     * @param string             $mime    es. text/html o text/plain.
+     * @return array<int, string>
+     */
+    private function replace_content_type_header( array $headers, string $mime ): array {
+        $out   = [];
+        $found = false;
+        foreach ( $headers as $h ) {
+            if ( preg_match( '/^Content-Type\s*:/i', $h ) ) {
+                $out[] = 'Content-Type: ' . $mime . '; charset=UTF-8';
+                $found = true;
+            } else {
+                $out[] = $h;
+            }
+        }
+        if ( ! $found ) {
+            array_unshift( $out, 'Content-Type: ' . $mime . '; charset=UTF-8' );
+        }
+        return $out;
+    }
+
+    /**
+     * Converte un corpo plain text in frammento HTML sicuro (prima del wrapper FP Mail SMTP).
+     */
+    private function plain_text_to_fp_mail_html_fragment( string $plain ): string {
+        $plain = trim( $plain );
+        if ( $plain === '' ) {
+            $plain = ' ';
+        }
+        $escaped     = esc_html( $plain );
+        $with_breaks = nl2br( $escaped, false );
+        return '<div class="fp-forms-email-plain-body" style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;font-size:15px;line-height:1.6;color:#334155;">' . $with_breaks . '</div>';
+    }
     
     /**
      * Restituisce il valore da mostrare per un campo (gestisce fullname)
@@ -810,6 +881,9 @@ class Manager {
     /**
      * Invia email via wp_mail con fallback: se fallisce e SMTP FP è attivo, ritenta senza SMTP.
      *
+     * Con FP Mail SMTP attivo, anche i corpi text/plain (conferma automatica, notifiche webmaster/staff)
+     * vengono convertiti in HTML sicuro e passati da fp_fpmail_brand_html() insieme agli header text/html.
+     *
      * @param string|string[] $to      Destinatario/i.
      * @param string          $subject Oggetto.
      * @param string          $message Corpo.
@@ -817,7 +891,12 @@ class Manager {
      * @return bool
      */
     private function send_via_wp_mail_with_fallback( $to, $subject, $message, $headers ) {
-        if ( function_exists( 'fp_fpmail_brand_html' ) && $this->email_headers_indicate_html( $headers ) && is_string( $message ) && trim( $message ) !== '' ) {
+        if ( is_string( $message ) && trim( $message ) !== '' && function_exists( 'fp_fpmail_brand_html' ) ) {
+            $headers = $this->normalize_email_headers_to_array( $headers );
+            if ( ! $this->email_headers_indicate_html( $headers ) ) {
+                $message = $this->plain_text_to_fp_mail_html_fragment( $message );
+                $headers = $this->replace_content_type_header( $headers, 'text/html' );
+            }
             $message = fp_fpmail_brand_html( $message );
         }
         $ok = wp_mail( $to, $subject, $message, $headers );
