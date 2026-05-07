@@ -4,7 +4,7 @@ Contributors: franpass87
 Tags: forms, form builder, contact form, landing page, stripe, payments, conditional logic
 Requires at least: 5.8
 Tested up to: 6.6
-Stable tag: 1.6.44
+Stable tag: 1.6.45
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -37,6 +37,9 @@ Richiede PHP 7.4+ e WordPress 5.8+.
 Per i form a pagamento Stripe: configura le chiavi in **FP Forms** > **Impostazioni** e imposta il webhook Stripe su `https://tuosito.com/wp-json/fp-forms/v1/stripe-webhook`.
 
 == Changelog ==
+
+= 1.6.45 = (2026-05-07)
+* Fix: rilevamento ambiente locale più robusto in `should_send_sync()` — match su hostname (`.local`, `.test`, `.dev`, `localhost`), env var Local by Flywheel / DDEV, oltre a `WP_ENVIRONMENT_TYPE`. Il fallback sincrono ora scatta automaticamente su `fp-development.local` anche senza configurare `WP_ENVIRONMENT_TYPE`. Filtro `fp_forms_is_local_environment` per override.
 
 = 1.6.44 = (2026-05-07)
 * Fix: fallback sincrono per la coda email su ambienti locali / `DISABLE_WP_CRON` (`Email\Manager::should_send_sync()`). Risolve email "in coda" mai inviate quando wp-cron è fermo.

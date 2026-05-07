@@ -186,6 +186,9 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.45 - 2026-05-07
+- **Fix**: rilevamento ambiente locale più robusto in `should_send_sync()` — funziona anche su Local by Flywheel / MAMP / DDEV / Valet quando `WP_ENVIRONMENT_TYPE` non è impostata. Match su hostname (`.local`, `.test`, `.dev`, `localhost`, …), env var (`LOCAL_BY_FLYWHEEL`, `IS_DDEV_PROJECT`), o `WP_ENVIRONMENT_TYPE` in `('local','development')`. Filtro `fp_forms_is_local_environment` per override.
+
 ### 1.6.44 - 2026-05-07
 - **Fix**: coda email con fallback sincrono in ambienti locali / `DISABLE_WP_CRON` / filtro `fp_forms_email_force_sync` (le email delle submission non restano più "in coda" quando wp-cron è fermo).
 - **Add**: admin notice nelle pagine FP Forms se ci sono job `fp_forms_process_email_queue` pendenti da > 5 minuti (sintomo di cron fermo), con suggerimenti per il fix rapido e strutturale.

@@ -1,5 +1,10 @@
 # CHANGELOG - FP Forms
 
+## [1.6.45] - 2026-05-07
+### Fixed
+- **Detection ambiente locale più robusto**: il fallback sincrono della 1.6.44 non scattava sui siti Local by Flywheel / MAMP / DDEV / Valet quando `WP_ENVIRONMENT_TYPE` non era impostata (di default `wp_get_environment_type()` ritorna `'production'` se la costante manca, quindi sui siti dev "puri" la coda restava abilitata e i job email rimanevano inevasi). Ora `should_send_sync()` aggiunge una euristica: hostname che terminano in `.local`, `.test`, `.dev`, `.localhost`, `.ddev.site`, `.lndo.site`, oppure `localhost` / `127.0.0.1` / `::1`, oppure presenza delle env var `LOCAL_BY_FLYWHEEL` / `IS_DDEV_PROJECT`. Override possibile col filtro `fp_forms_is_local_environment` (`true`/`false`).
+- Anche `WP_ENVIRONMENT_TYPE === 'development'` ora attiva il sincrono (prima solo `'local'`).
+
 ## [1.6.44] - 2026-05-07
 ### Fixed
 - **Coda email — fallback sincrono su ambienti dev**: in `Email\Manager::enqueue_email_job()`, quando `should_send_sync()` rileva ambiente locale (`wp_get_environment_type() === 'local'`), `DISABLE_WP_CRON` attiva, oppure il filtro `fp_forms_email_force_sync` è `true`, il job viene processato sincronicamente con `process_queue_job()` invece di essere accodato via `wp_schedule_single_event()`. Risolve il caso in cui le email "notification/confirmation/staff" delle submission rimangono non spedite perché wp-cron in locale è "lazy" e non gira mai senza traffico HTTP.

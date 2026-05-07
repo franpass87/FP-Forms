@@ -36,13 +36,16 @@ class Manager {
      *
      * Casi in cui il sincrono è obbligatorio:
      * - `DISABLE_WP_CRON` definita a `true` (cron WP completamente disattivato)
-     * - `wp_get_environment_type()` === 'local' (ambienti di sviluppo dove il cron è "lazy"
+     * - `wp_get_environment_type()` === 'local' / 'development' (ambienti di sviluppo dove il cron è "lazy"
      *   e i job possono restare in coda finché qualcuno non visita una pagina)
+     * - heuristic su hostname (`.local`, `.test`, `.dev`, `localhost`, `127.0.0.1`, `::1`) — copre
+     *   Local by Flywheel / MAMP / Laravel Valet / DDEV anche quando `WP_ENVIRONMENT_TYPE` non è settato
+     * - env var `LOCAL_BY_FLYWHEEL` o `IS_DDEV_PROJECT` presente
      * - filtro `fp_forms_email_force_sync` impostato a `true` (override esplicito).
      *
-     * NB: in modalità sincrona perdiamo throttling, retry e separazione dei processi,
-     * ma garantiamo che l'email parta davvero. Trade-off voluto per non lasciare
-     * silenziosamente messaggi non spediti su installazioni locali.
+     * NB: in modalità sincrona perdiamo throttling per-job, retry automatici e separazione dei processi,
+     * ma garantiamo che l'email parta davvero. Trade-off voluto per non lasciare silenziosamente messaggi
+     * non spediti su installazioni locali, dove di solito wp-cron non gira mai senza traffico HTTP.
      *
      * @return bool True se l'email va inviata sincronicamente.
      */
@@ -50,10 +53,71 @@ class Manager {
         if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON === true ) {
             return true;
         }
-        if ( function_exists( 'wp_get_environment_type' ) && wp_get_environment_type() === 'local' ) {
+
+        if ( function_exists( 'wp_get_environment_type' ) ) {
+            $env = wp_get_environment_type();
+            if ( in_array( $env, [ 'local', 'development' ], true ) ) {
+                return true;
+            }
+        }
+
+        if ( $this->looks_like_local_environment() ) {
             return true;
         }
+
         return (bool) apply_filters( 'fp_forms_email_force_sync', false );
+    }
+
+    /**
+     * Heuristic per rilevare ambienti di sviluppo locali quando `WP_ENVIRONMENT_TYPE` non è impostato.
+     *
+     * Non garantito al 100%, ma copre i casi tipici:
+     * - Local by Flywheel: env var `LOCAL_BY_FLYWHEEL`, hostname `*.local`
+     * - DDEV: env var `IS_DDEV_PROJECT`, hostname `*.ddev.site`
+     * - Hostname generici di sviluppo: `*.test`, `*.dev`, `localhost`, IP loopback
+     *
+     * Filtri:
+     * - `fp_forms_is_local_environment` per override esplicito (true/false)
+     *
+     * @return bool True se l'ambiente sembra di sviluppo locale.
+     */
+    private function looks_like_local_environment(): bool {
+        $override = apply_filters( 'fp_forms_is_local_environment', null );
+        if ( is_bool( $override ) ) {
+            return $override;
+        }
+
+        if ( getenv( 'LOCAL_BY_FLYWHEEL' ) || getenv( 'IS_DDEV_PROJECT' ) ) {
+            return true;
+        }
+
+        $host = '';
+        if ( isset( $_SERVER['HTTP_HOST'] ) ) {
+            $host = strtolower( (string) wp_unslash( $_SERVER['HTTP_HOST'] ) );
+        } elseif ( isset( $_SERVER['SERVER_NAME'] ) ) {
+            $host = strtolower( (string) wp_unslash( $_SERVER['SERVER_NAME'] ) );
+        }
+
+        if ( $host === '' ) {
+            return false;
+        }
+
+        // Strip eventuale porta.
+        $host = (string) preg_replace( '/:\d+$/', '', $host );
+
+        if ( in_array( $host, [ 'localhost', '127.0.0.1', '::1', '[::1]' ], true ) ) {
+            return true;
+        }
+
+        $local_tlds = [ '.local', '.test', '.dev', '.localhost', '.ddev.site', '.lndo.site' ];
+        foreach ( $local_tlds as $suffix ) {
+            $len = strlen( $suffix );
+            if ( strlen( $host ) >= $len && substr( $host, -$len ) === $suffix ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
