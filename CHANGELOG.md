@@ -1,5 +1,12 @@
 # CHANGELOG - FP Forms
 
+## [1.6.44] - 2026-05-07
+### Fixed
+- **Coda email — fallback sincrono su ambienti dev**: in `Email\Manager::enqueue_email_job()`, quando `should_send_sync()` rileva ambiente locale (`wp_get_environment_type() === 'local'`), `DISABLE_WP_CRON` attiva, oppure il filtro `fp_forms_email_force_sync` è `true`, il job viene processato sincronicamente con `process_queue_job()` invece di essere accodato via `wp_schedule_single_event()`. Risolve il caso in cui le email "notification/confirmation/staff" delle submission rimangono non spedite perché wp-cron in locale è "lazy" e non gira mai senza traffico HTTP.
+### Added
+- **Admin notice "coda email incagliata"**: nuovo `admin_notice_stalled_email_queue()` registrato su `admin_notices` che, nelle pagine FP Forms, scansiona `_get_cron_array()` per job `fp_forms_process_email_queue` con timestamp più vecchio di `STALLED_THRESHOLD_SECONDS` (300s = 5 min). Mostra warning con conteggio job e età del più vecchio + suggerimenti rapidi (disattivare la coda) e strutturali (rimuovere `DISABLE_WP_CRON`, schedulare cron di sistema).
+- **Hook**: `should_send_sync(): bool` (pubblico) — verificabile da plugin terzi; filtro `fp_forms_email_force_sync` per forzare l'invio sincrono anche in produzione.
+
 ## [1.6.43] - 2026-04-13
 ### Fixed
 - Email **text/plain** (conferma utente predefinita, notifiche webmaster/staff senza template HTML): con **FP Mail SMTP** attivo il corpo viene convertito in HTML sicuro e wrappato con `fp_fpmail_brand_html()`, così il layout branding si applica come per le mail già in HTML.

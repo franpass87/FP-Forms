@@ -14,11 +14,120 @@ class Manager {
     const CRON_ACTION = 'fp_forms_process_email_queue';
 
     /**
-     * Registra hook cron per coda email e invio email dopo pagamento completato
+     * Soglia (in secondi) oltre la quale un job pendente è considerato "incagliato"
+     * (cron fermo) e fa scattare l'admin notice.
+     */
+    const STALLED_THRESHOLD_SECONDS = 300;
+
+    /**
+     * Registra hook cron per coda email e invio email dopo pagamento completato.
+     *
+     * Aggiunge anche l'admin notice quando rileva job pendenti da troppo tempo
+     * (segnale di wp-cron fermo, tipico in ambienti locali).
      */
     public function __construct() {
         add_action( self::CRON_ACTION, [ $this, 'process_queue_job' ], 10, 3 );
         add_action( 'fp_forms_payment_completed', [ $this, 'send_emails_after_payment' ], 10, 3 );
+        add_action( 'admin_notices', [ $this, 'admin_notice_stalled_email_queue' ] );
+    }
+
+    /**
+     * Decide se invocare l'invio email in modo sincrono invece di accodare via wp-cron.
+     *
+     * Casi in cui il sincrono è obbligatorio:
+     * - `DISABLE_WP_CRON` definita a `true` (cron WP completamente disattivato)
+     * - `wp_get_environment_type()` === 'local' (ambienti di sviluppo dove il cron è "lazy"
+     *   e i job possono restare in coda finché qualcuno non visita una pagina)
+     * - filtro `fp_forms_email_force_sync` impostato a `true` (override esplicito).
+     *
+     * NB: in modalità sincrona perdiamo throttling, retry e separazione dei processi,
+     * ma garantiamo che l'email parta davvero. Trade-off voluto per non lasciare
+     * silenziosamente messaggi non spediti su installazioni locali.
+     *
+     * @return bool True se l'email va inviata sincronicamente.
+     */
+    public function should_send_sync(): bool {
+        if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON === true ) {
+            return true;
+        }
+        if ( function_exists( 'wp_get_environment_type' ) && wp_get_environment_type() === 'local' ) {
+            return true;
+        }
+        return (bool) apply_filters( 'fp_forms_email_force_sync', false );
+    }
+
+    /**
+     * Mostra un admin notice quando ci sono job email pendenti da oltre
+     * `STALLED_THRESHOLD_SECONDS` secondi (sintomo di wp-cron fermo).
+     *
+     * Visualizzato solo a chi può gestire le opzioni e nelle pagine FP Forms,
+     * per non disturbare il resto del wp-admin. Il notice suggerisce sia il
+     * fix immediato (disattivare la coda email) sia la cause root (cron fermo).
+     */
+    public function admin_notice_stalled_email_queue(): void {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+        if ( ! function_exists( '_get_cron_array' ) ) {
+            return;
+        }
+
+        $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+        $on_fp_forms_page = false;
+        if ( $screen && isset( $screen->id ) && false !== strpos( (string) $screen->id, 'fp-forms' ) ) {
+            $on_fp_forms_page = true;
+        }
+        if ( ! $on_fp_forms_page && isset( $_GET['page'] ) && false !== strpos( (string) $_GET['page'], 'fp-forms' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            $on_fp_forms_page = true;
+        }
+        if ( ! $on_fp_forms_page ) {
+            return;
+        }
+
+        $crons = _get_cron_array();
+        if ( ! is_array( $crons ) || $crons === [] ) {
+            return;
+        }
+
+        $now      = time();
+        $stalled  = 0;
+        $earliest = 0;
+        foreach ( $crons as $timestamp => $hooks ) {
+            if ( ! is_array( $hooks ) || ! isset( $hooks[ self::CRON_ACTION ] ) || ! is_array( $hooks[ self::CRON_ACTION ] ) ) {
+                continue;
+            }
+            $ts = (int) $timestamp;
+            if ( $ts > $now - self::STALLED_THRESHOLD_SECONDS ) {
+                continue;
+            }
+            $stalled += count( $hooks[ self::CRON_ACTION ] );
+            if ( $earliest === 0 || $ts < $earliest ) {
+                $earliest = $ts;
+            }
+        }
+
+        if ( $stalled === 0 ) {
+            return;
+        }
+
+        $age_seconds = $earliest > 0 ? max( 0, $now - $earliest ) : 0;
+        $age_minutes = (int) floor( $age_seconds / 60 );
+
+        echo '<div class="notice notice-warning"><p><strong>FP Forms — </strong>';
+        printf(
+            /* translators: 1: numero job pendenti, 2: età del job più vecchio in minuti */
+            esc_html__( '%1$d email in coda non spedite (la più vecchia è ferma da %2$d minuti). WP-Cron sembra non essere in esecuzione.', 'fp-forms' ),
+            $stalled,
+            $age_minutes
+        );
+        echo ' ';
+        printf(
+            /* translators: 1: link alla pagina impostazioni, 2: snippet wp-config */
+            wp_kses_post( __( 'Soluzione rapida: disattiva %1$s e riprova. Soluzione strutturale: assicurati che WP-Cron giri (rimuovi %2$s da wp-config.php oppure schedula un cron di sistema su wp-cron.php).', 'fp-forms' ) ),
+            '<a href="' . esc_url( admin_url( 'admin.php?page=fp-forms-settings' ) ) . '">' . esc_html__( '"Coda email" nelle Impostazioni', 'fp-forms' ) . '</a>',
+            '<code>define(\'DISABLE_WP_CRON\', true)</code>'
+        );
+        echo '</p></div>';
     }
 
     /**
@@ -75,6 +184,20 @@ class Manager {
         if ( ! in_array( $type, $allowed, true ) ) {
             return;
         }
+
+        // Fallback sincrono quando wp-cron non è affidabile (locale / DISABLE_WP_CRON / filtro).
+        // Senza questo, su ambienti dev i job restano nella `cron` option senza essere mai processati,
+        // e l'email non parte (problema osservato in 1.6.x su submissions in stato "in attesa").
+        if ( $this->should_send_sync() ) {
+            $this->process_queue_job( $form_id, $submission_id, $type );
+            \FPForms\Core\Logger::debug( 'Email job sent synchronously (cron disabled or local env)', [
+                'form_id'       => $form_id,
+                'submission_id' => $submission_id,
+                'type'          => $type,
+            ] );
+            return;
+        }
+
         wp_schedule_single_event( time(), self::CRON_ACTION, [ $form_id, $submission_id, $type ] );
         \FPForms\Core\Logger::debug( 'Email job enqueued', [
             'form_id'       => $form_id,

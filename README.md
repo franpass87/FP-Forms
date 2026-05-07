@@ -186,6 +186,10 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.44 - 2026-05-07
+- **Fix**: coda email con fallback sincrono in ambienti locali / `DISABLE_WP_CRON` / filtro `fp_forms_email_force_sync` (le email delle submission non restano più "in coda" quando wp-cron è fermo).
+- **Add**: admin notice nelle pagine FP Forms se ci sono job `fp_forms_process_email_queue` pendenti da > 5 minuti (sintomo di cron fermo), con suggerimenti per il fix rapido e strutturale.
+
 ### 1.6.43 - 2026-04-13
 - Fix integrazione **FP Mail SMTP**: email in testo semplice (conferma visitatore predefinita, notifiche webmaster/staff senza template HTML) convertite in HTML e passate da `fp_fpmail_brand_html`, così usano il layout FP Mail.
 
