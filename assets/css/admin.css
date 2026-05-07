@@ -2076,6 +2076,75 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
     margin-bottom: 8px;
 }
 
+/* v1.6.46 — Sezione "Reinvia email (recovery)" nel modal dettaglio submission */
+.fp-submission-resend-section {
+    margin-top: 18px;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--fp-radius-md);
+}
+
+.fp-submission-resend-title {
+    margin: 0 0 4px;
+    font-size: 14px;
+    color: #1e293b;
+}
+
+.fp-submission-resend-help {
+    margin: 0 0 12px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.fp-submission-resend-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.fp-resend-email-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fp-resend-email-btn .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 1;
+}
+
+.fp-resend-email-btn .dashicons.fp-spin {
+    animation: fp-spin 0.9s linear infinite;
+}
+
+.fp-resend-email-btn[disabled] {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.fp-submission-resend-feedback {
+    margin-top: 10px;
+    min-height: 1em;
+    font-size: 13px;
+}
+
+.fp-submission-resend-feedback.fp-feedback-success {
+    color: #166534;
+}
+
+.fp-submission-resend-feedback.fp-feedback-error {
+    color: #b91c1c;
+}
+
+@keyframes fp-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
 @media screen and (max-width: 782px) {
     .fp-submission-data-row {
         grid-template-columns: 1fr;
@@ -2084,5 +2153,10 @@ body.fp-forms-admin-shell #wpbody-content > .wrap.fp-forms-builder {
 
     .fp-submission-actions {
         white-space: normal;
+    }
+
+    .fp-submission-resend-buttons {
+        flex-direction: column;
+        align-items: stretch;
     }
 }

@@ -39,6 +39,9 @@ class Manager {
         add_action( 'wp_ajax_fp_forms_restore_snapshot', [ $this, 'ajax_restore_snapshot' ] );
         add_action( 'wp_ajax_fp_forms_import_form_config', [ $this, 'ajax_import_form_config' ] );
         add_action( 'wp_ajax_fp_forms_test_smtp', [ $this, 'ajax_test_smtp' ] );
+
+        // AJAX handlers v1.6.46 — recovery email per submission
+        add_action( 'wp_ajax_fp_forms_resend_submission_email', [ $this, 'ajax_resend_submission_email' ] );
     }
     
     /**
@@ -839,6 +842,64 @@ class Manager {
     }
 
     /**
+     * AJAX: reinvia manualmente una specifica email (notification|confirmation|staff)
+     * per una submission, bypassando il rate limit.
+     *
+     * Permessi: deve avere `manage_forms` (l'amministratore del form).
+     * Verifica nonce `fp_forms_admin`.
+     *
+     * Risposta JSON:
+     *   success → { message: string }
+     *   error   → { message: string }
+     */
+    public function ajax_resend_submission_email() {
+        if ( ! check_ajax_referer( 'fp_forms_admin', 'nonce', false ) ) {
+            wp_send_json_error(
+                [ 'message' => __( 'Verifica di sicurezza non riuscita. Ricarica la pagina e riprova.', 'fp-forms' ) ],
+                403
+            );
+        }
+
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
+            wp_send_json_error( [ 'message' => __( 'Permessi insufficienti.', 'fp-forms' ) ], 403 );
+        }
+
+        $submission_id = isset( $_POST['submission_id'] ) ? (int) $_POST['submission_id'] : 0;
+        $type          = isset( $_POST['email_type'] ) ? sanitize_key( wp_unslash( (string) $_POST['email_type'] ) ) : '';
+
+        if ( $submission_id <= 0 ) {
+            wp_send_json_error( [ 'message' => __( 'Submission non valida.', 'fp-forms' ) ] );
+        }
+
+        $allowed = [ 'notification', 'confirmation', 'staff' ];
+        if ( ! in_array( $type, $allowed, true ) ) {
+            wp_send_json_error( [ 'message' => __( 'Tipo email non valido.', 'fp-forms' ) ] );
+        }
+
+        $submission = \FPForms\Plugin::instance()->submissions->get_submission( $submission_id );
+        if ( ! $submission ) {
+            wp_send_json_error( [ 'message' => __( 'Submission non trovata.', 'fp-forms' ) ] );
+        }
+
+        $form_id = (int) ( $submission->form_id ?? 0 );
+        if ( $form_id <= 0 ) {
+            wp_send_json_error( [ 'message' => __( 'Form ID mancante per questa submission.', 'fp-forms' ) ] );
+        }
+
+        $email_manager = \FPForms\Plugin::instance()->email;
+        if ( ! $email_manager instanceof \FPForms\Email\Manager ) {
+            wp_send_json_error( [ 'message' => __( 'Email manager non disponibile.', 'fp-forms' ) ], 500 );
+        }
+        $result = $email_manager->resend_email( $form_id, $submission_id, $type );
+
+        if ( ! empty( $result['success'] ) ) {
+            wp_send_json_success( [ 'message' => $result['message'] ] );
+        }
+
+        wp_send_json_error( [ 'message' => $result['message'] ] );
+    }
+
+    /**
      * Costruisce l'HTML del modale dettaglio submission (usato dall'AJAX admin).
      *
      * @param object $submission Oggetto submission con proprietà data (array), created_at, status, user_ip, form_id.
@@ -940,6 +1001,65 @@ class Manager {
             $html .= '</div>';
         }
 
+        // Sezione recovery: pulsanti "Reinvia email" (v1.6.46)
+        $html .= $this->build_resend_emails_section_html( $submission_id, (int) $submission->form_id );
+
+        $html .= '</div>';
+
+        return $html;
+    }
+
+    /**
+     * Costruisce l'HTML della sezione "Reinvia email" mostrata nel modal dettaglio submission.
+     *
+     * Mostra i 3 pulsanti (notification/confirmation/staff) abilitati o disabilitati con tooltip
+     * a seconda della configurazione del form. Solo utenti con `manage_forms` vedono la sezione.
+     *
+     * @param int $submission_id ID submission.
+     * @param int $form_id       ID form.
+     * @return string HTML escaped.
+     */
+    private function build_resend_emails_section_html( int $submission_id, int $form_id ): string {
+        if ( ! \FPForms\Core\Capabilities::can_manage_forms() ) {
+            return '';
+        }
+        if ( $submission_id <= 0 || $form_id <= 0 ) {
+            return '';
+        }
+
+        $email_manager = \FPForms\Plugin::instance()->email;
+        if ( ! $email_manager instanceof \FPForms\Email\Manager ) {
+            return '';
+        }
+        $types = $email_manager->get_resendable_types_for_form( $form_id );
+
+        $html  = '<div class="fp-submission-resend-section" data-submission-id="' . esc_attr( (string) $submission_id ) . '">';
+        $html .= '<h4 class="fp-submission-resend-title">' . esc_html__( 'Reinvia email (recovery)', 'fp-forms' ) . '</h4>';
+        $html .= '<p class="fp-submission-resend-help">' . esc_html__( 'Usa questi pulsanti se le email automatiche non sono partite (es. rate limit, cron stallato, errore SMTP). Il rate limit viene ignorato per le azioni manuali.', 'fp-forms' ) . '</p>';
+        $html .= '<div class="fp-submission-resend-buttons">';
+
+        foreach ( $types as $entry ) {
+            $type      = (string) $entry['type'];
+            $label     = (string) $entry['label'];
+            $available = (bool) $entry['available'];
+            $reason    = (string) $entry['reason'];
+
+            $btn_attrs = 'data-submission-id="' . esc_attr( (string) $submission_id ) . '" data-email-type="' . esc_attr( $type ) . '"';
+            $disabled  = '';
+            $title     = '';
+            if ( ! $available ) {
+                $disabled = ' disabled';
+                $title    = ' title="' . esc_attr( $reason ) . '"';
+            }
+
+            $html .= '<button type="button" class="button fp-resend-email-btn"' . $btn_attrs . $disabled . $title . '>';
+            $html .= '<span class="dashicons dashicons-email-alt"></span> ';
+            $html .= esc_html( $label );
+            $html .= '</button>';
+        }
+
+        $html .= '</div>';
+        $html .= '<div class="fp-submission-resend-feedback" role="status" aria-live="polite"></div>';
         $html .= '</div>';
 
         return $html;

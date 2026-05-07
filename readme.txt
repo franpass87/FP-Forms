@@ -4,7 +4,7 @@ Contributors: franpass87
 Tags: forms, form builder, contact form, landing page, stripe, payments, conditional logic
 Requires at least: 5.8
 Tested up to: 6.6
-Stable tag: 1.6.45
+Stable tag: 1.6.46
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -37,6 +37,12 @@ Richiede PHP 7.4+ e WordPress 5.8+.
 Per i form a pagamento Stripe: configura le chiavi in **FP Forms** > **Impostazioni** e imposta il webhook Stripe su `https://tuosito.com/wp-json/fp-forms/v1/stripe-webhook`.
 
 == Changelog ==
+
+= 1.6.46 = (2026-05-07)
+* Add: pulsante "Reinvia email (recovery)" nel modal dettaglio submission — 3 azioni separate (notifica webmaster, conferma cliente, notifica staff) per recuperare le email saltate per rate limit, cron stallato o errore SMTP. Bypassa il rate limit (azione manuale).
+* Add: admin notice nelle pagine FP Forms quando ci sono email saltate per rate limit nelle ultime 24h, con conteggio submission interessate.
+* Add: API pubblica `Email\Manager::resend_email()` e `get_resendable_types_for_form()` per integrazioni / UI custom.
+* Change: logger del rate limit ora include `count` e `max` per facilitare la diagnosi.
 
 = 1.6.45 = (2026-05-07)
 * Fix: rilevamento ambiente locale più robusto in `should_send_sync()` — match su hostname (`.local`, `.test`, `.dev`, `localhost`), env var Local by Flywheel / DDEV, oltre a `WP_ENVIRONMENT_TYPE`. Il fallback sincrono ora scatta automaticamente su `fp-development.local` anche senza configurare `WP_ENVIRONMENT_TYPE`. Filtro `fp_forms_is_local_environment` per override.

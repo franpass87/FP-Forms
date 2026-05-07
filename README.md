@@ -186,6 +186,15 @@ GPL v2 or later
 
 ## 🔄 Changelog
 
+### 1.6.46 - 2026-05-07
+- **Add**: nuovo pulsante "Reinvia email (recovery)" nel modal dettaglio submission. Tre azioni separate (notifica webmaster, conferma cliente, notifica staff) per recuperare le email saltate per rate limit, cron stallato o errore SMTP. Bypassa il rate limit (azione manuale dell'amministratore). I pulsanti sono automaticamente disabilitati con tooltip esplicativo se l'invio non è applicabile (es. conferma cliente disabilitata, nessun indirizzo staff configurato, ecc.).
+- **Add**: admin notice nelle pagine FP Forms quando ci sono email saltate per rate limit nelle ultime 24 ore (memorizzate in `fp_forms_email_rate_limit_skips`, max 50 entry recenti).
+- **Add**: API pubblica `Email\Manager::resend_email( int $form_id, int $submission_id, string $type ): array{success:bool, message:string}` per reinviare programmaticamente. Tipi accettati: `notification`, `confirmation`, `staff`.
+- **Add**: API pubblica `Email\Manager::get_resendable_types_for_form( int $form_id ): array` per esporre lo stato di disponibilità dei 3 tipi.
+- **Add**: API pubblica `get_recent_rate_limit_skips()` e `clear_rate_limit_skips()`.
+- **Add**: AJAX action `wp_ajax_fp_forms_resend_submission_email` (richiede `manage_forms` + nonce `fp_forms_admin`).
+- **Change**: logger del rate limit più dettagliato (`count` e `max` inclusi nel log + memorizzazione per admin notice).
+
 ### 1.6.45 - 2026-05-07
 - **Fix**: rilevamento ambiente locale più robusto in `should_send_sync()` — funziona anche su Local by Flywheel / MAMP / DDEV / Valet quando `WP_ENVIRONMENT_TYPE` non è impostata. Match su hostname (`.local`, `.test`, `.dev`, `localhost`, …), env var (`LOCAL_BY_FLYWHEEL`, `IS_DDEV_PROJECT`), o `WP_ENVIRONMENT_TYPE` in `('local','development')`. Filtro `fp_forms_is_local_environment` per override.
 

@@ -150,6 +150,7 @@
             // Submissions
             $(document).on('click', '.fp-view-submission', this.viewSubmission);
             $(document).on('click', '.fp-delete-submission', this.deleteSubmission);
+            $(document).on('click', '.fp-resend-email-btn', this.resendSubmissionEmail);
             $(document).on('click', '.fp-export-submissions-btn', this.openExportModal);
             $(document).on('submit', '#fp-export-form', this.exportSubmissions);
             $(document).on('click', '.fp-modal-close', this.closeModal);
@@ -879,6 +880,67 @@
             });
         },
         
+        /**
+         * Reinvia manualmente una email per una submission (notification|confirmation|staff).
+         * Usato dal pannello "Reinvia email (recovery)" nel modal dettaglio submission.
+         * v1.6.46
+         */
+        resendSubmissionEmail: function(e) {
+            e.preventDefault();
+
+            var $btn = $(this);
+            if ($btn.is(':disabled') || $btn.hasClass('is-loading')) {
+                return;
+            }
+
+            var submissionId = parseInt($btn.data('submission-id'), 10) || 0;
+            var emailType = String($btn.data('email-type') || '');
+            var $section = $btn.closest('.fp-submission-resend-section');
+            var $feedback = $section.find('.fp-submission-resend-feedback');
+
+            if (submissionId <= 0 || !emailType) {
+                if (typeof window.fpToast !== 'undefined') fpToast.error('Parametri mancanti.');
+                return;
+            }
+
+            var originalLabel = $btn.html();
+            $btn.addClass('is-loading').prop('disabled', true).html('<span class="dashicons dashicons-update fp-spin"></span> Invio in corso...');
+            $feedback.removeClass('fp-feedback-error fp-feedback-success').empty();
+
+            $.ajax({
+                url: fpFormsAdmin.ajaxurl,
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    action: 'fp_forms_resend_submission_email',
+                    nonce: fpFormsAdmin.nonce,
+                    submission_id: submissionId,
+                    email_type: emailType
+                },
+                success: function(response) {
+                    var msg = (response && response.data && response.data.message) ? response.data.message : '';
+                    if (response && response.success) {
+                        $feedback.addClass('fp-feedback-success').text(msg || 'Email reinviata correttamente.');
+                        if (typeof window.fpToast !== 'undefined') fpToast.success(msg || 'Email reinviata.');
+                    } else {
+                        $feedback.addClass('fp-feedback-error').text(msg || 'Invio fallito.');
+                        if (typeof window.fpToast !== 'undefined') fpToast.error(msg || 'Invio fallito.');
+                    }
+                },
+                error: function(xhr) {
+                    var msg = 'Errore di rete durante l\'invio.';
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                        msg = xhr.responseJSON.data.message;
+                    }
+                    $feedback.addClass('fp-feedback-error').text(msg);
+                    if (typeof window.fpToast !== 'undefined') fpToast.error(msg);
+                },
+                complete: function() {
+                    $btn.removeClass('is-loading').prop('disabled', false).html(originalLabel);
+                }
+            });
+        },
+
         /**
          * Chiudi modal
          */

@@ -1,5 +1,16 @@
 # CHANGELOG - FP Forms
 
+## [1.6.46] - 2026-05-07
+### Added
+- **Recovery email per submission**: nuovo pulsante "Reinvia email" nel modal dettaglio submission (admin → FP Forms → Submissions → Visualizza). Tre azioni distinte: notifica webmaster, conferma cliente, notifica staff. Bypassa il rate limit (azione manuale dell'amministratore). Pulsanti automaticamente disabilitati con tooltip se l'invio non è applicabile (email disabilitate per il form, conferma disattivata, nessun indirizzo staff configurato, ecc.).
+- **Endpoint AJAX**: `wp_ajax_fp_forms_resend_submission_email` (richiede `manage_forms` + nonce `fp_forms_admin`). Parametri: `submission_id`, `email_type` (`notification`|`confirmation`|`staff`).
+- **Email Manager API pubblica**: `Email\Manager::resend_email( int $form_id, int $submission_id, string $type ): array{success:bool, message:string}` per reinviare programmaticamente una email.
+- **Email Manager API pubblica**: `Email\Manager::get_resendable_types_for_form( int $form_id ): array` espone lo stato di disponibilità dei 3 tipi (utile per UI custom o integrazioni).
+- **Email Manager API pubblica**: `get_recent_rate_limit_skips( int $hours_back = 24 ): array` e `clear_rate_limit_skips(): void`.
+- **Admin notice "email saltate per rate limit"**: nuovo `admin_notice_rate_limit_skips()` registrato su `admin_notices`. Quando ci sono email saltate per rate limit nelle ultime 24 ore (memorizzate in opzione `fp_forms_email_rate_limit_skips`, max 50 entry), nelle pagine FP Forms appare un banner rosso che indica numero email e submission interessate, con link rapido a Impostazioni → Rate limit per aumentarlo.
+### Changed
+- **Logger rate limit più dettagliato**: in `Email\Manager::process_queue_job()`, quando il rate limit fa saltare un job, il log ora include anche `count` e `max` per facilitare la diagnosi. L'evento viene anche memorizzato nell'opzione `fp_forms_email_rate_limit_skips` con submission/form/type/timestamp per essere mostrato nell'admin notice.
+
 ## [1.6.45] - 2026-05-07
 ### Fixed
 - **Detection ambiente locale più robusto**: il fallback sincrono della 1.6.44 non scattava sui siti Local by Flywheel / MAMP / DDEV / Valet quando `WP_ENVIRONMENT_TYPE` non era impostata (di default `wp_get_environment_type()` ritorna `'production'` se la costante manca, quindi sui siti dev "puri" la coda restava abilitata e i job email rimanevano inevasi). Ora `should_send_sync()` aggiunge una euristica: hostname che terminano in `.local`, `.test`, `.dev`, `.localhost`, `.ddev.site`, `.lndo.site`, oppure `localhost` / `127.0.0.1` / `::1`, oppure presenza delle env var `LOCAL_BY_FLYWHEEL` / `IS_DDEV_PROJECT`. Override possibile col filtro `fp_forms_is_local_environment` (`true`/`false`).

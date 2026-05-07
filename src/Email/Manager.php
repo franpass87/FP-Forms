@@ -20,6 +20,17 @@ class Manager {
     const STALLED_THRESHOLD_SECONDS = 300;
 
     /**
+     * Nome opzione che memorizza gli ultimi job email saltati per rate limit.
+     * Usata dall'admin notice per avvisare l'amministratore.
+     */
+    const RATE_LIMIT_SKIPS_OPTION = 'fp_forms_email_rate_limit_skips';
+
+    /**
+     * Numero massimo di skip recenti memorizzati (oltre vengono ruotati).
+     */
+    const RATE_LIMIT_SKIPS_MAX = 50;
+
+    /**
      * Registra hook cron per coda email e invio email dopo pagamento completato.
      *
      * Aggiunge anche l'admin notice quando rileva job pendenti da troppo tempo
@@ -29,6 +40,7 @@ class Manager {
         add_action( self::CRON_ACTION, [ $this, 'process_queue_job' ], 10, 3 );
         add_action( 'fp_forms_payment_completed', [ $this, 'send_emails_after_payment' ], 10, 3 );
         add_action( 'admin_notices', [ $this, 'admin_notice_stalled_email_queue' ] );
+        add_action( 'admin_notices', [ $this, 'admin_notice_rate_limit_skips' ] );
     }
 
     /**
@@ -287,7 +299,10 @@ class Manager {
                 'form_id' => $form_id,
                 'type'    => $type,
                 'slot'    => $slot,
+                'count'   => $count,
+                'max'     => $max_per_hour,
             ] );
+            $this->record_rate_limit_skip( $form_id, $submission_id, $type, $count, $max_per_hour );
             return;
         }
 
@@ -1184,6 +1199,327 @@ class Manager {
         );
 
         @file_put_contents( $file, $line, FILE_APPEND | LOCK_EX );
+    }
+
+    /**
+     * Memorizza in opzione un evento "rate-limit skip" per esporlo poi nell'admin notice.
+     *
+     * Conserva fino a {@see self::RATE_LIMIT_SKIPS_MAX} entry recenti (rotazione FIFO).
+     * Ogni entry: form_id, submission_id, type, count, max, timestamp.
+     *
+     * @param int    $form_id       ID form.
+     * @param int    $submission_id ID submission.
+     * @param string $type          Tipo email (notification|confirmation|staff).
+     * @param int    $count         Count corrente raggiunto.
+     * @param int    $max           Massimo per ora.
+     */
+    private function record_rate_limit_skip( int $form_id, int $submission_id, string $type, int $count, int $max ): void {
+        $skips = get_option( self::RATE_LIMIT_SKIPS_OPTION, [] );
+        if ( ! is_array( $skips ) ) {
+            $skips = [];
+        }
+        $skips[] = [
+            'form_id'       => $form_id,
+            'submission_id' => $submission_id,
+            'type'          => $type,
+            'count'         => $count,
+            'max'           => $max,
+            'timestamp'     => time(),
+        ];
+        if ( count( $skips ) > self::RATE_LIMIT_SKIPS_MAX ) {
+            $skips = array_slice( $skips, -self::RATE_LIMIT_SKIPS_MAX );
+        }
+        update_option( self::RATE_LIMIT_SKIPS_OPTION, $skips, false );
+    }
+
+    /**
+     * Restituisce gli skip recenti (ultime 24 ore) memorizzati per rate limit.
+     *
+     * @return array<int, array{form_id:int, submission_id:int, type:string, count:int, max:int, timestamp:int}>
+     */
+    public function get_recent_rate_limit_skips( int $hours_back = 24 ): array {
+        $skips = get_option( self::RATE_LIMIT_SKIPS_OPTION, [] );
+        if ( ! is_array( $skips ) ) {
+            return [];
+        }
+        $cutoff = time() - ( max( 1, $hours_back ) * HOUR_IN_SECONDS );
+        $recent = [];
+        foreach ( $skips as $entry ) {
+            if ( ! is_array( $entry ) || ! isset( $entry['timestamp'] ) ) {
+                continue;
+            }
+            if ( (int) $entry['timestamp'] < $cutoff ) {
+                continue;
+            }
+            $recent[] = $entry;
+        }
+        return $recent;
+    }
+
+    /**
+     * Reset dello storico skip (utilizzato dal pulsante "Ho preso visione" del notice).
+     */
+    public function clear_rate_limit_skips(): void {
+        delete_option( self::RATE_LIMIT_SKIPS_OPTION );
+    }
+
+    /**
+     * Mostra un admin notice quando ci sono email saltate per rate limit nelle ultime 24h.
+     *
+     * Visualizzato solo a chi può gestire le opzioni e nelle pagine FP Forms.
+     * Con link veloce per (a) aumentare il rate limit e (b) reinviare manualmente.
+     */
+    public function admin_notice_rate_limit_skips(): void {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+        $on_fp_forms_page = false;
+        if ( $screen && isset( $screen->id ) && false !== strpos( (string) $screen->id, 'fp-forms' ) ) {
+            $on_fp_forms_page = true;
+        }
+        if ( ! $on_fp_forms_page && isset( $_GET['page'] ) && false !== strpos( (string) $_GET['page'], 'fp-forms' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            $on_fp_forms_page = true;
+        }
+        if ( ! $on_fp_forms_page ) {
+            return;
+        }
+
+        $recent = $this->get_recent_rate_limit_skips( 24 );
+        if ( empty( $recent ) ) {
+            return;
+        }
+
+        $by_submission = [];
+        foreach ( $recent as $entry ) {
+            $sid = (int) ( $entry['submission_id'] ?? 0 );
+            if ( $sid <= 0 ) {
+                continue;
+            }
+            $by_submission[ $sid ] = ( $by_submission[ $sid ] ?? 0 ) + 1;
+        }
+
+        echo '<div class="notice notice-error"><p><strong>FP Forms — </strong>';
+        printf(
+            /* translators: 1: numero email saltate, 2: numero submission interessate */
+            esc_html__( '%1$d email non sono state inviate per rate limit nelle ultime 24 ore (%2$d submission interessate). Apri il dettaglio della submission e usa il pulsante "Reinvia email" per recuperarle.', 'fp-forms' ),
+            count( $recent ),
+            count( $by_submission )
+        );
+        echo ' ';
+        printf(
+            /* translators: 1: link impostazioni rate limit */
+            wp_kses_post( __( 'Per evitare nuovi blocchi, aumenta il limite in %1$s (oggi 50/h di default).', 'fp-forms' ) ),
+            '<a href="' . esc_url( admin_url( 'admin.php?page=fp-forms-settings' ) ) . '">' . esc_html__( 'Impostazioni → Rate limit email', 'fp-forms' ) . '</a>'
+        );
+        echo '</p></div>';
+    }
+
+    /**
+     * Reinvia manualmente una specifica email per una submission, bypassando il rate limit.
+     *
+     * Usato dall'admin per recuperare email saltate (rate limit, cron stallato, errore SMTP).
+     * NON incrementa il counter rate limit (è un'azione manuale dell'amministratore).
+     *
+     * @param int    $form_id       ID form.
+     * @param int    $submission_id ID submission.
+     * @param string $type          'notification' (webmaster) | 'confirmation' (cliente) | 'staff'.
+     * @return array{success:bool, message:string} Esito invio.
+     */
+    public function resend_email( int $form_id, int $submission_id, string $type ): array {
+        $allowed = [ 'notification', 'confirmation', 'staff' ];
+        if ( ! in_array( $type, $allowed, true ) ) {
+            return [
+                'success' => false,
+                'message' => sprintf(
+                    /* translators: %s: type passed */
+                    __( 'Tipo email non valido: %s', 'fp-forms' ),
+                    $type
+                ),
+            ];
+        }
+
+        $submission = \FPForms\Plugin::instance()->database->get_submission( $submission_id );
+        if ( ! $submission || (int) $submission->form_id !== $form_id ) {
+            return [
+                'success' => false,
+                'message' => __( 'Submission non trovata o form non corrispondente.', 'fp-forms' ),
+            ];
+        }
+
+        $form = \FPForms\Plugin::instance()->forms->get_form( $form_id );
+        if ( ! $form ) {
+            return [
+                'success' => false,
+                'message' => __( 'Form non trovato.', 'fp-forms' ),
+            ];
+        }
+
+        if ( ! empty( $form['settings']['disable_wordpress_emails'] ) ) {
+            return [
+                'success' => false,
+                'message' => __( 'Le email WordPress sono disabilitate per questo form (vedi impostazioni form → Notifiche email).', 'fp-forms' ),
+            ];
+        }
+
+        $data = isset( $submission->data ) ? json_decode( $submission->data, true ) : [];
+        if ( ! is_array( $data ) ) {
+            $data = [];
+        }
+
+        try {
+            if ( $type === 'notification' ) {
+                $ok = (bool) $this->send_notification( $form_id, $submission_id, $data );
+                return [
+                    'success' => $ok,
+                    'message' => $ok
+                        ? __( 'Notifica webmaster reinviata correttamente.', 'fp-forms' )
+                        : __( 'Invio notifica webmaster fallito (controlla configurazione SMTP / log).', 'fp-forms' ),
+                ];
+            }
+            if ( $type === 'confirmation' ) {
+                if ( empty( $form['settings']['confirmation_enabled'] ) ) {
+                    return [
+                        'success' => false,
+                        'message' => __( 'Email di conferma cliente disabilitata nelle impostazioni del form.', 'fp-forms' ),
+                    ];
+                }
+                $user_email = $this->get_user_email_from_data( $form_id, $data );
+                if ( ! $user_email ) {
+                    return [
+                        'success' => false,
+                        'message' => __( 'Nessun indirizzo email trovato nei campi della submission.', 'fp-forms' ),
+                    ];
+                }
+                $ok = (bool) $this->send_confirmation( $form_id, $user_email, $data );
+                return [
+                    'success' => $ok,
+                    'message' => $ok
+                        ? sprintf(
+                            /* translators: %s: indirizzo email cliente */
+                            __( 'Email di conferma reinviata a %s.', 'fp-forms' ),
+                            $user_email
+                        )
+                        : __( 'Invio conferma cliente fallito (controlla configurazione SMTP / log).', 'fp-forms' ),
+                ];
+            }
+            if ( $type === 'staff' ) {
+                if ( empty( $form['settings']['staff_notifications_enabled'] ) ) {
+                    return [
+                        'success' => false,
+                        'message' => __( 'Notifiche staff disabilitate nelle impostazioni del form.', 'fp-forms' ),
+                    ];
+                }
+                $staff_emails = $form['settings']['staff_emails'] ?? '';
+                if ( $staff_emails === '' ) {
+                    return [
+                        'success' => false,
+                        'message' => __( 'Nessun indirizzo staff configurato per questo form.', 'fp-forms' ),
+                    ];
+                }
+                $emails = array_filter( array_map( 'trim', preg_split( '/[,;\n\r]+/', $staff_emails ) ), 'is_email' );
+                if ( empty( $emails ) ) {
+                    return [
+                        'success' => false,
+                        'message' => __( 'Nessun indirizzo staff valido configurato.', 'fp-forms' ),
+                    ];
+                }
+                $sent = 0;
+                $failed = 0;
+                foreach ( $emails as $staff_email ) {
+                    $ok = (bool) $this->send_staff_notification( $form_id, $submission_id, $staff_email, $data );
+                    if ( $ok ) {
+                        $sent++;
+                    } else {
+                        $failed++;
+                    }
+                }
+                return [
+                    'success' => $sent > 0,
+                    'message' => $failed === 0
+                        ? sprintf(
+                            /* translators: %d: numero email staff inviate */
+                            _n( 'Notifica staff reinviata a %d destinatario.', 'Notifica staff reinviata a %d destinatari.', $sent, 'fp-forms' ),
+                            $sent
+                        )
+                        : sprintf(
+                            /* translators: 1: inviate, 2: fallite */
+                            __( 'Notifica staff: %1$d inviate, %2$d fallite.', 'fp-forms' ),
+                            $sent,
+                            $failed
+                        ),
+                ];
+            }
+        } catch ( \Throwable $e ) {
+            \FPForms\Core\Logger::error( 'Manual resend email failed', [
+                'form_id'       => $form_id,
+                'submission_id' => $submission_id,
+                'type'          => $type,
+                'error'         => $e->getMessage(),
+            ] );
+            return [
+                'success' => false,
+                'message' => sprintf(
+                    /* translators: %s: error message */
+                    __( 'Errore durante il reinvio: %s', 'fp-forms' ),
+                    $e->getMessage()
+                ),
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => __( 'Tipo non gestito.', 'fp-forms' ),
+        ];
+    }
+
+    /**
+     * Restituisce l'elenco dei tipi di email "reinviabili" per un form, con stato disponibilità.
+     *
+     * Usato dal modal dettaglio submission per mostrare/abilitare i pulsanti corretti.
+     *
+     * @param int $form_id ID form.
+     * @return array<int, array{type:string, label:string, available:bool, reason:string}>
+     */
+    public function get_resendable_types_for_form( int $form_id ): array {
+        $form = \FPForms\Plugin::instance()->forms->get_form( $form_id );
+        $disabled_all = is_array( $form ) && ! empty( $form['settings']['disable_wordpress_emails'] );
+
+        $confirmation_enabled = is_array( $form ) && ! empty( $form['settings']['confirmation_enabled'] );
+        $staff_enabled        = is_array( $form ) && ! empty( $form['settings']['staff_notifications_enabled'] );
+        $staff_emails         = is_array( $form ) ? (string) ( $form['settings']['staff_emails'] ?? '' ) : '';
+
+        $disabled_reason = $disabled_all
+            ? __( 'Tutte le email WordPress sono disabilitate nelle impostazioni del form.', 'fp-forms' )
+            : '';
+
+        return [
+            [
+                'type'      => 'notification',
+                'label'     => __( 'Notifica webmaster', 'fp-forms' ),
+                'available' => ! $disabled_all,
+                'reason'    => $disabled_reason,
+            ],
+            [
+                'type'      => 'confirmation',
+                'label'     => __( 'Conferma cliente', 'fp-forms' ),
+                'available' => ! $disabled_all && $confirmation_enabled,
+                'reason'    => $disabled_all
+                    ? $disabled_reason
+                    : ( $confirmation_enabled ? '' : __( 'Email di conferma disabilitata nelle impostazioni del form.', 'fp-forms' ) ),
+            ],
+            [
+                'type'      => 'staff',
+                'label'     => __( 'Notifica staff', 'fp-forms' ),
+                'available' => ! $disabled_all && $staff_enabled && $staff_emails !== '',
+                'reason'    => $disabled_all
+                    ? $disabled_reason
+                    : ( ! $staff_enabled
+                        ? __( 'Notifiche staff disabilitate nelle impostazioni del form.', 'fp-forms' )
+                        : ( $staff_emails === '' ? __( 'Nessun indirizzo staff configurato.', 'fp-forms' ) : '' ) ),
+            ],
+        ];
     }
 
     /**
